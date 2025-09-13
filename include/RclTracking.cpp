@@ -125,6 +125,10 @@ public:
         insert(length, obj_ptr);
     }
 
+    void add_front(AnyType* obj_ptr) {
+        insert(0, obj_ptr);
+    }
+
     void insert(int index, AnyType* obj_ptr) {
         if (obj_ptr != nullptr) {
             int temp_index = index;
@@ -242,7 +246,7 @@ public:
         line.slope = (y2 - y1) / (x2 - x1);
         line.yIntercept = y1 - line.slope * x1;
         // Add to collection if space available
-        Line_Obstacle::obstacleCollection.push_back(this);
+        Line_Obstacle::obstacleCollection.add_front(this);
     }
 
     // Check if the obstacle has expired
@@ -292,7 +296,7 @@ public:
 
     Circle_Obstacle(double x_, double y_, double r_, double lifeTimeMs = -1)
         : x(x_), y(y_), radius(r_), lifeTimer(lifeTimeMs < 0 ? MAX_OBSTACLE_DURATION : lifeTimeMs) {
-        Circle_Obstacle::obstacleCollection.push_back(this);
+        Circle_Obstacle::obstacleCollection.add_front(this);
     }
 
     // Check if the obstacle expired
