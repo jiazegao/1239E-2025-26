@@ -14,7 +14,6 @@
 #include <utility>
 #include <vector>
 #include <numeric>
-#include <array>
 
 // Enumerations
 enum class TimeUnit { SECOND, MILLISECOND };
@@ -336,12 +335,15 @@ public:
 
     // Compute pose of the ray origin & slope
     void updatePose(const lemlib::Pose& botPose) {
+        // sensor's angle position relative to the bot's center
         double theta = degToRad(offsetAngle - botPose.theta);
         sp.x = botPose.x + std::cos(theta) * offsetDist;
         sp.y = botPose.y + std::sin(theta) * offsetDist;
+        // sensor ray's heading
         sp.heading = std::fmod(botPose.theta + mainAngle, 360.0);
         if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
         if (sp.heading == 180) sp.heading += 0.00001;  // avoid 180
+        // slope and y-intercept
         sp.slope = 1.0 / std::tan(degToRad(sp.heading));
         sp.yIntercept = sp.y - sp.slope * sp.x;
     }
@@ -361,8 +363,10 @@ public:
     // Return which coordinate (X or Y) and its value
     std::pair<CoordType, double> getBotCoord(const lemlib::Pose& botPose, double accum = NAN) {
 
+        // accumulative?
         double val = std::isnan(accum) ? sensor->get() * mmToInch : accum;
 
+        // verify sensor data
         if (!isValid(val)) return {CoordType::INVALID, 0.0};
 
         // Determine which wall
@@ -370,13 +374,11 @@ public:
         double heading = sp.heading;
         if (heading == 90.0) wall = 2;
         else if (heading == 270.0) wall = 4;
-        else if (heading < 90.0 || heading > 270.0)
-        {
+        else if (heading < 90.0 || heading > 270.0) {
             double tx = (FIELD_HALF_LENGTH - sp.yIntercept) / sp.slope;
             wall = (tx <= FIELD_NEG_HALF_LENGTH ? 4 : (tx < FIELD_HALF_LENGTH ? 1 : 2));
         }
-        else
-        {
+        else {
             double tx = (FIELD_NEG_HALF_LENGTH - sp.yIntercept) / sp.slope;
             wall = (tx <= FIELD_NEG_HALF_LENGTH ? 4 : (tx < FIELD_HALF_LENGTH ? 3 : 2));
         }
@@ -477,9 +479,129 @@ public:
         stopAccumulating();
     }
 
+    // Reset Rcl
     void discardData () {
         latestPrecise = chassis->getPose();
         poseAtLatest = chassis->getPose();
+    }
+
+    // Single updates
+    void mainUpdate() {
+        // Accumulators
+        std::vector<double> accTotal(RclSensor::sensorCollection.size());
+        std::vector<int> accCount(RclSensor::sensorCollection.size());
+        // If accumulating, gather readings
+        while (accumulating) {
+            for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
+                accTotal[i] += RclSensor::sensorCollection[i]->rawReading();
+                accCount[i] ++;
+            }
+            pros::delay(goalMSPT);
+        }
+
+        // Collections
+        std::vector<double> xs, ys;
+
+        // Loop sensors
+        auto botPose = getRclPosition();
+        for (int i = 0; i < RclSensor::sensorCollection.size(); i++)
+        {
+            auto sens = RclSensor::sensorCollection[i];
+            sens->updatePose(botPose);
+
+            double avg = (accCount[i] > 0) ? (accTotal[i] / accCount[i]) : NAN;
+            auto [type, coord] = sens->getBotCoord(botPose, avg);
+
+            // Validate and collect
+            if (type == CoordType::X)
+            {
+                double diff = std::abs(coord - botPose.x);
+                if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) xs.push_back(coord);
+            }
+            else if (type == CoordType::Y)
+            {
+                double diff = std::abs(coord - botPose.y);
+                if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) ys.push_back(coord);
+            }
+        }
+
+        // Update means
+        if (!xs.empty())
+        {
+            double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
+            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
+        }
+        if (!ys.empty())
+        {
+            double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
+            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
+        }
+
+        // Determine if bot position should be automatically updated
+        if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
+            updateBotPosition();
+    }
+    void syncUpdate() {
+        // variables
+        double x_diff = 0.0;
+        double y_diff = 0.0;
+        double real_diff = 0.0;
+
+        double x_update = 0.0;
+        double y_update = 0.0;
+
+        // retrive rcl-based position
+        lemlib::Pose currRclPosition = getRclPosition();
+
+        // calculate differences
+        x_diff = currRclPosition.x - chassis->getPose().x;
+        y_diff = currRclPosition.y - chassis->getPose().y;
+        real_diff = std::hypot(std::abs(x_diff), std::abs(y_diff));
+
+        // If within maximum sync distance, update the chassis pose directly
+        if (real_diff <= maxSyncPT) {
+            chassis->setPose(currRclPosition.x, currRclPosition.y, chassis->getPose().theta);
+        }
+        // Otherwise, only sync part of the discrepency
+        else {
+            // Calculate the updating amount
+            x_update = x_diff / real_diff * std::sqrt(maxSyncPT);
+            y_update = y_diff / real_diff * std::sqrt(maxSyncPT);
+
+            // Update (Sync)
+            chassis->setPose(chassis->getPose().x+x_update, chassis->getPose().y+y_update, chassis->getPose().theta);
+        }
+    }
+    void lifeTimeUpdate() {
+        // Clean circular obstacles
+        auto* currCircle = Circle_Obstacle::obstacleCollection.getHead();
+        while (currCircle->next != nullptr) {
+            if (currCircle->next->ptr->expired()) {
+                auto* oldNode = currCircle->next;
+                currCircle->next = oldNode->next;
+                delete oldNode->ptr;
+                delete oldNode;
+                Circle_Obstacle::obstacleCollection.setSize(Circle_Obstacle::obstacleCollection.size()-1);
+            }
+            else {
+                currCircle = currCircle->next;
+            }
+        }
+        
+        // Clean line obstacles
+        auto* currLine = Line_Obstacle::obstacleCollection.getHead();
+        while (currLine->next != nullptr) {
+            if (currLine->next->ptr->expired()) {
+                auto* oldNode = currLine->next;
+                currLine->next = oldNode->next;
+                delete oldNode->ptr;
+                delete oldNode;
+                Line_Obstacle::obstacleCollection.setSize(Line_Obstacle::obstacleCollection.size()-1);
+            }
+            else {
+                currLine = currLine->next;
+            }
+        }
     }
 
 private:
@@ -499,155 +621,42 @@ private:
     lemlib::Pose latestPrecise, poseAtLatest;
     bool updateAfterAccum = false;
 
+    // Update loops
     void mainLoop() {
         
         Timer frequencyTimer(goalMSPT);    // Create timer for frequency
 
         while (true) {
-
             // Reset frequency timer
             frequencyTimer.reset();
 
-            // Accumulators
-            std::vector<double> accTotal(RclSensor::sensorCollection.size());
-            std::vector<int> accCount(RclSensor::sensorCollection.size());
-            // If accumulating, gather readings
-            while (accumulating) {
-                for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
-                    accTotal[i] += RclSensor::sensorCollection[i]->rawReading();
-                    accCount[i] ++;
-                }
-                pros::delay(goalMSPT);
-            }
-
-            // Collections
-            std::vector<double> xs, ys;
-
-            // Loop sensors
-            auto botPose = getRclPosition();
-            for (int i = 0; i < RclSensor::sensorCollection.size(); i++)
-            {
-                auto sens = RclSensor::sensorCollection[i];
-                sens->updatePose(botPose);
-
-                double avg = (accCount[i] > 0) ? (accTotal[i] / accCount[i]) : NAN;
-                auto [type, coord] = sens->getBotCoord(botPose, avg);
-
-                // Validate and collect
-                if (type == CoordType::X)
-                {
-                    double diff = std::abs(coord - botPose.x);
-                    if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) xs.push_back(coord);
-                }
-                else if (type == CoordType::Y)
-                {
-                    double diff = std::abs(coord - botPose.y);
-                    if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) ys.push_back(coord);
-                }
-            }
-
-            // Update means
-            if (!xs.empty())
-            {
-                double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
-                if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
-            }
-            if (!ys.empty())
-            {
-                double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
-                if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
-            }
-
-            // Determine if bot position should be automatically updated
-            if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
-                updateBotPosition();
-
-            
+            // Call the update function
+            mainUpdate();
 
             // Delay to save resources
             if ( frequencyTimer.timeLeft() < minPause ) pros::delay(minPause); // Ensure that the loop pauses at least for minPause
             else pros::delay(frequencyTimer.timeLeft()); // Otherwise, wait for the remaining time
-
         }
     }
-
     void syncLoop() {
 
         Timer frequencyTimer(goalMSPT);    // Create timer for frequency
 
-        double x_diff = 0.0;
-        double y_diff = 0.0;
-        double real_diff = 0.0;
-
-        double x_update = 0.0;
-        double y_update = 0.0;
-        
         while (true) {
 
             frequencyTimer.reset(); // Reset frequency timer
 
-            lemlib::Pose currRclPosition = getRclPosition();
-
-            x_diff = currRclPosition.x - chassis->getPose().x;
-            y_diff = currRclPosition.y - chassis->getPose().y;
-            real_diff = std::hypot(std::abs(x_diff), std::abs(y_diff));
-
-            // If within maximum sync distance, update the chassis pose directly
-            if (real_diff <= maxSyncPT) {
-                chassis->setPose(currRclPosition.x, currRclPosition.y, chassis->getPose().theta);
-            }
-            // Otherwise, only sync part of the discrepency
-            else {
-                // Calculate the updating amount
-                x_update = x_diff / real_diff * std::sqrt(maxSyncPT);
-                y_update = y_diff / real_diff * std::sqrt(maxSyncPT);
-
-                // Set the maximum difference
-                chassis->setPose(chassis->getPose().x+x_update, chassis->getPose().y+y_update, chassis->getPose().theta);
-            }
+            // main update function
+            syncUpdate();
 
             // Pause for the remaining time
             if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause
             else pros::delay(frequencyTimer.timeLeft()); // Otherwise, wait for the remaining time
-
         }
-
-
     }
-
     void lifeTimeLoop() {
         while (true) {
-
-            // Clean circular obstacles
-            auto* currCircle = Circle_Obstacle::obstacleCollection.getHead();
-            while (currCircle->next != nullptr) {
-                if (currCircle->next->ptr->expired()) {
-                    auto* oldNode = currCircle->next;
-                    currCircle->next = oldNode->next;
-                    delete oldNode->ptr;
-                    delete oldNode;
-                    Circle_Obstacle::obstacleCollection.setSize(Circle_Obstacle::obstacleCollection.size()-1);
-                }
-                else {
-                    currCircle = currCircle->next;
-                }
-            }
-            
-            // Clean line obstacles
-            auto* currLine = Line_Obstacle::obstacleCollection.getHead();
-            while (currLine->next != nullptr) {
-                if (currLine->next->ptr->expired()) {
-                    auto* oldNode = currLine->next;
-                    currLine->next = oldNode->next;
-                    delete oldNode->ptr;
-                    delete oldNode;
-                    Line_Obstacle::obstacleCollection.setSize(Line_Obstacle::obstacleCollection.size()-1);
-                }
-                else {
-                    currLine = currLine->next;
-                }
-            }
-
+            lifeTimeUpdate();
             pros::delay(goalMSPT);
         }
     }
