@@ -1,8 +1,6 @@
 #include "main.h"
 #include "RclTracking.cpp"
 
-
-
 void initialize() {
 
 }

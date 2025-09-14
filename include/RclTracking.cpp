@@ -421,12 +421,12 @@ private:
 class RclTracking {
 public:
     RclTracking(lemlib::Chassis* chassis_,
-                int frequencyHz_ = 20,
+                int frequencyHz_ = 25,
                 bool autoUpdate_ = true,
-                double minDelta_ = 0.6,
-                double maxDelta_ = 6.0,
+                double minDelta_ = 0.3,
+                double maxDelta_ = 4.0,
                 double maxSyncPerSec_ = 1.5,
-                int minPause_ = 10)
+                int minPause_ = 15)
         : chassis(chassis_),
           goalMSPT(std::round(1000.0 / frequencyHz_)),
           minPause(minPause_),
@@ -508,8 +508,7 @@ public:
 
         // Loop sensors
         auto botPose = getRclPosition();
-        for (int i = 0; i < RclSensor::sensorCollection.size(); i++)
-        {
+        for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
             auto sens = RclSensor::sensorCollection[i];
             sens->updatePose(botPose);
 
@@ -517,28 +516,24 @@ public:
             auto [type, coord] = sens->getBotCoord(botPose, avg);
 
             // Validate and collect
-            if (type == CoordType::X)
-            {
+            if (type == CoordType::X) {
                 double diff = std::abs(coord - botPose.x);
-                if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) xs.push_back(coord);
+                if (diff <= maxDelta) xs.push_back(coord);
             }
-            else if (type == CoordType::Y)
-            {
+            else if (type == CoordType::Y) {
                 double diff = std::abs(coord - botPose.y);
-                if (diff <= maxDelta && (diff >= minDelta || accCount[i] > 0)) ys.push_back(coord);
+                if (diff <= maxDelta) ys.push_back(coord);
             }
         }
 
         // Update means
-        if (!xs.empty())
-        {
+        if (!xs.empty()) {
             double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
-            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
+            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
         }
-        if (!ys.empty())
-        {
+        if (!ys.empty()) {
             double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
-            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
+            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
         }
 
         // Determine if bot position should be automatically updated
