@@ -1,4 +1,4 @@
-// rclTracking.cpp
+// RclTracking.cpp
 // Author: Jiaze Gao, Aiden Kim (based on the Lemlib Library)
 // Description: This file implements the RCL Tracking system for a robot, including
 //              sensor management, obstacle detection, position tracking and syncing
@@ -207,7 +207,7 @@ private:
 
 // Constants
 constexpr double mmToInch = 0.039370078740157;
-constexpr double MAX_OBSTACLE_DURATION = 1e9;         // ms
+constexpr double MAX_OBSTACLE_DURATION = 1e12;         // ms
 constexpr double FIELD_HALF_LENGTH = 70.5;         // inches
 constexpr double FIELD_NEG_HALF_LENGTH = -70.5;
 
@@ -423,16 +423,18 @@ public:
     RclTracking(lemlib::Chassis* chassis_,
                 int frequencyHz_ = 25,
                 bool autoUpdate_ = true,
-                double minDelta_ = 0.3,
+                double minDelta_ = 0.5,
                 double maxDelta_ = 4.0,
-                double maxSyncPerSec_ = 1.5,
-                int minPause_ = 15)
+                double maxDeltaFromLemlib_ = 8.0,
+                double maxSyncPerSec_ = 2.0,
+                int minPause_ = 20)
         : chassis(chassis_),
           goalMSPT(std::round(1000.0 / frequencyHz_)),
           minPause(minPause_),
           maxSyncPT(maxSyncPerSec_ / frequencyHz_),
           minDelta(minDelta_),
           maxDelta(maxDelta_),
+          maxDeltaFromLemlib(maxDeltaFromLemlib_),
           autoUpdate(autoUpdate_),
           latestPrecise{0, 0, 0},
           poseAtLatest{0, 0, 0} {}
@@ -506,8 +508,15 @@ public:
         // Collections
         std::vector<double> xs, ys;
 
-        // Loop sensors
+        // Make sure RclPosition doesn't deviate too much from the chassis position
         auto botPose = getRclPosition();
+        double diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
+        if (diff_from_lemlib > maxDeltaFromLemlib) {
+            botPose.x += (chassis->getPose().x-botPose.x) / diff_from_lemlib;
+            botPose.y += (chassis->getPose().y-botPose.y) / diff_from_lemlib;
+        }
+
+        // Loop sensors
         for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
             auto sens = RclSensor::sensorCollection[i];
             sens->updatePose(botPose);
@@ -608,7 +617,7 @@ private:
     int goalMSPT;
     int minPause;
     double maxSyncPT;
-    double minDelta, maxDelta;
+    double minDelta, maxDelta, maxDeltaFromLemlib;
     bool autoUpdate;
     bool accumulating;
     pros::Task mainLoopTask = pros::Task([](){});
