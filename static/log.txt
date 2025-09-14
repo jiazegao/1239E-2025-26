@@ -1,0 +1,4 @@
+9/14/2024
+    1) Setup devices template
+    2) Setup auton selector
+    3) Setup basic file format

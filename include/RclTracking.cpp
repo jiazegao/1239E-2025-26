@@ -6,9 +6,9 @@
 //              Most functionalities are achieved through basic sensor fusion and
 //              intersection math.
 
-#include "main.h"
-#include "lemlib/api.hpp"
+#pragma once
 
+#include "main.h"
 #include <chrono>
 #include <cmath>
 #include <utility>
@@ -272,21 +272,21 @@ public:
         return (dx * std::cos(ang) > 0) || (dy * std::sin(ang) > 0);
     }
 
+    // Polygon obstacles
+    static void addPolygonObstacle(const std::vector<std::pair<double, double>>& points, double lifeTimeMs = -1) {
+        // If the points are not enough to form a polygon, do nothing
+        if (points.size() < 3) return;
+        // Create a line for each pair of points
+        for (size_t i = 0; i < points.size(); ++i) {
+            size_t next = (i + 1) % points.size();
+            new Line_Obstacle(points[i].first, points[i].second, points[next].first, points[next].second, lifeTimeMs);
+        }
+    }
+
 private:
     Line line;
     Timer lifeTimer;
 };
-
-// Polygon obstacles
-void addPolygonObstacle(const std::vector<std::pair<double, double>>& points, double lifeTimeMs = -1) {
-    // If the points are not enough to form a polygon, do nothing
-    if (points.size() < 3) return;
-    // Create a line for each pair of points
-    for (size_t i = 0; i < points.size(); ++i) {
-        size_t next = (i + 1) % points.size();
-        new Line_Obstacle(points[i].first, points[i].second, points[next].first, points[next].second, lifeTimeMs);
-    }
-}
 
 // Circle obstacle class
 class Circle_Obstacle {
