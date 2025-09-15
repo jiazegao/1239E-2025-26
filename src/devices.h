@@ -1,7 +1,9 @@
-#pragma once
 
 #include "main.h"
-#include "RclTracking.cpp"
+#include "RclTracking.h"
+
+#ifndef DEVICES
+#define DEVICES
 
 // Controller
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -80,3 +82,8 @@ static lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Rcl setup
+static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
+static RclTracking RclMain(&chassis);
+
+
+#endif

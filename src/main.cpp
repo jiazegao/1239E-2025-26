@@ -1,9 +1,8 @@
 
 #include "main.h"
 #include "auton.cpp"
-#include "auton_selector.cpp"
-#include "RclTracking.cpp"
 #include "devices.h"
+#include "auton_selector.h"
 #include "liblvgl/llemu.hpp"
 
 void lcd_display()  {

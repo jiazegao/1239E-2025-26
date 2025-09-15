@@ -1,32 +1,14 @@
-#pragma once
 
-#include "main.h"
-#include "liblvgl/lvgl.h"
-
-// Autonomous selection variables
-enum autonColors { AUTON_NONE, REDAUTON, BLUEAUTON };
-enum autonTypes { TYPE_NONE, TYPE1, TYPE2, TYPE3, TYPE4 };
-autonColors autonColor = AUTON_NONE;
-autonTypes autonType = TYPE_NONE;
-bool runningSkills = false;
-bool autonMoveToPose = false;
-
-// GUI objects
-lv_obj_t* label_color;
-lv_obj_t* label_type;
-lv_obj_t* label_skills;
-lv_obj_t* btn_color;
-lv_obj_t* btn_type;
-lv_obj_t* btn_skills;
+#include "auton_selector.h"
 
 // Button event callback functions
-static void toggle_color(lv_event_t* e) {
+void toggle_color(lv_event_t* e) {
     autonColor = (autonColor == REDAUTON) ? BLUEAUTON : REDAUTON;
     lv_label_set_text(label_color, (autonColor == REDAUTON) ? "Red" : "Blue");
     lv_obj_set_style_bg_color(btn_color, (autonColor == REDAUTON) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
 }
 
-static void toggle_type(lv_event_t* e) {
+void toggle_type(lv_event_t* e) {
     switch (autonType) {
         case TYPE1: autonType = TYPE2; lv_label_set_text(label_type, "TYPE 2"); break;
         case TYPE2: autonType = TYPE3; lv_label_set_text(label_type, "TYPE 3"); break;
@@ -35,10 +17,10 @@ static void toggle_type(lv_event_t* e) {
     }
 }
 
-static void toggle_skills (lv_event_t* e) {
+void toggle_skills (lv_event_t* e) {
     runningSkills = (runningSkills == true) ? false : true;
     lv_label_set_text(label_skills, (runningSkills == true) ? "SKILLS/Y" : "SKILLS/N");
-    lv_obj_set_style_bg_color(btn_skills, (runningSkills == true) ? lv_color_hex(0x00FF00) : lv_color_hex(0x0000FF), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn_skills, (runningSkills == true) ? lv_color_hex(0x00FF00) : lv_color_hex(0xFF0000), LV_PART_MAIN);
 }
 
 // Initialize autonomous selector GUI
