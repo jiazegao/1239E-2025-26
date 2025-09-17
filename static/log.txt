@@ -4,3 +4,6 @@
     3) Setup basic file format
 9/15/2025
     1) Organized RclTracking.cpp and auton_selector.cpp into according header files
+9/17/2025
+    1) Renamed devices.h as configs.h
+    2) Setup Rcl obstacles on the field

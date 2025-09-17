@@ -1,7 +1,7 @@
 
 #include "main.h"
 #include "auton.cpp"
-#include "devices.h"
+#include "configs.h"
 #include "auton_selector.h"
 #include "liblvgl/llemu.hpp"
 

@@ -2,6 +2,9 @@
 #include "main.h"
 #include "liblvgl/lvgl.h"
 
+#ifndef AUTON_SELECTOR
+#define AUTON_SELECTOR
+
 // Autonomous selection variables
 enum autonColors { AUTON_NONE, REDAUTON, BLUEAUTON };
 enum autonTypes { TYPE_NONE, TYPE1, TYPE2, TYPE3, TYPE4 };
@@ -27,3 +30,5 @@ void toggle_skills (lv_event_t* e);
 
 // Initialize autonomous selector GUI
 void init_auton_selector();
+
+#endif

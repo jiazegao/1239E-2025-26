@@ -2,8 +2,8 @@
 #include "main.h"
 #include "RclTracking.h"
 
-#ifndef DEVICES
-#define DEVICES
+#ifndef CONFIGS
+#define CONFIGS
 
 // Controller
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -84,6 +84,20 @@ static lemlib::Chassis chassis( drivetrain, // drivetrain settings
 // Rcl setup
 static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
 static RclTracking RclMain(&chassis);
+
+// loaders
+static Circle_Obstacle redUpLoader(-67.5, 46.5, 4);
+static Circle_Obstacle redDownLoader(-67.5, -46.5, 4);
+static Circle_Obstacle blueUpLoader(67.5, 46.5, 4);
+static Circle_Obstacle blueDownLoader(67.5, -46.5, 4);
+
+// legs
+static Circle_Obstacle upConeLeft(-21, 47.5, 4);
+static Circle_Obstacle upConeRight(21, 47.5, 4);
+static Circle_Obstacle downConeLeft(-21, -47.5, 4);
+static Circle_Obstacle downConeRight(21, -47.5, 4);
+
+static Circle_Obstacle center(0, 0, 5);
 
 
 #endif
