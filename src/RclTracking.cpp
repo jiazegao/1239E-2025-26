@@ -216,15 +216,17 @@ RclTracking::RclTracking(lemlib::Chassis* chassis_,
 
 // Start background task
 void RclTracking::startTracking() {
-    // Start position update loop
-    if (!mainLoopRunning) 
-        mainLoopTask = pros::Task([this]{ this->mainLoopRunning = true; this->mainLoop(); });
-    // Start sync loop
-    if (autoUpdate && !syncLoopRunning)
-        syncLoopTask = pros::Task([this]{ this->syncLoopRunning = true; this->syncLoop(); });
-    // Start lifetime update loop
-    if (!lifeLoopRunning)
-        lifeLoopTask = pros::Task([this]{ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
+    if (RclSensor::sensorCollection.size() > 0) {
+        // Start position update loop
+        if (!mainLoopRunning) 
+            mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
+        // Start sync loop
+        if (autoUpdate && !syncLoopRunning)
+            syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
+        // Start lifetime update loop
+        if (!lifeLoopRunning)
+            lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
+    }
 }
 void RclTracking::stopTracking() {
     // Stop both loops if possible

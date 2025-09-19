@@ -1,6 +1,4 @@
-
-#ifndef RCLTRACKING
-#define RCLTRACKING
+#pragma once
 
 #include "main.h"
 #include <chrono>
@@ -317,4 +315,3 @@ private:
     void lifeTimeLoop();
 };
 
-#endif

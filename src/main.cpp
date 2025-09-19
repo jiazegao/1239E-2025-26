@@ -1,32 +1,48 @@
 
+#pragma once 
 #include "main.h"
-#include "auton.cpp"
+#include "lemlib/api.hpp" // IWYU pragma: keep
+#include "api.h" // IWYU pragma: keep 
+#include "liblvgl/llemu.hpp"// IWYU pragma: keep
+#include "lemlib/chassis/chassis.hpp" 			// IWYU pragma: keep
+#include "pros/abstract_motor.hpp" // IWYU pragma: keep
+#include "pros/adi.hpp"// IWYU pragma: keep
+#include "pros/misc.h"
+#include "pros/motors.hpp" // IWYU pragma: keep
+#include "pros/rtos.hpp"
+
 #include "configs.h"
+#include "auton.cpp"
 #include "auton_selector.h"
-#include "liblvgl/llemu.hpp"
-
-void lcd_display()  {
-
-	int count = 0;
-
-    while (true){
-
-		count ++;
-
-        pros::lcd::print(0, "X: %f", chassis.getPose().x);
-        pros::lcd::print(1, "Y: %f", chassis.getPose().y);
-        pros::lcd::print(2, "Heading: %f", chassis.getPose().theta);
-		pros::lcd::print(4, "Running? %d", count);
-
-        pros::delay(20);
-
-    }
-}
+#include "RclTracking.h"
 
 void initialize() {
-	//init_auton_selector();
 	pros::lcd::initialize();
-	pros::Task([](){lcd_display();});
+	chassis.calibrate();
+	chassis.setPose(0, 0, 0);
+
+	RclMain.startTracking();
+	pros::Task BrainScreenTask ([&]() {
+		while (true) {
+			pros::lcd::print(0, "X: %f", chassis.getPose().x);
+			pros::lcd::print(1, "Y: %f", chassis.getPose().y);
+			pros::lcd::print(2, "Theta: %f", chassis.getPose().theta);
+			pros::delay(50);
+		}
+	});
+
+	pros::Task ControllerScreenTask ([&](){
+		while (true) {
+			controller.clear();
+			pros::delay(40);
+			controller.print(0, 0, "X: %f", chassis.getPose().x);
+			pros::delay(40);
+			controller.print(1, 0, "Y: %f", chassis.getPose().y);
+			pros::delay(40);
+			controller.print(2, 0, "Theta: %f", chassis.getPose().theta);
+			pros::delay(80);
+		}
+	});
 }
 
 void disabled() {}
@@ -37,7 +53,12 @@ void autonomous() {}
 
 void opcontrol() {
 	while (true) {
-		pros::delay(100);
+		// Tank Drive
+		int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+		int rightY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+
+		chassis.tank(leftY, rightY);
+		pros::delay(20);
 	}
 
 }

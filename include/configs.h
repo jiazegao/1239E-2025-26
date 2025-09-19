@@ -1,16 +1,24 @@
+#pragma once
 
-#include "main.h"
+#include "lemlib/chassis/chassis.hpp" // IWYU pragma: keep
+#include "pros/adi.hpp" // IWYU pragma: keep
+#include "pros/distance.hpp" // IWYU pragma: keep
+#include "pros/imu.hpp" // IWYU pragma: keep
+#include "pros/misc.hpp" // IWYU pragma: keep
+#include "pros/motor_group.hpp" // IWYU pragma: keep
+#include "pros/motors.hpp"   // IWYU pragma: keep
+#include "pros/optical.hpp"     // IWYU pragma: keep
+#include "pros/rotation.hpp" // IWYU pragma: keep
+#include "cmath"
+
 #include "RclTracking.h"
-
-#ifndef CONFIGS
-#define CONFIGS
 
 // Controller
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-static pros::MotorGroup LeftMotors({-4, 5, 6}, pros::MotorGearset::blue);
-static pros::MotorGroup RightMotors({8, -9, -10}, pros::MotorGearset::blue);
+static pros::MotorGroup LeftMotors({-4, -5, 6}, pros::MotorGearset::blue);
+static pros::MotorGroup RightMotors({8, 9, -10}, pros::MotorGearset::blue);
 //static pros::Motor Intake(1, pros::MotorGearset::blue);
 //static pros::Motor Outtake(2, pros::MotorGearset::blue);
 
@@ -19,7 +27,7 @@ static lemlib::Drivetrain drivetrain(&LeftMotors,
                               &RightMotors,
                               15,
                               3.25,
-                              100,
+                              450,
                               2
 );
 
@@ -27,7 +35,7 @@ static lemlib::Drivetrain drivetrain(&LeftMotors,
 static pros::Imu imu(19);
 
 // Distance
-static pros::Distance dist1(18);
+//static pros::Distance dist1(18);
 
 // Odometry
 static lemlib::OdomSensors sensors( nullptr,
@@ -39,7 +47,7 @@ static lemlib::OdomSensors sensors( nullptr,
 
 // Lateral PID controller
 static lemlib::ControllerSettings lateral_controller(
-                                              0, // proportional gain (kP)
+                                              5, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               0 , // derivative gain (kD)
                                               3, // anti windup
@@ -51,7 +59,7 @@ static lemlib::ControllerSettings lateral_controller(
 );
 
 // Angular PID controller
-static lemlib::ControllerSettings angular_controller(0, // proportional gain (kP)
+static lemlib::ControllerSettings angular_controller(5, // proportional gain (kP)
                                             0, // integral gain (kI)
                                               0, // derivative gain (kD)
                                               3, // anti windup
@@ -82,7 +90,7 @@ static lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Rcl setup
-static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
+//static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
 static RclTracking RclMain(&chassis);
 
 // loaders
@@ -100,4 +108,3 @@ static Circle_Obstacle downConeRight(21, -47.5, 4);
 static Circle_Obstacle center(0, 0, 5);
 
 
-#endif

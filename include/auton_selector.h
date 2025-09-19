@@ -1,9 +1,7 @@
+#pragma once
 
 #include "main.h"
 #include "liblvgl/lvgl.h"
-
-#ifndef AUTON_SELECTOR
-#define AUTON_SELECTOR
 
 // Autonomous selection variables
 enum autonColors { AUTON_NONE, REDAUTON, BLUEAUTON };
@@ -30,5 +28,3 @@ void toggle_skills (lv_event_t* e);
 
 // Initialize autonomous selector GUI
 void init_auton_selector();
-
-#endif
