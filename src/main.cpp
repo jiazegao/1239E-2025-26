@@ -34,13 +34,12 @@ void initialize() {
 	pros::Task ControllerScreenTask ([&](){
 		while (true) {
 			controller.clear();
-			pros::delay(40);
 			controller.print(0, 0, "X: %f", chassis.getPose().x);
-			pros::delay(40);
+			pros::delay(15);
 			controller.print(1, 0, "Y: %f", chassis.getPose().y);
-			pros::delay(40);
-			controller.print(2, 0, "Theta: %f", chassis.getPose().theta);
-			pros::delay(80);
+			pros::delay(15);
+			controller.print(2, 0, "Heading: %f", chassis.getPose().theta);
+			pros::delay(100);
 		}
 	});
 }
