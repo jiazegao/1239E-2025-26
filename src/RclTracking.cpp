@@ -216,17 +216,15 @@ RclTracking::RclTracking(lemlib::Chassis* chassis_,
 
 // Start background task
 void RclTracking::startTracking() {
-    if (RclSensor::sensorCollection.size() > 0) {
-        // Start position update loop
-        if (!mainLoopRunning) 
-            mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
-        // Start sync loop
-        if (autoUpdate && !syncLoopRunning)
-            syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
-        // Start lifetime update loop
-        if (!lifeLoopRunning)
-            lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
-    }
+    // Start position update loop
+    if (!mainLoopRunning) 
+        mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
+    // Start sync loop
+    if (autoUpdate && !syncLoopRunning)
+        syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
+    // Start lifetime update loop
+    if (!lifeLoopRunning)
+        lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
 }
 void RclTracking::stopTracking() {
     // Stop both loops if possible
@@ -269,61 +267,64 @@ void RclTracking::discardData () {
 
 // Single updates
 void RclTracking::mainUpdate() {
-    // Accumulators
-    std::vector<double> accTotal(RclSensor::sensorCollection.size());
-    std::vector<int> accCount(RclSensor::sensorCollection.size());
-    // If accumulating, gather readings
-    while (accumulating) {
+    // Verify that there is at least one sensor
+    if (RclSensor::sensorCollection.size() > 0) {
+        // Accumulators
+        std::vector<double> accTotal(RclSensor::sensorCollection.size());
+        std::vector<int> accCount(RclSensor::sensorCollection.size());
+        // If accumulating, gather readings
+        while (accumulating) {
+            for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
+                accTotal[i] += RclSensor::sensorCollection[i]->rawReading();
+                accCount[i] ++;
+            }
+            pros::delay(goalMSPT);
+        }
+
+        // Collections
+        std::vector<double> xs, ys;
+
+        // Make sure RclPosition doesn't deviate too much from the chassis position
+        auto botPose = getRclPosition();
+        double diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
+        if (diff_from_lemlib > maxDeltaFromLemlib) {
+            botPose.x += (chassis->getPose().x-botPose.x) / diff_from_lemlib;
+            botPose.y += (chassis->getPose().y-botPose.y) / diff_from_lemlib;
+        }
+
+        // Loop sensors
         for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
-            accTotal[i] += RclSensor::sensorCollection[i]->rawReading();
-            accCount[i] ++;
+            auto sens = RclSensor::sensorCollection[i];
+            sens->updatePose(botPose);
+
+            double avg = (accCount[i] > 0) ? (accTotal[i] / accCount[i]) : NAN;
+            auto [type, coord] = sens->getBotCoord(botPose, avg);
+
+            // Validate and collect
+            if (type == CoordType::X) {
+                double diff = std::abs(coord - botPose.x);
+                if (diff <= maxDelta) xs.push_back(coord);
+            }
+            else if (type == CoordType::Y) {
+                double diff = std::abs(coord - botPose.y);
+                if (diff <= maxDelta) ys.push_back(coord);
+            }
         }
-        pros::delay(goalMSPT);
-    }
 
-    // Collections
-    std::vector<double> xs, ys;
-
-    // Make sure RclPosition doesn't deviate too much from the chassis position
-    auto botPose = getRclPosition();
-    double diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
-    if (diff_from_lemlib > maxDeltaFromLemlib) {
-        botPose.x += (chassis->getPose().x-botPose.x) / diff_from_lemlib;
-        botPose.y += (chassis->getPose().y-botPose.y) / diff_from_lemlib;
-    }
-
-    // Loop sensors
-    for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
-        auto sens = RclSensor::sensorCollection[i];
-        sens->updatePose(botPose);
-
-        double avg = (accCount[i] > 0) ? (accTotal[i] / accCount[i]) : NAN;
-        auto [type, coord] = sens->getBotCoord(botPose, avg);
-
-        // Validate and collect
-        if (type == CoordType::X) {
-            double diff = std::abs(coord - botPose.x);
-            if (diff <= maxDelta) xs.push_back(coord);
+        // Update means
+        if (!xs.empty()) {
+            double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
+            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
         }
-        else if (type == CoordType::Y) {
-            double diff = std::abs(coord - botPose.y);
-            if (diff <= maxDelta) ys.push_back(coord);
+        if (!ys.empty()) {
+            double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
+            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
         }
-    }
 
-    // Update means
-    if (!xs.empty()) {
-        double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
-        if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
+        // Determine if bot position should be automatically updated
+        if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
+            updateBotPosition();
     }
-    if (!ys.empty()) {
-        double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
-        if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
-    }
-
-    // Determine if bot position should be automatically updated
-    if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
-        updateBotPosition();
 }
 void RclTracking::syncUpdate() {
     // variables

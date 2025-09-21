@@ -9,6 +9,7 @@
     2) Setup Rcl obstacles on the field
 9/19/2025
     1) Configured drive ports
+    2) Completed code for defense robot
 9/21/2025
     1) Added indexer motors
     2) Added control for indexer motors
