@@ -52,6 +52,18 @@ void autonomous() {}
 
 void opcontrol() {
 	while (true) {
+		// Indexer control
+		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+			FrontIndexer.move_velocity(400);
+			BackIndexer.move_velocity(400);
+		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+			FrontIndexer.move_velocity(-400);
+			BackIndexer.move_velocity(-400);
+		} else {
+			FrontIndexer.move_velocity(0);
+			BackIndexer.move_velocity(0);
+		}
+
 		// Tank Drive
 		int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
 		int rightY = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
