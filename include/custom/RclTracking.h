@@ -170,6 +170,10 @@ public:
         return this->head;
     }
 
+    Node* getTail() {
+        return this->tail;
+    }
+
 private:
     Node* head = new Node(nullptr);
     Node* tail = new Node(nullptr);
@@ -262,7 +266,7 @@ private:
 class RclTracking {
 public:
     RclTracking(lemlib::Chassis* chassis_,
-                int frequencyHz_ = 25,
+                int frequencyHz_ = 10,
                 bool autoUpdate_ = true,
                 double minDelta_ = 0.5,
                 double maxDelta_ = 4.0,

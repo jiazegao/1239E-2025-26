@@ -29,13 +29,14 @@ void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_A
 void startControllerDisplay() {
     if (!controllerDiplsayStarted) {
         controllerDiplsayStarted = true;
-        pros::Task ControllerScreenTask ([&](){
+        pros::Task  controllerScreenTask([&](){
             while (true) {
                 controller.clear();
+                pros::delay(50);
                 controller.print(0, 0, "X: %f", chassis.getPose().x);
-                pros::delay(15);
+                pros::delay(50);
                 controller.print(1, 0, "Y: %f", chassis.getPose().y);
-                pros::delay(15);
+                pros::delay(50);
                 controller.print(2, 0, "Heading: %f", chassis.getPose().theta);
                 pros::delay(100);
             }
@@ -45,7 +46,7 @@ void startControllerDisplay() {
 void startBrainDisplay() {
     if (!brainDisplayStarted) {
         brainDisplayStarted = true;
-        pros::Task BrainScreenTask ([&]() {
+        pros::Task brainScreenTask([&]() {
             while (true) {
                 pros::lcd::print(0, "X: %f", chassis.getPose().x);
                 pros::lcd::print(1, "Y: %f", chassis.getPose().y);

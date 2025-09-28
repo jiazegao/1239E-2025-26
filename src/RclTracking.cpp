@@ -216,15 +216,26 @@ RclTracking::RclTracking(lemlib::Chassis* chassis_,
 
 // Start background task
 void RclTracking::startTracking() {
+    pros::delay(1000);
+
+    syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
+    lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
+
+
+
     // Start position update loop
-    if (!mainLoopRunning) 
+    /*if (!mainLoopRunning)  {
         mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
-    // Start sync loop
-    if (autoUpdate && !syncLoopRunning)
-        syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
+    }
     // Start lifetime update loop
-    if (!lifeLoopRunning)
+    if (!lifeLoopRunning) {
         lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
+    }
+    // Start sync loop
+    if (autoUpdate && !syncLoopRunning) {
+        syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
+    }*/
+
 }
 void RclTracking::stopTracking() {
     // Stop both loops if possible
@@ -360,7 +371,7 @@ void RclTracking::syncUpdate() {
 void RclTracking::lifeTimeUpdate() {
     // Clean circular obstacles
     auto* currCircle = Circle_Obstacle::obstacleCollection.getHead();
-    while (currCircle->next != nullptr) {
+    while (currCircle->next != nullptr && currCircle->next != Circle_Obstacle::obstacleCollection.getTail()) {
         if (currCircle->next->ptr->expired()) {
             auto* oldNode = currCircle->next;
             currCircle->next = oldNode->next;
@@ -375,7 +386,7 @@ void RclTracking::lifeTimeUpdate() {
     
     // Clean line obstacles
     auto* currLine = Line_Obstacle::obstacleCollection.getHead();
-    while (currLine->next != nullptr) {
+    while (currLine->next != nullptr && currLine->next != Line_Obstacle::obstacleCollection.getTail()) {
         if (currLine->next->ptr->expired()) {
             auto* oldNode = currLine->next;
             currLine->next = oldNode->next;
@@ -391,7 +402,6 @@ void RclTracking::lifeTimeUpdate() {
 
 // Update loops
 void RclTracking::mainLoop() {
-    
     Timer frequencyTimer(goalMSPT);    // Create timer for frequency
 
     while (true) {
