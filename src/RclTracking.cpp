@@ -197,7 +197,7 @@ SensorPose RclSensor::getPose() const { return sp; }
 // Main RCL Tracking
 RclTracking::RclTracking(lemlib::Chassis* chassis_,
             int frequencyHz_,
-            bool autoUpdate_,
+            bool autoSync_,
             double minDelta_,
             double maxDelta_,
             double maxDeltaFromLemlib_,
@@ -210,38 +210,25 @@ RclTracking::RclTracking(lemlib::Chassis* chassis_,
         minDelta(minDelta_),
         maxDelta(maxDelta_),
         maxDeltaFromLemlib(maxDeltaFromLemlib_),
-        autoUpdate(autoUpdate_),
+        autoSync(autoSync_),
         latestPrecise{0, 0, 0},
         poseAtLatest{0, 0, 0} {}
 
 // Start background task
 void RclTracking::startTracking() {
-    pros::delay(1000);
-
-    syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
-    lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
-
-
-
     // Start position update loop
-    /*if (!mainLoopRunning)  {
+    if (!mainLoopRunning)  {
         mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
     }
-    // Start lifetime update loop
-    if (!lifeLoopRunning) {
-        lifeLoopTask = pros::Task([this](){ this->lifeLoopRunning = true; this->lifeTimeLoop(); });
+    // Start miscellaneous update loop
+    if (!miscLoopRunning) {
+        miscLoopTask = pros::Task([this](){ this->miscLoopRunning = true; this->miscLoop(); });
     }
-    // Start sync loop
-    if (autoUpdate && !syncLoopRunning) {
-        syncLoopTask = pros::Task([this](){ this->syncLoopRunning = true; this->syncLoop(); });
-    }*/
-
 }
 void RclTracking::stopTracking() {
     // Stop both loops if possible
     if (mainLoopRunning) { mainLoopTask.remove(); mainLoopRunning = false; }
-    if (syncLoopRunning) { syncLoopTask.remove(); syncLoopRunning = false; }
-    if (lifeLoopRunning) { lifeLoopTask.remove(); lifeLoopRunning = false; }
+    if (miscLoopRunning) { miscLoopTask.remove(); miscLoopRunning = false; } 
 }
 // Accessors
 lemlib::Pose RclTracking::getRclPosition() const {
@@ -416,7 +403,7 @@ void RclTracking::mainLoop() {
         else pros::delay(frequencyTimer.timeLeft()); // Otherwise, wait for the remaining time
     }
 }
-void RclTracking::syncLoop() {
+void RclTracking::miscLoop() {
 
     Timer frequencyTimer(goalMSPT);    // Create timer for frequency
 
@@ -424,17 +411,12 @@ void RclTracking::syncLoop() {
 
         frequencyTimer.reset(); // Reset frequency timer
 
-        // main update function
-        syncUpdate();
+        // main update functions
+        if (autoSync) { syncUpdate(); }
+        lifeTimeUpdate();
 
         // Pause for the remaining time
         if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause
         else pros::delay(frequencyTimer.timeLeft()); // Otherwise, wait for the remaining time
-    }
-}
-void RclTracking::lifeTimeLoop() {
-    while (true) {
-        lifeTimeUpdate();
-        pros::delay(goalMSPT);
     }
 }

@@ -266,8 +266,8 @@ private:
 class RclTracking {
 public:
     RclTracking(lemlib::Chassis* chassis_,
-                int frequencyHz_ = 10,
-                bool autoUpdate_ = true,
+                int frequencyHz_ = 25,
+                bool autoSync_ = true,
                 double minDelta_ = 0.5,
                 double maxDelta_ = 4.0,
                 double maxDeltaFromLemlib_ = 8.0,
@@ -302,20 +302,17 @@ private:
     int minPause;
     double maxSyncPT;
     double minDelta, maxDelta, maxDeltaFromLemlib;
-    bool autoUpdate;
+    bool autoSync;
     bool accumulating;
     pros::Task mainLoopTask = pros::Task([](){});
     bool mainLoopRunning = false;
-    pros::Task syncLoopTask = pros::Task([](){});
-    bool syncLoopRunning = false;
-    pros::Task lifeLoopTask = pros::Task([](){});
-    bool lifeLoopRunning = false;
+    pros::Task miscLoopTask = pros::Task([](){});
+    bool miscLoopRunning = false;
     lemlib::Pose latestPrecise, poseAtLatest;
     bool updateAfterAccum = false;
 
     // Update loops
     void mainLoop();
-    void syncLoop();
-    void lifeTimeLoop();
+    void miscLoop();
 };
 

@@ -15,4 +15,5 @@
     2) Added control for indexer motors
 9/28/2025
     1) Separated tank drive and indexer control into util_funcs
-    2) 
+    2) Organized self-wrtten header files into the folder 'custom'
+    2) Fixed RclTracking::startTracking() (Combined lifeTimeLoop and syncLoop into miscLoop and reduced the amount of pros::Task)
