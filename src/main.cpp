@@ -52,7 +52,7 @@ void autonomous() {}
 
 void opcontrol() {
 	while (true) {
-// Indexer control
+		// Indexer control
 		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
 			FrontIndexer.move_velocity(400);
 			BackIndexer.move_velocity(400);
