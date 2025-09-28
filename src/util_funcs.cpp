@@ -5,12 +5,12 @@
 
 // Indexer control
 void indexerIn() {
-    FrontIndexer.move_velocity(600);
-	BackIndexer.move_velocity(600);
-}
-void indexerOut() {
     FrontIndexer.move_velocity(-600);
 	BackIndexer.move_velocity(-600);
+}
+void indexerOut() {
+    FrontIndexer.move_velocity(600);
+	BackIndexer.move_velocity(600);
 }
 void stopIndexer() {
     FrontIndexer.move_velocity(0);
