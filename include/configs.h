@@ -17,10 +17,10 @@
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-static pros::MotorGroup LeftMotors({-4, -5, 6}, pros::MotorGearset::blue);
-static pros::MotorGroup RightMotors({8, 9, -10}, pros::MotorGearset::blue);
-//static pros::Motor Intake(1, pros::MotorGearset::blue);
-//static pros::Motor Outtake(2, pros::MotorGearset::blue);
+static pros::MotorGroup LeftMotors({-1, -13, -12}, pros::MotorGearset::blue);
+static pros::MotorGroup RightMotors({11, 10, 9}, pros::MotorGearset::blue);
+static pros::Motor FrontIndexer(-2, pros::MotorGearset::blue);
+static pros::Motor BackIndexer(-8, pros::MotorGearset::blue);
 
 // Drivetrain
 static lemlib::Drivetrain drivetrain(&LeftMotors,
