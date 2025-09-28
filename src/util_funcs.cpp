@@ -17,8 +17,8 @@ void stopIndexer() {
 	BackIndexer.move_velocity(0);
 }
 void updateIndexer() {
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) indexerIn();
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) indexerOut();
+    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) indexerOut();
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) indexerIn();
     else  stopIndexer();
 }
 

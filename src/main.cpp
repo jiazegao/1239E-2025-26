@@ -9,7 +9,7 @@ void initialize() {
 	pros::lcd::initialize();
 	chassis.calibrate();
 	chassis.setPose(0, 0, 0);
-	RclMain.startTracking();
+	//RclMain.startTracking();
 	
 	startBrainDisplay();
 	startControllerDisplay();
