@@ -13,7 +13,7 @@
 
 #include "configs.h"
 #include "auton.cpp"
-#include "auton_selector.h"
+#include "auton_selector.h" // IWYU pragma: keep
 #include "RclTracking.h"
 
 void initialize() {
@@ -54,11 +54,11 @@ void opcontrol() {
 	while (true) {
 		// Indexer control
 		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-			FrontIndexer.move_velocity(400);
-			BackIndexer.move_velocity(400);
+			FrontIndexer.move_velocity(600);
+			BackIndexer.move_velocity(600);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-			FrontIndexer.move_velocity(-400);
-			BackIndexer.move_velocity(-400);
+			FrontIndexer.move_velocity(-600);
+			BackIndexer.move_velocity(-600);
 		} else {
 			FrontIndexer.move_velocity(0);
 			BackIndexer.move_velocity(0);

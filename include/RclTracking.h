@@ -1,11 +1,11 @@
 #pragma once
 
-#include "main.h"
+#include "main.h" // IWYU pragma: keep
 #include <chrono>
 #include <cmath>
 #include <utility>
 #include <vector>
-#include <numeric>
+#include <numeric> // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
 
 // Enumerations
