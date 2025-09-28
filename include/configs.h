@@ -37,6 +37,10 @@ static pros::Imu imu(19);
 // Distance
 //static pros::Distance dist1(18);
 
+// Pneumatics
+static pros::adi::Pneumatics backGate('A', false, false);
+static pros::adi::Pneumatics topLift('B', false, false);
+
 // Odometry
 static lemlib::OdomSensors sensors( nullptr,
                                     nullptr,
