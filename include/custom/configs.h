@@ -11,7 +11,7 @@
 #include "pros/rotation.hpp" // IWYU pragma: keep
 #include "cmath"
 
-#include "RclTracking.h"
+#include "custom/RclTracking.h"
 
 // Controller
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);

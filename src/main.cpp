@@ -1,22 +1,9 @@
-
-#pragma once 
 #include "main.h"
-#include "auton.h"
-#include "lemlib/api.hpp" // IWYU pragma: keep
-#include "api.h" // IWYU pragma: keep 
-#include "liblvgl/llemu.hpp"// IWYU pragma: keep
-#include "lemlib/chassis/chassis.hpp" 			// IWYU pragma: keep
-#include "pros/abstract_motor.hpp" // IWYU pragma: keep
-#include "pros/adi.hpp"// IWYU pragma: keep
-#include "pros/misc.h"
-#include "pros/motors.hpp" // IWYU pragma: keep
-#include "pros/rtos.hpp"
-
-#include "configs.h"
-#include "auton.cpp"
-#include "util_funcs.h"
-#include "auton_selector.h" // IWYU pragma: keep
-#include "RclTracking.h"
+#include "custom/configs.h"
+#include "custom/auton.h"
+#include "custom/util_funcs.h"
+#include "custom/auton_selector.h" // IWYU pragma: keep
+#include "custom/RclTracking.h"
 
 void initialize() {
 	pros::lcd::initialize();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "configs.h"
+#include "custom/configs.h"
 
 // Intake Controls
 void indexerIn();

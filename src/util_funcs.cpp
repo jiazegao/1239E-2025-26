@@ -1,6 +1,6 @@
 
-#include "util_funcs.h"
-#include "auton.h"
+#include "custom/util_funcs.h"
+#include "custom/auton.h"
 #include "pros/misc.h"
 
 // Indexer control
