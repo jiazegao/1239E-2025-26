@@ -22,3 +22,6 @@
     2) Added placeholders for components of new bot
     3) Finished drafting 'void updateIntake()' and 'void updatePneumatics()' in 'util_funcs'
     4) Updated 'void opcontrol()' accordingly
+1/8/2025
+    1) Added all motor ports
+    2) Fixed util_funcs.cpp, congif.h not properly included per file directory.

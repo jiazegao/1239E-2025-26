@@ -1,6 +1,6 @@
 
 #include "custom/util_funcs.h"
-#include "configs.h"
+#include "custom/configs.h"
 #include "custom/auton.h"
 #include "pros/misc.h"
 #include "pros/motors.h"
