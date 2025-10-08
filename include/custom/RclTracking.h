@@ -104,7 +104,7 @@ public:
         if (obj_ptr != nullptr) {
             int temp_index = index;
 
-            if (temp_index >= 0 && temp_index <= length) {
+            if (temp_index >= 0 && temp_index <= length && this->head != nullptr) {
                 Node* currNode = this->head;
                 while (temp_index > 0){
                     currNode = currNode->next;

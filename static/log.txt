@@ -25,3 +25,6 @@
 1/8/2025
     1) Added all motor ports
     2) Fixed util_funcs.cpp, congif.h not properly included per file directory.
+    commit
+    3) Fixed Data Abort Error, PROS System Daemon using symbolizer & copilot so review with caution.
+    commit
