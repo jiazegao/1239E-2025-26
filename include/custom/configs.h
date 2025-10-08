@@ -13,18 +13,22 @@
 
 #include "custom/RclTracking.h"
 
+// Alliance Color
+enum alliance_color { RED, BLUE, NONE };
+static alliance_color allianceColor = alliance_color::RED;
+
 // Controller
 static pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-static pros::MotorGroup LeftMotors({-1, -13, -12}, pros::MotorGearset::blue);
-static pros::MotorGroup RightMotors({11, 10, 9}, pros::MotorGearset::blue);
-static pros::Motor FrontIndexer(-2, pros::MotorGearset::blue);
-static pros::Motor BackIndexer(-8, pros::MotorGearset::blue);
+static pros::MotorGroup leftMotors({-1, -13, -12}, pros::MotorGearset::blue);
+static pros::MotorGroup rightMotors({11, 10, 9}, pros::MotorGearset::blue);
+static pros::Motor frontMotor(-2, pros::MotorGearset::blue);
+static pros::Motor topMotor(-8, pros::MotorGearset::blue);
 
 // Drivetrain
-static lemlib::Drivetrain drivetrain(&LeftMotors,
-                              &RightMotors,
+static lemlib::Drivetrain drivetrain(&leftMotors,
+                              &rightMotors,
                               15,
                               3.25,
                               450,
@@ -37,9 +41,15 @@ static pros::Imu imu(19);
 // Distance
 //static pros::Distance dist1(18);
 
+// Optical
+static pros::Optical topOptic(15);
+
 // Pneumatics
-static pros::adi::Pneumatics backGate('A', false, false);
-static pros::adi::Pneumatics topLift('B', false, false);
+static pros::adi::Pneumatics matchLoadGate('A', false, false);
+static pros::adi::Pneumatics middleMech('B', false, false);
+static pros::adi::Pneumatics middleDescore('C', false, false);
+static pros::adi::Pneumatics leftDescoreArm('D', false, false);
+static pros::adi::Pneumatics rightDescoreArm('E', false, false);
 
 // Odometry
 static lemlib::OdomSensors sensors( nullptr,
@@ -104,11 +114,11 @@ static Circle_Obstacle blueUpLoader(67.5, 46.5, 4);
 static Circle_Obstacle blueDownLoader(67.5, -46.5, 4);
 
 // legs
-static Circle_Obstacle upConeLeft(-21, 47.5, 4);
-static Circle_Obstacle upConeRight(21, 47.5, 4);
-static Circle_Obstacle downConeLeft(-21, -47.5, 4);
-static Circle_Obstacle downConeRight(21, -47.5, 4);
+static Circle_Obstacle upLongGoalLeft(-21, 47.5, 4);
+static Circle_Obstacle upLongGoalRight(21, 47.5, 4);
+static Circle_Obstacle downLongGoalLeft(-21, -47.5, 4);
+static Circle_Obstacle downLongGoalRight(21, -47.5, 4);
 
-static Circle_Obstacle center(0, 0, 5);
+static Circle_Obstacle centerGoals(0, 0, 5);
 
 

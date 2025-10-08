@@ -27,13 +27,12 @@ void autonomous() {}
 void opcontrol() {
 
 	while (true) {
-		// Indexer control
-		updateIndexer();
-
-		// Tank Drive
+		// Update Controls
 		updateTankDrive();
+		updateIntake();
+		updatePneumatics();
 
 		pros::delay(20);
 	}
-
+	
 }

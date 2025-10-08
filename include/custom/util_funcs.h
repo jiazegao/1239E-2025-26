@@ -2,13 +2,9 @@
 
 #include "custom/configs.h"
 
-// Intake Controls
-void indexerIn();
-void indexerOut();
-void stopIndexer();
-void updateIndexer();
-
-// Tank Drive Update
+// Controls
+void updateIntake();
+void updatePneumatics();
 void updateTankDrive();
 
 // Display

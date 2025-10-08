@@ -17,3 +17,8 @@
     1) Separated tank drive and indexer control into util_funcs
     2) Organized self-wrtten header files into the folder 'custom'
     2) Fixed RclTracking::startTracking() (Combined lifeTimeLoop and syncLoop into miscLoop and reduced the amount of pros::Task)
+10/7/2025
+    1) Organized .cpp files for custom .h files into the folder 'custom'
+    2) Added placeholders for components of new bot
+    3) Finished drafting 'void updateIntake()' and 'void updatePneumatics()' in 'util_funcs'
+    4) Updated 'void opcontrol()' accordingly
