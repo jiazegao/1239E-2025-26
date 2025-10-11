@@ -15,70 +15,109 @@
 
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
-extern alliance_color allianceColor;
+inline alliance_color allianceColor = alliance_color::RED;
 
 // Controller
-extern pros::Controller controller;
+inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-extern pros::MotorGroup leftMotors;
-extern pros::MotorGroup rightMotors;
-extern pros::Motor frontMotor;
-extern pros::Motor topMotor;
+inline pros::MotorGroup leftMotors({-1, -13, -12}, pros::MotorGearset::blue);
+inline pros::MotorGroup rightMotors({11, 10, 9}, pros::MotorGearset::blue);
+inline pros::Motor frontMotor(-2, pros::MotorGearset::blue);
+inline pros::Motor topMotor(-8, pros::MotorGearset::blue);
 
-// Drivetrain
-extern lemlib::Drivetrain drivetrain;
+inline lemlib::Drivetrain drivetrain(&leftMotors,
+                              &rightMotors,
+                              15,
+                              3.25,
+                              450,
+                              2
+);
 
 // IMU
-extern pros::Imu imu;
+inline pros::Imu imu(19);
 
 // Distance
-extern pros::Distance dist1;
+inline pros::Distance dist1(18);
 
 // Optical
-extern pros::Optical topOptic;
+inline pros::Optical topOptic(15);
 
 // Pneumatics
-extern pros::adi::Pneumatics matchLoadGate;
-extern pros::adi::Pneumatics middleMech;
-extern pros::adi::Pneumatics middleDescore;
-extern pros::adi::Pneumatics leftDescoreArm;
-extern pros::adi::Pneumatics rightDescoreArm;
+inline pros::adi::Pneumatics matchLoadGate('A', false, false);
+inline pros::adi::Pneumatics middleMech('B', false, false);
+inline pros::adi::Pneumatics middleDescore('C', false, false);
+inline pros::adi::Pneumatics leftDescoreArm('D', false, false);
+inline pros::adi::Pneumatics rightDescoreArm('E', false, false);
 
 // Odometry
-extern lemlib::OdomSensors sensors;
+inline lemlib::OdomSensors sensors( nullptr,
+                                    nullptr,
+                                    nullptr,
+                                    nullptr,
+                                    &imu
+);
 
 // Lateral PID controller
-extern lemlib::ControllerSettings lateral_controller;
+inline lemlib::ControllerSettings lateral_controller(
+                                              5, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              0 , // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
 
 // Angular PID controller
-extern lemlib::ControllerSettings angular_controller;
+inline lemlib::ControllerSettings angular_controller(5, // proportional gain (kP)
+                                            0, // integral gain (kI)
+                                              0, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in degrees
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in degrees
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
 
 // Throttle curve
-extern lemlib::ExpoDriveCurve throttle_curve;
+inline lemlib::ExpoDriveCurve throttle_curve(3, // joystick deadband out of 127
+                                            10, // minimum output where drivetrain will move out of 127
+                                                1.019 // expo curve gain
+);
 
 // Steer curve
-extern lemlib::ExpoDriveCurve steer_curve;
+inline lemlib::ExpoDriveCurve steer_curve(3, // joystick deadband out of 127
+                                         10, // minimum output where drivetrain will move out of 127
+                                             1.019 // expo curve gain
+);
 
 // Chassis
-extern lemlib::Chassis chassis;
+inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
+                        lateral_controller, // lateral PID settings
+                        angular_controller, // angular PID settings
+                        sensors // odometry sensors
+);
 
 // Rcl setup
 //static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
-extern RclTracking RclMain;
+inline RclTracking RclMain(&chassis);
 
 // loaders
-extern Circle_Obstacle redUpLoader;
-extern Circle_Obstacle redDownLoader;
-extern Circle_Obstacle blueUpLoader;
-extern Circle_Obstacle blueDownLoader;
+inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);
+inline Circle_Obstacle redDownLoader(-67.5, -46.5, 4);
+inline Circle_Obstacle blueUpLoader(67.5, 46.5, 4);
+inline Circle_Obstacle blueDownLoader(67.5, -46.5, 4);
 
 // legs
-extern Circle_Obstacle upLongGoalLeft;
-extern Circle_Obstacle upLongGoalRight;
-extern Circle_Obstacle downLongGoalLeft;
-extern Circle_Obstacle downLongGoalRight;
+inline Circle_Obstacle upLongGoalLeft(-21, 47.5, 4);
+inline Circle_Obstacle upLongGoalRight(21, 47.5, 4);
+inline Circle_Obstacle downLongGoalLeft(-21, -47.5, 4);
+inline Circle_Obstacle downLongGoalRight(21, -47.5, 4);
 
-extern Circle_Obstacle centerGoals;
+inline Circle_Obstacle centerGoals(0, 0, 5);
 
 

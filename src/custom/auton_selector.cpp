@@ -1,18 +1,6 @@
 
 #include "custom/auton_selector.h"
 
-autonColors autonColor = autonColors::AUTON_NONE;
-autonTypes autonType = autonTypes::TYPE_NONE;
-bool runningSkills = false;
-bool autonMoveToPose = false;
-
-lv_obj_t* label_color;
-lv_obj_t* label_type;
-lv_obj_t* label_skills;
-lv_obj_t* btn_color;
-lv_obj_t* btn_type;
-lv_obj_t* btn_skills;
-
 // Button event callback functions
 void toggle_color(lv_event_t* e) {
     autonColor = (autonColor == autonColors::RED_AUTON) ? autonColors::BLUE_AUTON : autonColors::RED_AUTON;

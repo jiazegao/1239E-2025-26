@@ -32,6 +32,6 @@
         - Allowed iterators to insert / remove during iterations
         - Improved nullptr detections
     2) Improved 'RclTracking::void lifeTimeUpdate()' algorithm with iterator features
-    3) Replaced static objects in 'config.h' with extern objects instantiated in newly created 'configs.cpp' in 'custom' (Unifies devices across files)
-    4) Replaced static objects in 'auton_selector.h' with extern objects instantiated in 'auton_selector.cpp'
-    5) Replaced static objects in 'util_funcs.h' with extern objects instantiated in 'util_funcs.cpp'
+    3) Replaced static objects in 'config.h' with inline objects
+    4) Replaced static objects in 'auton_selector.h' with inline objects
+    5) Replaced static objects in 'util_funcs.h' with inline objects
