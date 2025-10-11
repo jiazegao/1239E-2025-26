@@ -1,5 +1,4 @@
 // RclTracking.cpp
-// Author: Jiaze Gao, Aiden Kim (based on the Lemlib Library)
 // Description: This file implements the RCL Tracking system for a robot, including
 //              sensor management, obstacle detection, position tracking and syncing
 //              using VEX V5 distance sensors.
@@ -357,33 +356,17 @@ void RclTracking::syncUpdate() {
 }
 void RclTracking::lifeTimeUpdate() {
     // Clean circular obstacles
-    auto* currCircle = Circle_Obstacle::obstacleCollection.getHead();
-    while (currCircle->next != nullptr && currCircle->next != Circle_Obstacle::obstacleCollection.getTail()) {
-        if (currCircle->next->ptr->expired()) {
-            auto* oldNode = currCircle->next;
-            currCircle->next = oldNode->next;
-            delete oldNode->ptr;
-            delete oldNode;
-            Circle_Obstacle::obstacleCollection.setSize(Circle_Obstacle::obstacleCollection.size()-1);
-        }
-        else {
-            currCircle = currCircle->next;
-        }
+    auto circle_itr = Circle_Obstacle::obstacleCollection.begin();
+    while (circle_itr != Circle_Obstacle::obstacleCollection.end()) {
+        if ((**circle_itr).expired()) circle_itr.remove();
+        else ++circle_itr;
     }
-    
+
     // Clean line obstacles
-    auto* currLine = Line_Obstacle::obstacleCollection.getHead();
-    while (currLine->next != nullptr && currLine->next != Line_Obstacle::obstacleCollection.getTail()) {
-        if (currLine->next->ptr->expired()) {
-            auto* oldNode = currLine->next;
-            currLine->next = oldNode->next;
-            delete oldNode->ptr;
-            delete oldNode;
-            Line_Obstacle::obstacleCollection.setSize(Line_Obstacle::obstacleCollection.size()-1);
-        }
-        else {
-            currLine = currLine->next;
-        }
+    auto line_itr = Line_Obstacle::obstacleCollection.begin();
+    while (line_itr != Line_Obstacle::obstacleCollection.end()) {
+        if ((**line_itr).expired()) line_itr.remove();
+        else ++line_itr;
     }
 }
 

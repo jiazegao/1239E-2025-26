@@ -8,9 +8,9 @@ void updatePneumatics();
 void updateTankDrive();
 
 // Display
-static bool controllerDiplsayStarted = false;
-static pros::Task controllerScreenTask([](){});
+extern bool controllerDiplsayStarted;
+extern pros::Task controllerScreenTask;
 void startControllerDisplay();
-static bool brainDisplayStarted = false;
-static pros::Task brainScreenTask([](){});
+extern bool brainDisplayStarted;
+extern pros::Task brainScreenTask;
 void startBrainDisplay();

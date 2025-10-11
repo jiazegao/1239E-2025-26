@@ -1,19 +1,31 @@
 
 #include "custom/auton_selector.h"
 
+autonColors autonColor = autonColors::AUTON_NONE;
+autonTypes autonType = autonTypes::TYPE_NONE;
+bool runningSkills = false;
+bool autonMoveToPose = false;
+
+lv_obj_t* label_color;
+lv_obj_t* label_type;
+lv_obj_t* label_skills;
+lv_obj_t* btn_color;
+lv_obj_t* btn_type;
+lv_obj_t* btn_skills;
+
 // Button event callback functions
 void toggle_color(lv_event_t* e) {
-    autonColor = (autonColor == REDAUTON) ? BLUEAUTON : REDAUTON;
-    lv_label_set_text(label_color, (autonColor == REDAUTON) ? "Red" : "Blue");
-    lv_obj_set_style_bg_color(btn_color, (autonColor == REDAUTON) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
+    autonColor = (autonColor == autonColors::RED_AUTON) ? autonColors::BLUE_AUTON : autonColors::RED_AUTON;
+    lv_label_set_text(label_color, (autonColor == autonColors::RED_AUTON) ? "Red" : "Blue");
+    lv_obj_set_style_bg_color(btn_color, (autonColor == autonColors::RED_AUTON) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
 }
 
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
-        case TYPE1: autonType = TYPE2; lv_label_set_text(label_type, "TYPE 2"); break;
-        case TYPE2: autonType = TYPE3; lv_label_set_text(label_type, "TYPE 3"); break;
-        case TYPE3: autonType = TYPE4; lv_label_set_text(label_type, "TYPE 4"); break;
-        default: autonType = TYPE1; lv_label_set_text(label_type, "TYPE 1"); break;
+        case autonTypes::TYPE1: autonType = autonTypes::TYPE2; lv_label_set_text(label_type, "TYPE 2"); break;
+        case autonTypes::TYPE2: autonType = autonTypes::TYPE3; lv_label_set_text(label_type, "TYPE 3"); break;
+        case autonTypes::TYPE3: autonType = autonTypes::TYPE4; lv_label_set_text(label_type, "TYPE 4"); break;
+        default: autonType = autonTypes::TYPE1; lv_label_set_text(label_type, "TYPE 1"); break;
     }
 }
 

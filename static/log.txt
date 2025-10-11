@@ -22,8 +22,16 @@
     2) Added placeholders for components of new bot
     3) Finished drafting 'void updateIntake()' and 'void updatePneumatics()' in 'util_funcs'
     4) Updated 'void opcontrol()' accordingly
-1/8/2025
+10/8/2025
     1) Added all motor ports
     2) Fixed util_funcs.cpp, congif.h not properly included per file directory.
     3) Added nullptr detection in Singly_Linked_List::void insert() for head node validity
     4) Added nullptr detection in Singly_Linked_List::void remove() after the while loop
+10/11/2025
+    1) Improved 'Singly_Linked_List'
+        - Allowed iterators to insert / remove during iterations
+        - Improved nullptr detections
+    2) Improved 'RclTracking::void lifeTimeUpdate()' algorithm with iterator features
+    3) Replaced static objects in 'config.h' with extern objects instantiated in newly created 'configs.cpp' in 'custom' (Unifies devices across files)
+    4) Replaced static objects in 'auton_selector.h' with extern objects instantiated in 'auton_selector.cpp'
+    5) Replaced static objects in 'util_funcs.h' with extern objects instantiated in 'util_funcs.cpp'

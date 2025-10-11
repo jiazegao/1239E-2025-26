@@ -5,6 +5,12 @@
 #include "pros/misc.h"
 #include "pros/motors.h"
 
+// Object declaration
+bool controllerDiplsayStarted = false;
+pros::Task controllerScreenTask([](){});
+bool brainDisplayStarted = false;
+pros::Task brainScreenTask([](){});
+
 // Indexer control
 void frontIn() {
     frontMotor.move(127);

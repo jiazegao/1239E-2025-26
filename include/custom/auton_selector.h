@@ -1,23 +1,22 @@
 #pragma once
 
 #include "main.h" // IWYU pragma: keep
-#include "liblvgl/lvgl.h" // IWYU pragma: keep
 
 // Autonomous selection variables
-enum autonColors { AUTON_NONE, REDAUTON, BLUEAUTON };
-enum autonTypes { TYPE_NONE, TYPE1, TYPE2, TYPE3, TYPE4 };
-static autonColors autonColor = AUTON_NONE;
-static autonTypes autonType = TYPE_NONE;
-static bool runningSkills = false;
-static bool autonMoveToPose = false;
+enum class autonColors { AUTON_NONE, RED_AUTON, BLUE_AUTON };
+enum class autonTypes { TYPE_NONE, TYPE1, TYPE2, TYPE3, TYPE4 };
+extern autonColors autonColor;
+extern autonTypes autonType;
+extern bool runningSkills;
+extern bool autonMoveToPose;
 
 // GUI objects
-static lv_obj_t* label_color;
-static lv_obj_t* label_type;
-static lv_obj_t* label_skills;
-static lv_obj_t* btn_color;
-static lv_obj_t* btn_type;
-static lv_obj_t* btn_skills;
+extern lv_obj_t* label_color;
+extern lv_obj_t* label_type;
+extern lv_obj_t* label_skills;
+extern lv_obj_t* btn_color;
+extern lv_obj_t* btn_type;
+extern lv_obj_t* btn_skills;
 
 // Button event callback functions
 void toggle_color(lv_event_t* e);

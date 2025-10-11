@@ -25,7 +25,7 @@ class Timer {
     private:
         double timeoutMs;
         std::chrono::high_resolution_clock::time_point startTime;
-    
+
         double elapsedMs() const;
 };
 
@@ -35,12 +35,15 @@ class Singly_Linked_List {
 
 public:
     Singly_Linked_List() {
+        head = new Node(nullptr);
+        tail = new Node(nullptr);
+        length = 0;
         head->next = tail;
     }
 
     class Node {
         public:
-            Node(AnyType* obj_ptr) {
+            explicit Node(AnyType* obj_ptr) {
                 this->ptr = obj_ptr;
                 this->next = nullptr;
             }
@@ -50,46 +53,95 @@ public:
 
     class Iterator {
     private:
-        Node* current;
+        Node* next;
+        Node* previous;
+        Singly_Linked_List* list;
+        int count;
+
     public:
         // Constructor
-        Iterator(Node* node) : current(node) {}
+        explicit Iterator(Singly_Linked_List* list, Node* node) : next(node), previous(list->getHead()), list(list), count(0) {}
 
         // Dereference operator
         AnyType*& operator*() const {
-            return current->ptr;
+            return next->ptr;
         }
 
         // Pre-increment operator
         Iterator& operator++() {
-            current = current->next;
+            if (next != list->getTail() && count < list->size()) {
+                previous = next;
+                next = next->next;
+                count++;
+            }
             return *this;
         }
 
         // Post-increment operator (optional, but good practice)
         Iterator operator++(int) {
             Iterator temp = *this;
-            current = current->next;
+            if (next != list->getTail() && count < list->size()) {
+                previous = next;
+                next = next->next;
+                count++;
+            }
             return temp;
         }
 
         // Equality operator
         bool operator==(const Iterator& other) const {
-            return current == other.current;
+            return next == other.next;
         }
 
         // Inequality operator
         bool operator!=(const Iterator& other) const {
-            return current != other.current;
+            return next != other.next;
+        }
+
+        // Insert at current location
+        void insert(AnyType* obj_ptr) {
+            if (obj_ptr != nullptr) {
+                // previous * next  =>  previous * new - next
+                Node* oldNode = next;
+                previous->next = new Node(obj_ptr);
+                previous->next->next = oldNode;
+                ++list->length;
+
+                next = previous->next; // Update iterator
+            }
+        }
+
+        // Remove current object
+        bool remove(bool clean = false) {
+            if (next == list->getTail()) return false;
+
+            if (0 <= count && count < list->size()) {
+                // previous * next - nextNext  =>  previous * nextNext
+                Node* oldNode = next;
+                next = next->next;
+                previous->next = next;
+                if (clean && oldNode->ptr != nullptr) delete oldNode->ptr;
+                delete oldNode;
+                --list->length;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        // Get current index
+        [[nodiscard]] int getIndex() const {
+            return count;
         }
     };
 
     Iterator begin() {
-        return Iterator(head->next);
+        return Iterator(this, head->next);
     }
 
     Iterator end() {
-        return Iterator(tail);
+        return Iterator(this, tail);
     }
 
     void push_back(AnyType* obj_ptr) {
@@ -118,7 +170,7 @@ public:
         }
     }
 
-    void pop(int index){
+    void pop(int index, bool clean = false){
         if (index >= 0 && index < length) {
             Node* currNode = head;
             while (index > 0){
@@ -127,6 +179,7 @@ public:
             }
             Node* oldNode = currNode->next;
             currNode->next = oldNode->next;
+            if (clean && oldNode->ptr != nullptr) delete oldNode->ptr;
             delete oldNode;
             length--;
         }
@@ -143,7 +196,11 @@ public:
         return currNode->ptr;
     }
 
-    void remove(AnyType* obj_ptr) {
+    AnyType* operator[](int index) {
+        return get(index);
+    }
+
+    void remove(AnyType* obj_ptr, bool clean = false) {
         if (obj_ptr != nullptr) {
             Node* currNode = this->head;
             while (currNode->next != nullptr && currNode->next->ptr != obj_ptr){
@@ -152,20 +209,21 @@ public:
             if (currNode->next != nullptr && currNode->next->ptr == obj_ptr) {
                 Node* oldNode = currNode->next;
                 currNode->next = oldNode->next;
+                if (clean && oldNode->ptr != nullptr) delete oldNode->ptr;
                 delete oldNode;
                 length--;
             }
         }
     }
 
-    int size(){
+    [[nodiscard]] int size() const {
         return length;
     }
 
     void setSize(int size) {
         length = size;
     }
-    
+
     Node* getHead() {
         return this->head;
     }
@@ -175,10 +233,12 @@ public:
     }
 
 private:
-    Node* head = new Node(nullptr);
-    Node* tail = new Node(nullptr);
-    int length = 0;
+    Node* head;
+    Node* tail;
+    int length;
+
 };
+
 
 // Constants
 constexpr double mmToInch = 0.039370078740157;
