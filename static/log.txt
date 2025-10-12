@@ -35,3 +35,6 @@
     3) Replaced static objects in 'config.h' with inline objects
     4) Replaced static objects in 'auton_selector.h' with inline objects
     5) Replaced static objects in 'util_funcs.h' with inline objects
+10/12/2025
+    1) Implemented auton routes 'red_left' and 'red_right'
+    2) Created intake & pneumatics control functions for auton

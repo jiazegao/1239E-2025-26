@@ -43,6 +43,72 @@ bool topOpticIsBlue() {
     return (200 < topOptic.get_hue() && topOptic.get_hue() < 240);
 }
 
+// Pneumatics functions
+void openGate() {
+    matchLoadGate.extend();
+};
+void closeGate() {
+    matchLoadGate.retract();
+};
+void openMid() {
+    middleMech.retract();
+};
+void closeMid() {
+    middleMech.extend();
+};
+void extendLeftArm() {
+    leftDescoreArm.extend();
+};
+void retractLeftArm() {
+    leftDescoreArm.retract();
+};
+void extendRightArm() {
+    rightDescoreArm.extend();
+};
+void retractRightArm() {
+    rightDescoreArm.retract();
+};
+
+// Auton functions
+void stopIntake() {
+    middleMech.extend();
+    lockTop();
+    lockFront();
+    stopTop();
+    stopFront();
+};
+void stopTopScore() {
+    stopIntake();
+};
+void stopMidScore() {
+    stopIntake();
+}
+void stopOuttake() {
+    stopIntake();
+}
+void startIntake() {
+    stopIntake();
+    lockTop();
+    stopTop();
+    frontIn();
+};
+void startTopScore() {
+    stopIntake();
+    frontIn();
+    topOut();
+};
+void startMidScore() {
+    middleMech.retract();
+    stopIntake();
+    frontIn();
+    topIn();
+}
+void startOuttake() {
+    frontOut();
+    topIn();
+}
+
+
 // Function for managing intake controls
 void updateIntake() {
 

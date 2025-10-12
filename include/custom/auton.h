@@ -4,3 +4,4 @@
 #include "custom/util_funcs.h"
 
 void red_left();
+void red_right();
