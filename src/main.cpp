@@ -9,11 +9,13 @@ void initialize() {
 	chassis.calibrate();
 	chassis.setPose(0, 0, 0);
 	
-	//init_auton_selector();
+	init_auton_selector();
 	
+	/*
 	pros::lcd::initialize();
 	startBrainDisplay();
 	startControllerDisplay();
+	*/
 
 	RclMain.startTracking();
 }
