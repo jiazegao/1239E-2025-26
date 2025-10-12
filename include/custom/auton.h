@@ -5,3 +5,4 @@
 
 void red_left();
 void red_right();
+void red_soloAWP();
