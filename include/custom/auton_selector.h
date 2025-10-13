@@ -4,7 +4,7 @@
 
 // Autonomous selection variables
 enum class autonColors { AUTON_NONE, RED_AUTON, BLUE_AUTON };
-enum class autonTypes { TYPE_NONE, TYPE1, TYPE2, TYPE3, TYPE4 };
+enum class autonTypes { TYPE_NONE, LEFT, RIGHT, SOLO_AWP };
 inline autonColors autonColor = autonColors::AUTON_NONE;
 inline autonTypes autonType = autonTypes::TYPE_NONE;
 inline bool runningSkills = false;

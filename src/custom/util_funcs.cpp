@@ -124,10 +124,10 @@ void updateIntake() {
         frontIn();
         topOut();
     }
-    // Button R1 - Score middle
+    // Button R1 - Score top
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
         frontIn();
-        topIn();
+        topOut();
     }
     // Button L2 - Normal intake
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {

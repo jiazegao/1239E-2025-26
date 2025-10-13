@@ -10,10 +10,10 @@ void toggle_color(lv_event_t* e) {
 
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
-        case autonTypes::TYPE1: autonType = autonTypes::TYPE2; lv_label_set_text(label_type, "TYPE 2"); break;
-        case autonTypes::TYPE2: autonType = autonTypes::TYPE3; lv_label_set_text(label_type, "TYPE 3"); break;
-        case autonTypes::TYPE3: autonType = autonTypes::TYPE4; lv_label_set_text(label_type, "TYPE 4"); break;
-        default: autonType = autonTypes::TYPE1; lv_label_set_text(label_type, "TYPE 1"); break;
+        case autonTypes::LEFT: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
+        case autonTypes::RIGHT: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
+        case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
+        default: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
     }
 }
 
@@ -48,3 +48,4 @@ void init_auton_selector() {
     label_skills = lv_label_create(btn_skills);
     lv_label_set_text(label_skills, "Skills?");
 }
+
