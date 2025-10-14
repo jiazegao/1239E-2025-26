@@ -91,10 +91,10 @@ void red_right() {
 }
 
 void red_soloAWP() {
-    chassis.setPose(-51, -14, 180);
+    chassis.setPose(-47, -13.25, 180);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-51, -47, 1200, {}, false);
+    chassis.moveToPoint(-47, -47, 1200, {}, false);
     chassis.turnToHeading(270, 800, {}, false);
     startIntake();
     openGate();

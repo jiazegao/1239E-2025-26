@@ -57,8 +57,8 @@ inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 
 // Odometry
 
-inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -2.4399925, 1.0);
-inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.409145, 1.0);
+inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
+inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
 inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
                                     nullptr,
@@ -69,9 +69,9 @@ inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
 
 // Lateral PID controller
 inline lemlib::ControllerSettings lateral_controller(
-                                              12, // proportional gain (kP)
+                                              9, // proportional gain (kP)
                                               0.01, // integral gain (kI)
-                                              35 , // derivative gain (kD)
+                                              65 , // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds

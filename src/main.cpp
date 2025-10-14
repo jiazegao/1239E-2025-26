@@ -6,18 +6,18 @@
 #include "custom/auton_selector.h" // IWYU pragma: keep
 
 void initialize() {
-	chassis.calibrate();
-	chassis.setPose(0, 0, 0);
-	
-	init_auton_selector();
-	
-	/*
-	pros::lcd::initialize();
-	startBrainDisplay();
-	startControllerDisplay();
-	*/
+    chassis.calibrate();
+    chassis.setPose(0, 0, 0);
 
-	RclMain.startTracking();
+    //init_auton_selector();
+
+
+    pros::lcd::initialize();
+    startBrainDisplay();
+    startControllerDisplay();
+
+
+    //RclMain.startTracking();
 }
 
 void disabled() {}
@@ -26,9 +26,9 @@ void competition_initialize() {}
 
 void autonomous() {
 
-	//PID TUNING
-	chassis.setPose(0, 0, 0);
-	chassis.moveToPoint(0, 24, 99999);
+	//FOR TESTING***
+
+	red_soloAWP();
 
 	// Red Autons
 	/*if (autonColor == autonColors::RED_AUTON) {
@@ -52,5 +52,18 @@ void opcontrol() {
 
 		pros::delay(20);
 	}
+
+	pros::Task screenTask([&]() {
+        while (true) {
+            // print robot location to the brain screen
+            pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
+            pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
+            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            // log position telemetry
+			//            lemlib::telemetrySink()->info("Chassis pose: {}", chassis.getPose());
+            // delay to save resources
+            pros::delay(50);
+        }
+    });
 	
 }
