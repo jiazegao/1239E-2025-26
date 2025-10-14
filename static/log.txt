@@ -38,3 +38,6 @@
 10/12/2025
     1) Implemented auton routes 'red_left,' 'red_right,' and 'red_soloAWP'
     2) Created intake & pneumatics control functions for auton
+10/13/2025
+    1) Changed pneumatics to respective ports
+    2) Defined odometry sensors (not implemented into drivetrain constructor due to error)

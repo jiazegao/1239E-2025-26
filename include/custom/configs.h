@@ -28,11 +28,15 @@ inline pros::Motor topMotor(9, pros::MotorGearset::blue);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
-                              15,
+                              11.375,
                               3.25,
                               450,
                               2
 );
+
+// Odometry
+inline pros::Rotation verticalEncoder(-7);
+inline pros::Rotation horizontalEncoder(16);
 
 // IMU
 inline pros::Imu imu(19);
@@ -44,11 +48,11 @@ inline pros::Distance dist1(18);
 inline pros::Optical topOptic(15);
 
 // Pneumatics
-inline pros::adi::Pneumatics matchLoadGate('A', false, false);
+inline pros::adi::Pneumatics matchLoadGate('F', false, false);
 inline pros::adi::Pneumatics middleMech('B', false, false);
 inline pros::adi::Pneumatics middleDescore('C', false, false);
-inline pros::adi::Pneumatics leftDescoreArm('D', false, false);
-inline pros::adi::Pneumatics rightDescoreArm('E', false, false);
+inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
+inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 
 // Odometry
 inline lemlib::OdomSensors sensors( nullptr,
