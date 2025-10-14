@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lemlib/chassis/chassis.hpp" // IWYU pragma: keep
+#include "lemlib/chassis/trackingWheel.hpp"
 #include "pros/adi.hpp" // IWYU pragma: keep
 #include "pros/distance.hpp" // IWYU pragma: keep
 #include "pros/imu.hpp" // IWYU pragma: keep
@@ -35,8 +36,8 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 );
 
 // Odometry
-inline pros::Rotation verticalEncoder(-7);
-inline pros::Rotation horizontalEncoder(16);
+inline pros::Rotation vertSensor(-7);
+inline pros::Rotation horiSensor(16);
 
 // IMU
 inline pros::Imu imu(19);
@@ -55,9 +56,13 @@ inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
 inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 
 // Odometry
-inline lemlib::OdomSensors sensors( nullptr,
+
+lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -2.4399925, 1.0);
+lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.409145, 1.0);
+
+inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
                                     nullptr,
-                                    nullptr,
+                                    &horizontal_tracking_wheel,
                                     nullptr,
                                     &imu
 );
