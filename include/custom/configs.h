@@ -40,7 +40,7 @@ inline pros::Rotation vertSensor(-7);
 inline pros::Rotation horiSensor(16);
 
 // IMU
-inline pros::Imu imu(19);
+inline pros::Imu imu(6);
 
 // Distance
 inline pros::Distance dist1(18);
@@ -57,8 +57,8 @@ inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 
 // Odometry
 
-lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -2.4399925, 1.0);
-lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.409145, 1.0);
+inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -2.4399925, 1.0);
+inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.409145, 1.0);
 
 inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
                                     nullptr,
@@ -69,21 +69,21 @@ inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
 
 // Lateral PID controller
 inline lemlib::ControllerSettings lateral_controller(
-                                              5, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              0 , // derivative gain (kD)
+                                              12, // proportional gain (kP)
+                                              0.01, // integral gain (kI)
+                                              35 , // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+                                              20 // maximum acceleration (slew)
 );
 
 // Angular PID controller
-inline lemlib::ControllerSettings angular_controller(5, // proportional gain (kP)
-                                            0, // integral gain (kI)
-                                              0, // derivative gain (kD)
+inline lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
+                                            .1, // integral gain (kI)
+                                              10.5, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds

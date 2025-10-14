@@ -25,8 +25,13 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
+
+	//PID TUNING
+	chassis.setPose(0, 0, 0);
+	chassis.moveToPoint(0, 24, 99999);
+
 	// Red Autons
-	if (autonColor == autonColors::RED_AUTON) {
+	/*if (autonColor == autonColors::RED_AUTON) {
 		if (autonType == autonTypes::LEFT) {
 			red_left();
 		} else if (autonType == autonTypes::RIGHT) {
@@ -34,7 +39,7 @@ void autonomous() {
 		} else if (autonType == autonTypes::SOLO_AWP) {
 			red_soloAWP();
 		}
-	}
+	}*/
 }
 
 void opcontrol() {
