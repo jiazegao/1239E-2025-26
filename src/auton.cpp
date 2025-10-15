@@ -94,39 +94,39 @@ void red_soloAWP() {
     chassis.setPose(-47, -13.25, 180);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-47, -42, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(270, 800, {.minSpeed=60, .earlyExitRange=4});
-    startIntake();
     openGate();
+    chassis.moveToPoint(-47, -39.5, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
+    chassis.turnToHeading(260, 800, {.minSpeed=60, .earlyExitRange=4});
+    startIntake();
     //pros::delay(200);
-    chassis.moveToPoint(-63, -47, 1150, {.maxSpeed=70}, false);
+    chassis.moveToPoint(-64, -47.5, 1200, {.maxSpeed=70}, false);
     //pros::delay(800);
 
     // Score the long goal
-    chassis.moveToPoint(-24, -47, 1100, {.forwards=false, .maxSpeed=70}, false);
+    chassis.moveToPoint(-24, -47, 1000, {.forwards=false, .maxSpeed=90}, false);
     startTopScore();
     closeGate();
     pros::delay(1000);
 
     // Back off
     chassis.moveToPoint(-38, -47, 600, {.minSpeed=60, .earlyExitRange=3});
-    chassis.turnToHeading(30, 800, {}, false);
+    chassis.turnToHeading(30, 800, {.minSpeed=60, .earlyExitRange=3});
     stopTopScore();
     
     // Intake 3 balls
     //chassis.moveToPoint(-22, -20, 1200, {.maxSpeed=70, .minSpeed=30, .earlyExitRange=3});
 
     // Score low goal
-    chassis.moveToPoint(-11, -8.5, 1750, {.maxSpeed=73}, false);
+    chassis.moveToPoint(-11, -8.5, 1450, {.maxSpeed=90}, false);
     startOuttake();
-    pros::delay(50);
-    chassis.moveToPoint(-24, -24, 800, {.forwards=false, .minSpeed=40}, false);
+    pros::delay(250);
+    chassis.moveToPoint(-24, -24, 800, {.forwards=false, .minSpeed=70, .earlyExitRange=3});
 
     // Intake 3 other balls
     startIntake();
-    chassis.turnToHeading(0, 300, {}, false);
-    chassis.moveToPoint(-25, 22, 1500, {.maxSpeed=70, .minSpeed=30, .earlyExitRange=3}, true);
-    pros::delay(250);
+    chassis.turnToHeading(0, 300, {.minSpeed=60, .earlyExitRange=3});
+    chassis.moveToPoint(-25, 22, 1500, {.maxSpeed=85, .minSpeed=50, .earlyExitRange=3}, true);
+    pros::delay(50);
     closeGate();
     pros::delay(1000);
     openGate();
@@ -141,15 +141,17 @@ void red_soloAWP() {
     stopTopScore();*/
 
     // Move towards the other matchloader and intake
-    chassis.turnToPoint(-47, 49, 700, {.maxSpeed=90, .minSpeed=30, .earlyExitRange=3}, false);
-    chassis.moveToPoint(-47, 49, 1600, {}, false);
-    chassis.turnToHeading(270, 500, {}, false);
+    chassis.turnToPoint(-47, 45.5, 700, {.minSpeed=50, .earlyExitRange=3});
+    chassis.moveToPoint(-47, 45.5, 1600, {.minSpeed=70, .earlyExitRange=3});
+    chassis.turnToHeading(275, 500, {.minSpeed=60, .earlyExitRange=3});
     startIntake();
-    chassis.moveToPoint(-65, 49, 1200, {.maxSpeed=70}, false);
+    chassis.moveToPoint(-67.5, 49, 1200, {.maxSpeed=80}, false);
 
     // Score the other long goal
-   // chassis.turnToPoint(-33, 49, 800);
-    chassis.moveToPoint(-30, 50, 1200, {.forwards=false, .maxSpeed=70}, false);
+    // chassis.turnToPoint(-33, 49, 800);
+    chassis.moveToPoint(-30, 50, 1000, {.forwards=false, .maxSpeed=90, .minSpeed=50}, false);
     startTopScore();
-    closeGate();
+    pros::delay(2250);
+    chassis.moveToPoint(-42, 52, 1000, {.minSpeed=100});
 }
+

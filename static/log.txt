@@ -43,3 +43,6 @@
     2) Defined odometry sensors (not implemented into drivetrain constructor due to error)
 10/14/2025
     1) Revised background task-managing strategies (Store pointers to RclTracking and Display tasks instead of objects)
+10/15/2025
+    1) Pushed yesterday's work on sawp
+    2) Began sklls
