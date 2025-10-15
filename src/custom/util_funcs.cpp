@@ -193,9 +193,8 @@ void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_A
 
 // Display
 void startControllerDisplay() {
-    if (!controllerDiplsayStarted) {
-        controllerDiplsayStarted = true;
-        pros::Task  controllerScreenTask([&](){
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
             while (true) {
                 controller.clear();
                 pros::delay(50);
@@ -210,9 +209,8 @@ void startControllerDisplay() {
     }
 }
 void startBrainDisplay() {
-    if (!brainDisplayStarted) {
-        brainDisplayStarted = true;
-        pros::Task brainScreenTask([&]() {
+    if (brainScreenTask == nullptr) {
+        brainScreenTask = new pros::Task ([&]() {
             while (true) {
                 pros::lcd::print(0, "X: %f", chassis.getPose().x);
                 pros::lcd::print(1, "Y: %f", chassis.getPose().y);
@@ -220,5 +218,19 @@ void startBrainDisplay() {
                 pros::delay(50);
             }
         });
+    }
+}
+void stopControllerDisplay() {
+    if (controllerScreenTask != nullptr) {
+        controllerScreenTask->remove();
+        delete controllerScreenTask;
+        controllerScreenTask = nullptr;
+    }
+}
+void stopBrainDisplay() {
+    if (brainScreenTask != nullptr) {
+        brainScreenTask->remove();
+        delete brainScreenTask;
+        brainScreenTask = nullptr;
     }
 }

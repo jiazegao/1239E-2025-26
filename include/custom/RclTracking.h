@@ -364,10 +364,8 @@ private:
     double minDelta, maxDelta, maxDeltaFromLemlib;
     bool autoSync;
     bool accumulating;
-    pros::Task mainLoopTask = pros::Task([](){});
-    bool mainLoopRunning = false;
-    pros::Task miscLoopTask = pros::Task([](){});
-    bool miscLoopRunning = false;
+    pros::Task* mainLoopTask = nullptr;
+    pros::Task* miscLoopTask = nullptr;
     lemlib::Pose latestPrecise, poseAtLatest;
     bool updateAfterAccum = false;
 
