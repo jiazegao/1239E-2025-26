@@ -94,8 +94,8 @@ void red_soloAWP() {
     chassis.setPose(-47, -13.25, 180);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-47, -47, 1200, {}, false);
-    chassis.turnToHeading(270, 800, {});
+    chassis.moveToPoint(-47, -42, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
+    chassis.turnToHeading(270, 800, {.minSpeed=60, .earlyExitRange=4});
     startIntake();
     openGate();
     //pros::delay(200);
@@ -117,9 +117,9 @@ void red_soloAWP() {
     //chassis.moveToPoint(-22, -20, 1200, {.maxSpeed=70, .minSpeed=30, .earlyExitRange=3});
 
     // Score low goal
-    chassis.moveToPoint(-12, -9.5, 1750, {.maxSpeed=73}, false);
+    chassis.moveToPoint(-11, -8.5, 1750, {.maxSpeed=73}, false);
     startOuttake();
-    //pros::delay(1000);
+    pros::delay(50);
     chassis.moveToPoint(-24, -24, 800, {.forwards=false, .minSpeed=40}, false);
 
     // Intake 3 other balls
