@@ -216,18 +216,18 @@ RclTracking::RclTracking(lemlib::Chassis* chassis_,
 // Start background task
 void RclTracking::startTracking() {
     // Start position update loop
-    if (!mainLoopRunning)  {
-        mainLoopTask = pros::Task([this](){ this->mainLoopRunning = true; this->mainLoop(); });
+    if (mainLoopTask == nullptr)  {
+        mainLoopTask = new pros::Task([this](){ this->mainLoop(); });
     }
     // Start miscellaneous update loop
-    if (!miscLoopRunning) {
-        miscLoopTask = pros::Task([this](){ this->miscLoopRunning = true; this->miscLoop(); });
+    if (miscLoopTask == nullptr) {
+        miscLoopTask = new pros::Task([this](){ this->miscLoop(); });
     }
 }
 void RclTracking::stopTracking() {
     // Stop both loops if possible
-    if (mainLoopRunning) { mainLoopTask.remove(); mainLoopRunning = false; }
-    if (miscLoopRunning) { miscLoopTask.remove(); miscLoopRunning = false; } 
+    if (mainLoopTask != nullptr) { mainLoopTask->remove(); delete mainLoopTask; mainLoopTask = nullptr; }
+    if (miscLoopTask != nullptr) { miscLoopTask->remove(); delete miscLoopTask; miscLoopTask = nullptr; } 
 }
 // Accessors
 lemlib::Pose RclTracking::getRclPosition() const {
@@ -358,14 +358,14 @@ void RclTracking::lifeTimeUpdate() {
     // Clean circular obstacles
     auto circle_itr = Circle_Obstacle::obstacleCollection.begin();
     while (circle_itr != Circle_Obstacle::obstacleCollection.end()) {
-        if ((**circle_itr).expired()) circle_itr.remove();
+        if ((**circle_itr).expired()) circle_itr.remove(true);
         else ++circle_itr;
     }
 
     // Clean line obstacles
     auto line_itr = Line_Obstacle::obstacleCollection.begin();
     while (line_itr != Line_Obstacle::obstacleCollection.end()) {
-        if ((**line_itr).expired()) line_itr.remove();
+        if ((**line_itr).expired()) line_itr.remove(true);
         else ++line_itr;
     }
 }

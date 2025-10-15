@@ -26,9 +26,9 @@ void extendRightArm();
 void retractRightArm();
 
 // Display
-inline bool controllerDiplsayStarted = false;
-inline pros::Task controllerScreenTask([](){});
+inline pros::Task* controllerScreenTask = nullptr;
 void startControllerDisplay();
-inline bool brainDisplayStarted = false;
-inline pros::Task brainScreenTask([](){});
+void stopControllerDisplay();
+inline pros::Task* brainScreenTask = nullptr;
 void startBrainDisplay();
+void stopBrainDisplay();
