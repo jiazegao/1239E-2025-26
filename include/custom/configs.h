@@ -37,7 +37,7 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 
 // Odometry
 inline pros::Rotation vertSensor(-7);
-inline pros::Rotation horiSensor(16);
+inline pros::Rotation horiSensor(-16);
 
 // IMU
 inline pros::Imu imu(6);
@@ -69,9 +69,9 @@ inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
 
 // Lateral PID controller
 inline lemlib::ControllerSettings lateral_controller(
-                                              9, // proportional gain (kP)
-                                              0.01, // integral gain (kI)
-                                              65 , // derivative gain (kD)
+                                              5, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              25 , // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
