@@ -28,23 +28,7 @@ void autonomous() {
 
 	//FOR SKILLS TESTING***
 
-	chassis.setPose(-47, -13.25, 180);
-
-    // Head towards the matchloader and intake
-    openGate();
-    chassis.moveToPoint(-47, -39.5, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(260, 800, {.minSpeed=60, .earlyExitRange=4});
-    startIntake();
-    //pros::delay(200);
-    chassis.moveToPoint(-67, -47.5, 2500, {.maxSpeed=70}, false);
-    //pros::delay(800);
-
-    // Move to other side of long goal and score
-	chassis.moveToPoint(-48, -48, 1000, {.forwards=false}, false);
-	closeGate();
-	chassis.turnToHeading(180, 700, {}, false);
-	chassis.moveToPoint(-48, -63, 1000, {}, false);
-	chassis.turnToHeading(90, 700, {}, false);
+	skills();
 
 
 	// Red Autons

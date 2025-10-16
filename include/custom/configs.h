@@ -52,8 +52,8 @@ inline pros::Optical topOptic(15);
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
 inline pros::adi::Pneumatics middleMech('B', false, false);
 inline pros::adi::Pneumatics middleDescore('C', false, false);
-inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
-inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
+inline pros::adi::Pneumatics leftDescoreArm('A', true, false);
+inline pros::adi::Pneumatics rightDescoreArm('H', true, false);
 
 // Odometry
 
