@@ -159,8 +159,8 @@ void skills() {
     chassis.setPose(-47, -13.25, 180);
 
     // Head towards bottom-left match loader
-    chassis.moveToPoint(-47, -42, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(270, 800, {.minSpeed=60, .earlyExitRange=4});
+    chassis.moveToPoint(-47, -47, 2000, {}, false);
+    chassis.turnToHeading(270, 800, {});
     startIntake();
     openGate();
     chassis.moveToPoint(-63, -47, 1150, {.maxSpeed=70}, false);
@@ -173,15 +173,15 @@ void skills() {
     pros::delay(1000);
 
     // Back off (#1)
-    chassis.moveToPoint(-38, -47, 600, {.minSpeed=60, .earlyExitRange=3});
+    chassis.moveToPoint(-38, -47, 1000, {});
     chassis.turnToHeading(180, 800, {}, false);
     stopTopScore();
 
     // Score bottom-right
-    chassis.moveToPoint(-38, -60, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(90, 800, {.minSpeed=60, .earlyExitRange=4});
-    chassis.moveToPoint(38, -60, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(0, 800, {.minSpeed=60, .earlyExitRange=4});
+    chassis.moveToPoint(-38, -60, 1200, {}, false);
+    chassis.turnToHeading(90, 800, {});
+    chassis.moveToPoint(38, -60, 3000, {}, false);
+    chassis.turnToHeading(0, 800, {});
     chassis.moveToPoint(38, -47, 1200, {}, false);
     chassis.turnToHeading(90, 800, {}, false);
 
@@ -207,8 +207,8 @@ void skills() {
     stopTopScore();
 
     // Head towards top-right match loader
-    chassis.moveToPoint(42, 42, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(90, 800, {.minSpeed=60, .earlyExitRange=4});
+    chassis.moveToPoint(42, 47, 3000, {}, false);
+    chassis.turnToHeading(90, 800, {});
     startIntake();
     openGate();
     chassis.moveToPoint(63, 47, 1150, {.maxSpeed=70}, false);
@@ -221,15 +221,15 @@ void skills() {
     pros::delay(1000);
 
     // Back off (#3)
-    chassis.moveToPoint(38, 47, 600, {.minSpeed=60, .earlyExitRange=3});
+    chassis.moveToPoint(38, 47, 1000, {});
     chassis.turnToHeading(0, 800, {}, false);
     stopTopScore();
 
     // Score the top-left goal
-    chassis.moveToPoint(38, 60, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(270, 800, {.minSpeed=60, .earlyExitRange=4});
-    chassis.moveToPoint(-38, 60, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
-    chassis.turnToHeading(180, 800, {.minSpeed=60, .earlyExitRange=4});
+    chassis.moveToPoint(38, 60, 1200, {}, false);
+    chassis.turnToHeading(270, 800, {});
+    chassis.moveToPoint(-38, 60, 3000, {}, false);
+    chassis.turnToHeading(180, 800, {});
     chassis.moveToPoint(-38, 47, 1200, {}, false);
     chassis.turnToHeading(270, 800, {}, false);
 
@@ -255,7 +255,7 @@ void skills() {
     stopTopScore();
 
     // Park
-    chassis.moveToPoint(-42, 0, 2000, {}, false);
+    chassis.moveToPoint(-42, 0, 2500, {}, false);
     chassis.turnToHeading(270, 800, {}, false);
     chassis.moveToPoint(-63, 0, 1200, {}, false);
 
