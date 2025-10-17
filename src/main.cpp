@@ -32,13 +32,13 @@ void autonomous() {
 
 void opcontrol() {
 
+	odomLift.extend();
+
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
-
-		odomLift.extend();
 
 		pros::delay(20);
 	}
