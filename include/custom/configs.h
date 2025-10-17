@@ -40,13 +40,13 @@ inline pros::Rotation vertSensor(-7);
 inline pros::Rotation horiSensor(-16);
 
 // IMU
-inline pros::Imu imu(6);
+inline pros::Imu imu(5);
 
 // Distance
 inline pros::Distance dist1(18);
 
 // Optical
-inline pros::Optical topOptic(15);
+inline pros::Optical topOptic(6);
 
 // Pneumatics
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);

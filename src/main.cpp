@@ -28,7 +28,7 @@ void autonomous() {
 
 	//FOR SKILLS TESTING***
 
-	skills();
+	red_soloAWP();
 
 
 	// Red Autons

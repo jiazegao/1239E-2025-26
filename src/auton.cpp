@@ -99,7 +99,7 @@ void red_soloAWP() {
     chassis.turnToHeading(260, 800, {.minSpeed=60, .earlyExitRange=4});
     startIntake();
     //pros::delay(200);
-    chassis.moveToPoint(-64, -47.5, 1200, {.maxSpeed=70}, false);
+    chassis.moveToPoint(-64, -47.5, 1250, {.maxSpeed=70}, false);
     //pros::delay(800);
 
     // Score the long goal
