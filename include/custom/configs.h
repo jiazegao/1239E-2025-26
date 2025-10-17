@@ -16,7 +16,7 @@
 
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
-inline alliance_color allianceColor = alliance_color::RED;
+inline alliance_color allianceColor = alliance_color::NONE;
 
 // Controller
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);

@@ -30,17 +30,6 @@ void autonomous() {
 
 	skills();
 
-
-	// Red Autons
-	/*if (autonColor == autonColors::RED_AUTON) {
-		if (autonType == autonTypes::LEFT) {
-			red_left();
-		} else if (autonType == autonTypes::RIGHT) {
-			red_right();
-		} else if (autonType == autonTypes::SOLO_AWP) {
-			red_soloAWP();
-		}
-	}*/
 }
 
 void opcontrol() {

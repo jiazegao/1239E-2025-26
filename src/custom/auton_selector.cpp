@@ -3,9 +3,9 @@
 
 // Button event callback functions
 void toggle_color(lv_event_t* e) {
-    autonColor = (autonColor == autonColors::RED_AUTON) ? autonColors::BLUE_AUTON : autonColors::RED_AUTON;
-    lv_label_set_text(label_color, (autonColor == autonColors::RED_AUTON) ? "Red" : "Blue");
-    lv_obj_set_style_bg_color(btn_color, (autonColor == autonColors::RED_AUTON) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
+    allianceColor = (allianceColor == alliance_color::RED) ? alliance_color::BLUE : alliance_color::RED;
+    lv_label_set_text(label_color, (allianceColor == alliance_color::RED) ? "Red" : "Blue");
+    lv_obj_set_style_bg_color(btn_color, (allianceColor == alliance_color::BLUE) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
 }
 
 void toggle_type(lv_event_t* e) {
