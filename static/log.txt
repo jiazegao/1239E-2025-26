@@ -46,3 +46,6 @@
 10/15/2025
     1) Pushed yesterday's work on sawp
     2) Began sklls
+10/16/2026
+    1) Modified middle goal function.
+    2) Changed middle goal to score on R1, top on R2.

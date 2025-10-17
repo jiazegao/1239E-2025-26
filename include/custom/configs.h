@@ -50,7 +50,7 @@ inline pros::Optical topOptic(15);
 
 // Pneumatics
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
-inline pros::adi::Pneumatics middleMech('B', false, false);
+inline pros::adi::Pneumatics middleMech('B', true, true);
 inline pros::adi::Pneumatics middleDescore('C', false, false);
 inline pros::adi::Pneumatics leftDescoreArm('A', true, false);
 inline pros::adi::Pneumatics rightDescoreArm('H', true, false);

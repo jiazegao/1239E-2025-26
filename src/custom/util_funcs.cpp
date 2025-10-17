@@ -21,6 +21,9 @@ void topIn() {
 void topOut() {
     topMotor.move(-127);
 }
+void slowTopOut() {
+    topMotor.move(-20);
+}
 void stopTop() {
     topMotor.move(0);
 }
@@ -101,7 +104,7 @@ void startMidScore() {
     middleMech.retract();
     stopIntake();
     frontIn();
-    topIn();
+    slowTopOut();
 }
 void startOuttake() {
     frontOut();
@@ -124,10 +127,10 @@ void updateIntake() {
         frontIn();
         topOut();
     }
-    // Button R1 - Score top
+    // Button R1 - Score mid
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
         frontIn();
-        topOut();
+        slowTopOut();
     }
     // Button L2 - Normal intake
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {

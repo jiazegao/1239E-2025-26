@@ -163,8 +163,8 @@ void skills() {
     chassis.turnToHeading(270, 800, {});
     startIntake();
     openGate();
-    chassis.moveToPoint(-63, -47, 1150, {.maxSpeed=70}, false);
-    pros::delay(2500);
+    chassis.moveToPoint(-63, -47, 1500, {.maxSpeed=70}, false);
+    pros::delay(1500);
 
     // Back off (#1)
     stopIntake();
@@ -173,9 +173,9 @@ void skills() {
     chassis.turnToHeading(180, 800, {}, false);
 
     // Score bottom-right
-    chassis.moveToPoint(-38, -60, 1200, {}, false);
+    chassis.moveToPoint(-38, -62, 1200, {}, false);
     chassis.turnToHeading(90, 800, {});
-    chassis.moveToPoint(38, -60, 3000, {}, false);
+    chassis.moveToPoint(38, -62, 3000, {}, false);
     chassis.turnToHeading(0, 800, {});
     chassis.moveToPoint(38, -47, 1200, {}, false);
     chassis.turnToHeading(90, 800, {}, false);
@@ -202,17 +202,17 @@ void skills() {
     stopTopScore();
 
     // Head towards top-right match loader
-    chassis.moveToPoint(42, 47, 3000, {}, false);
+    chassis.moveToPoint(42, 43, 3000, {}, false);
     chassis.turnToHeading(90, 800, {});
     startIntake();
     openGate();
-    chassis.moveToPoint(63, 47, 1150, {.maxSpeed=70}, false);
+    chassis.moveToPoint(63, 43, 1150, {.maxSpeed=70}, false);
     pros::delay(2500);
 
     // Back off (#3)
     stopIntake();
     closeGate();
-    chassis.moveToPoint(38, 47, 1000, {.forwards=false});
+    chassis.moveToPoint(38, 43, 1000, {.forwards=false});
     chassis.turnToHeading(0, 800, {}, false);
 
     // Score the top-left goal
