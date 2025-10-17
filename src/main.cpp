@@ -32,7 +32,7 @@ void autonomous() {
 
 void opcontrol() {
 
-	odomLift.extend();
+	//odomLift.extend();
 
 	while (true) {
 		// Update Controls

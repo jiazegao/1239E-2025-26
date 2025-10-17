@@ -14,6 +14,8 @@ void startOuttake();
 void stopOuttake();
 void startTopScore();
 void stopTopScore();
+void startMidScore();
+void stopMidScore();
 
 // Pneumatics functions
 void openGate();
