@@ -4,7 +4,7 @@
 
 // 9 balls -> Top Middle Goal + Top Long Goal
 void red_left() {
-    chassis.setPose(-50, 13.5, 90);
+    chassis.setPose(-48.75, 16.125, 90);
 
     // Intake three balls
     startIntake();

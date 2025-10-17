@@ -54,6 +54,7 @@ inline pros::adi::Pneumatics middleMech('B', true, true);
 inline pros::adi::Pneumatics middleDescore('C', false, false);
 inline pros::adi::Pneumatics leftDescoreArm('A', true, false);
 inline pros::adi::Pneumatics rightDescoreArm('H', true, false);
+inline pros::adi::Pneumatics odomLift('G', false, false);
 
 // Odometry
 

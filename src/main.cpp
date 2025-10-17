@@ -9,12 +9,7 @@ void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
 
-    //init_auton_selector();
-
-
-    pros::lcd::initialize();
-    startBrainDisplay();
-    startControllerDisplay();
+    init_auton_selector();
 
 
     //RclMain.startTracking();
@@ -26,9 +21,12 @@ void competition_initialize() {}
 
 void autonomous() {
 
+	//Ensure odom pod is down
+	odomLift.retract();
+
 	//FOR SKILLS TESTING***
 
-	red_soloAWP();
+	red_left();
 
 }
 
@@ -39,6 +37,8 @@ void opcontrol() {
 		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
+
+		odomLift.extend();
 
 		pros::delay(20);
 	}
