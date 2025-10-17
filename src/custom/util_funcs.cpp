@@ -101,8 +101,8 @@ void startTopScore() {
     topOut();
 };
 void startMidScore() {
-    middleMech.retract();
     stopIntake();
+    middleMech.retract();
     frontIn();
     slowTopOut();
 }
