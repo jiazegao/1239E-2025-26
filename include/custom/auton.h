@@ -6,4 +6,7 @@
 void red_left();
 void red_right();
 void red_soloAWP();
+void blue_left();
+void blue_right();
+void blue_soloAWP();
 void skills();

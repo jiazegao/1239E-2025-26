@@ -10,7 +10,8 @@ void initialize() {
     chassis.setPose(0, 0, 0);
 
     init_auton_selector();
-	startControllerDisplay();
+	startControllerAutonSelectorDisplay();
+	//startControllerDisplay();
 
     RclMain.startTracking();
 }
@@ -21,15 +22,12 @@ void competition_initialize() {}
 
 void autonomous() {
 
-	//FOR SKILLS TESTING***
-	skills();
-
-	// Retract both descore arms
-	extendLeftArm();
-	extendLeftArm();
-
 	//Ensure odom pod is down
 	odomLift.retract();
+
+	// Ensure descore arms are retracted
+	extendLeftArm();
+	extendRightArm();
 
 	// Auton Selection
 	if (runningSkills) {
@@ -37,7 +35,6 @@ void autonomous() {
 		return;
 	}
 
-	/*
 	switch (allianceColor) {
 		case alliance_color::RED:
 			switch (autonType) {
@@ -64,7 +61,7 @@ void autonomous() {
 					blue_right();
 					break;
 				case autonTypes::SOLO_AWP:
-					blue_solo_away_from_wall();
+					blue_soloAWP();
 					break;
 				default:
 					blue_left();
@@ -72,20 +69,23 @@ void autonomous() {
 			}
 			break;
 		default:
-			red_left();
+			blue_soloAWP();
 			break;
-	}
-			*/
+	}	
 
-	
-
-	
 
 }
 
 void opcontrol() {
+	
+	stopControllerDisplay();
+	startControllerDisplay();
 
 	//odomLift.extend();
+
+	// Retract both descore arms
+	extendLeftArm();
+	extendRightArm();
 
 	while (true) {
 		// Update Controls

@@ -5,6 +5,8 @@
 #include "pros/misc.h"
 #include "pros/motors.h"
 
+#include "auton_selector.h"
+
 // Indexer control
 void frontIn() {
     frontMotor.move(127);
@@ -235,5 +237,31 @@ void stopBrainDisplay() {
         brainScreenTask->remove();
         delete brainScreenTask;
         brainScreenTask = nullptr;
+    }
+}
+void startControllerAutonSelectorDisplay() {
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
+                pros::delay(50);
+                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::RIGHT ? "RIGHT" : "SOLO_AWP");
+                pros::delay(50);
+                controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
+                pros::delay(100);
+
+                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+                    toggle_color(nullptr);
+                }
+                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+                    toggle_type(nullptr);
+                }
+                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+                    toggle_skills(nullptr);
+                }
+            }
+        });
     }
 }

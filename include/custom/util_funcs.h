@@ -34,3 +34,4 @@ void stopControllerDisplay();
 inline pros::Task* brainScreenTask = nullptr;
 void startBrainDisplay();
 void stopBrainDisplay();
+void startControllerAutonSelectorDisplay();
