@@ -2,6 +2,7 @@
 #include "custom/util_funcs.h"
 #include "custom/configs.h"
 #include "custom/auton.h"
+#include "liblvgl/misc/lv_types.h"
 #include "pros/misc.h"
 #include "pros/motors.h"
 
@@ -197,7 +198,35 @@ void updatePneumatics() {
 void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
 
 // Display
+void stopBrainDisplay() {
+    if (brainScreenTask != nullptr) {
+        brainScreenTask->remove();
+        delete brainScreenTask;
+        brainScreenTask = nullptr;
+    }
+}
+void stopControllerDisplay() {
+    if (controllerScreenTask != nullptr) {
+        controllerScreenTask->remove();
+        delete controllerScreenTask;
+        controllerScreenTask = nullptr;
+    }
+}
+void startBrainDisplay() {
+    stopBrainDisplay();
+    if (brainScreenTask == nullptr) {
+        brainScreenTask = new pros::Task ([&]() {
+            while (true) {
+                pros::lcd::print(0, "X: %f", chassis.getPose().x);
+                pros::lcd::print(1, "Y: %f", chassis.getPose().y);
+                pros::lcd::print(2, "Theta: %f", chassis.getPose().theta);
+                pros::delay(50);
+            }
+        });
+    }
+}
 void startControllerDisplay() {
+    stopControllerDisplay();
     if (controllerScreenTask == nullptr) {
         controllerScreenTask = new pros::Task ([&](){
             while (true) {
@@ -213,33 +242,8 @@ void startControllerDisplay() {
         });
     }
 }
-void startBrainDisplay() {
-    if (brainScreenTask == nullptr) {
-        brainScreenTask = new pros::Task ([&]() {
-            while (true) {
-                pros::lcd::print(0, "X: %f", chassis.getPose().x);
-                pros::lcd::print(1, "Y: %f", chassis.getPose().y);
-                pros::lcd::print(2, "Theta: %f", chassis.getPose().theta);
-                pros::delay(50);
-            }
-        });
-    }
-}
-void stopControllerDisplay() {
-    if (controllerScreenTask != nullptr) {
-        controllerScreenTask->remove();
-        delete controllerScreenTask;
-        controllerScreenTask = nullptr;
-    }
-}
-void stopBrainDisplay() {
-    if (brainScreenTask != nullptr) {
-        brainScreenTask->remove();
-        delete brainScreenTask;
-        brainScreenTask = nullptr;
-    }
-}
 void startControllerAutonSelectorDisplay() {
+    stopControllerDisplay();
     if (controllerScreenTask == nullptr) {
         controllerScreenTask = new pros::Task ([&](){
             while (true) {
@@ -247,20 +251,10 @@ void startControllerAutonSelectorDisplay() {
                 pros::delay(50);
                 controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
                 pros::delay(50);
-                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::RIGHT ? "RIGHT" : "SOLO_AWP");
+                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::RIGHT_NOMID ? "RIGHT_NOMID" : autonType == autonTypes::RIGHT_WMID ? "RIGHT_WMID" : "SOLO_AWP");
                 pros::delay(50);
                 controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
                 pros::delay(100);
-
-                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-                    toggle_color(nullptr);
-                }
-                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-                    toggle_type(nullptr);
-                }
-                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-                    toggle_skills(nullptr);
-                }
             }
         });
     }

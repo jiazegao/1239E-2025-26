@@ -16,7 +16,7 @@
 
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
-inline alliance_color allianceColor = alliance_color::NONE;
+inline alliance_color allianceColor = alliance_color::BLUE;
 
 // Controller
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -118,7 +118,7 @@ inline pros::Distance left_dist(4);
 static RclSensor rcl1(&back_dist, 5.375, -4.25, 180, 15.0);
 static RclSensor rcl2(&right_dist, 4.5, 0.0, 90.0, 15.0);
 static RclSensor rcl3(&left_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclTracking RclMain(&chassis, 10, false, 0.5, 10, 10, 0.2, 30);
+inline RclTracking RclMain(&chassis, 10, false, 0.5, 10, 10, 2, 30);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);

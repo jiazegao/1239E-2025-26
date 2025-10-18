@@ -40,37 +40,43 @@ void autonomous() {
 			switch (autonType) {
 				case autonTypes::LEFT:
 					red_left();
-					break;
-				case autonTypes::RIGHT:
-					red_right();
-					break;
+					return;
+				case autonTypes::RIGHT_NOMID:
+					red_right_noScoreMid();
+					return;
+				case autonTypes::RIGHT_WMID:
+					red_right_scoreMid();
+					return;
 				case autonTypes::SOLO_AWP:
 					red_soloAWP();
-					break;
+					return;
 				default:
 					red_left();
-					break;
+					return;
 			}
-			break;
+			return;
 		case alliance_color::BLUE:
 			switch (autonType) {
 				case autonTypes::LEFT:
 					blue_left();
-					break;
-				case autonTypes::RIGHT:
-					blue_right();
-					break;
+					return;
+				case autonTypes::RIGHT_NOMID:
+					blue_right_noScoreMid();
+					return;
+				case autonTypes::RIGHT_WMID:
+					blue_right_scoreMid();
+					return;
 				case autonTypes::SOLO_AWP:
 					blue_soloAWP();
-					break;
+					return;
 				default:
 					blue_left();
-					break;
+					return;
 			}
-			break;
+			return;
 		default:
 			blue_soloAWP();
-			break;
+			return;
 	}	
 
 

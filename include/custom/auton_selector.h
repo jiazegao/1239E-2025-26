@@ -4,8 +4,8 @@
 #include "configs.h"
 
 // Autonomous selection variables
-enum class autonTypes { TYPE_NONE, LEFT, RIGHT, SOLO_AWP };
-inline autonTypes autonType = autonTypes::TYPE_NONE;
+enum class autonTypes { TYPE_NONE, LEFT, RIGHT_WMID, RIGHT_NOMID, SOLO_AWP };
+inline autonTypes autonType = autonTypes::SOLO_AWP;
 inline bool runningSkills = false;
 inline bool autonMoveToPose = false;
 

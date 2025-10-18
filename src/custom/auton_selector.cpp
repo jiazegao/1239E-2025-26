@@ -10,8 +10,9 @@ void toggle_color(lv_event_t* e) {
 
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
-        case autonTypes::LEFT: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
-        case autonTypes::RIGHT: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
+        case autonTypes::LEFT: autonType = autonTypes::RIGHT_NOMID; lv_label_set_text(label_type, "RIGHT_NO_MID"); break;
+        case autonTypes::RIGHT_NOMID: autonType = autonTypes::RIGHT_WMID; lv_label_set_text(label_type, "RIGHT_WITH_MID"); break;
+        case autonTypes::RIGHT_WMID: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
         case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
         default: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
     }
