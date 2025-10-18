@@ -42,9 +42,6 @@ inline pros::Rotation horiSensor(-16);
 // IMU
 inline pros::Imu imu(5);
 
-// Distance
-inline pros::Distance dist1(18);
-
 // Optical
 inline pros::Optical topOptic(6);
 
@@ -52,8 +49,8 @@ inline pros::Optical topOptic(6);
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
 inline pros::adi::Pneumatics middleMech('B', true, true);
 inline pros::adi::Pneumatics middleDescore('C', false, false);
-inline pros::adi::Pneumatics leftDescoreArm('A', true, false);
-inline pros::adi::Pneumatics rightDescoreArm('H', true, false);
+inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
+inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 inline pros::adi::Pneumatics odomLift('G', false, false);
 
 // Odometry
@@ -112,9 +109,16 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 
+// Distance
+inline pros::Distance back_dist(15);
+inline pros::Distance right_dist(3);
+inline pros::Distance left_dist(4);
+
 // Rcl setup
-//static RclSensor rcl1(&dist1, 0.0, 0.0, 0.0, 15.0);
-inline RclTracking RclMain(&chassis);
+static RclSensor rcl1(&back_dist, 5.375, -4.25, 180, 15.0);
+static RclSensor rcl2(&right_dist, 4.5, 0.0, 90.0, 15.0);
+static RclSensor rcl3(&left_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclTracking RclMain(&chassis, 25, true, 0, 10000, 10000, 200000, 20);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);

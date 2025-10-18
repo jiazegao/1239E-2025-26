@@ -16,6 +16,8 @@ inline lv_obj_t* label_skills;
 inline lv_obj_t* btn_color;
 inline lv_obj_t* btn_type;
 inline lv_obj_t* btn_skills;
+inline lv_obj_t* btn_recalibrate;
+inline lv_obj_t* label_recalibrate;
 
 // Button event callback functions
 void toggle_color(lv_event_t* e);
@@ -23,6 +25,8 @@ void toggle_color(lv_event_t* e);
 void toggle_type(lv_event_t* e);
 
 void toggle_skills (lv_event_t* e);
+
+void recalibrate(lv_event_t* e);
 
 // Initialize autonomous selector GUI
 void init_auton_selector();
