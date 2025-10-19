@@ -7,11 +7,10 @@
 
 void initialize() {
     chassis.calibrate();
-    chassis.setPose(0, 0, 0);
+    chassis.setPose(64, -62, 0);
 
     init_auton_selector();
 	startControllerAutonSelectorDisplay();
-	//startControllerDisplay();
 
     RclMain.startTracking();
 }
@@ -85,9 +84,9 @@ void autonomous() {
 void opcontrol() {
 	
 	stopControllerDisplay();
-	startControllerDisplay();
+	startControllerRclDisplay();
 
-	//odomLift.extend();
+	odomLift.extend();
 
 	// Retract both descore arms
 	extendLeftArm();

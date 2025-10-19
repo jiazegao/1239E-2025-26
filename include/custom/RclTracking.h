@@ -310,7 +310,7 @@ public:
     void updatePose(const lemlib::Pose& botPose);
     bool isValid(double distVal) const;
     std::pair<CoordType, double> getBotCoord(const lemlib::Pose& botPose, double accum = NAN);
-    double rawReading() const;
+    int rawReading() const;
     SensorPose getPose() const;
 
 private:
@@ -339,9 +339,10 @@ public:
     void stopTracking();
 
     // Accessors
-    lemlib::Pose getRclPosition() const;
-    void setRclPosition(const lemlib::Pose& p);
-    void updateBotPosition();
+    lemlib::Pose getRclPose() const;
+    void setRclPose(const lemlib::Pose& p);
+    void updateBotPose();
+    void updateBotPose(RclSensor* sens);
 
     // Accumulation control
     void startAccumulating(bool autoUpdateAfterAccum = true);

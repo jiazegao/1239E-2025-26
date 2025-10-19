@@ -31,7 +31,7 @@ void recalibrate(lv_event_t* e) {
 // Initialize autonomous selector GUI
 void init_auton_selector() {
     btn_color = lv_button_create(lv_screen_active());
-    lv_obj_set_pos(btn_color, 30, 20);
+    lv_obj_set_pos(btn_color, 10, 20);
     lv_obj_set_size(btn_color, 110, 200);
     lv_obj_add_event_cb(btn_color, toggle_color, LV_EVENT_CLICKED, NULL);
     lv_obj_set_style_bg_color(btn_color, lv_color_hex(0x808080), LV_PART_MAIN); // Default to gray
@@ -39,14 +39,14 @@ void init_auton_selector() {
     lv_label_set_text(label_color, "Select Color");
     
     btn_type = lv_button_create(lv_screen_active());
-    lv_obj_set_pos(btn_type, 150, 20);
+    lv_obj_set_pos(btn_type, 130, 20);
     lv_obj_set_size(btn_type, 110, 200);
     lv_obj_add_event_cb(btn_type, toggle_type, LV_EVENT_CLICKED, NULL);
     label_type = lv_label_create(btn_type);
     lv_label_set_text(label_type, "Select Type");
 
     btn_skills = lv_button_create(lv_screen_active());
-    lv_obj_set_pos(btn_skills, 270, 20);
+    lv_obj_set_pos(btn_skills, 250, 20);
     lv_obj_set_size(btn_skills, 110, 200);
     lv_obj_add_event_cb(btn_skills, toggle_skills, LV_EVENT_CLICKED, NULL);
     lv_obj_set_style_bg_color(btn_skills, lv_color_hex(0x808080), LV_PART_MAIN); // Default to gray
@@ -54,8 +54,8 @@ void init_auton_selector() {
     lv_label_set_text(label_skills, "Skills?");
 
     btn_recalibrate = lv_button_create(lv_screen_active());
-    lv_obj_set_pos(btn_recalibrate, 390, 20);
-    lv_obj_set_size(btn_recalibrate, 50, 200);
+    lv_obj_set_pos(btn_recalibrate, 370, 20);
+    lv_obj_set_size(btn_recalibrate, 90, 200);
     lv_obj_add_event_cb(btn_recalibrate, recalibrate, LV_EVENT_CLICKED, NULL);
     label_recalibrate = lv_label_create(btn_recalibrate);
     lv_label_set_text(label_recalibrate, "Recal");

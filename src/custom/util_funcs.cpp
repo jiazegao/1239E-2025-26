@@ -1,5 +1,6 @@
 
 #include "custom/util_funcs.h"
+#include "RclTracking.h"
 #include "custom/configs.h"
 #include "custom/auton.h"
 #include "liblvgl/misc/lv_types.h"
@@ -21,8 +22,8 @@ void stopFront() {
 void topIn() {
     topMotor.move(127);
 }
-void topOut() {
-    topMotor.move(-127);
+void topOut(int velocity = 127) {
+    topMotor.move(-1 * std::abs(velocity));
 }
 void slowTopOut() {
     topMotor.move(-20);
@@ -98,10 +99,10 @@ void startIntake() {
     stopTop();
     frontIn();
 };
-void startTopScore() {
+void startTopScore(int velocity) {
     stopIntake();
     frontIn();
-    topOut();
+    topOut(velocity);
 };
 void startMidScore() {
     stopIntake();
@@ -254,6 +255,23 @@ void startControllerAutonSelectorDisplay() {
                 controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::RIGHT_NOMID ? "RIGHT_NOMID" : autonType == autonTypes::RIGHT_WMID ? "RIGHT_WMID" : "SOLO_AWP");
                 pros::delay(50);
                 controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
+                pros::delay(100);
+            }
+        });
+    }
+}
+void startControllerRclDisplay() {
+    stopControllerDisplay();
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "RCL (%.1f, %.1f, %.1f)", RclMain.getRclPose().x, RclMain.getRclPose().y, RclMain.getRclPose().theta);
+                pros::delay(50);
+                controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
+                pros::delay(50);
+                controller.print(2, 0, "(%.1f, %.1f, %.1f)", left_rcl.getBotCoord(chassis.getPose()).second, back_rcl.getBotCoord(chassis.getPose()).second, right_rcl.getBotCoord(chassis.getPose()).second);
                 pros::delay(100);
             }
         });

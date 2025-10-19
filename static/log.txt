@@ -46,6 +46,11 @@
 10/15/2025
     1) Pushed yesterday's work on sawp
     2) Began sklls
-10/16/2026
+10/16/2025
     1) Modified middle goal function.
     2) Changed middle goal to score on R1, top on R2.
+10/18/2025
+    1) Adjusted names of RclTracking function names
+    2) Added confidence test for distance sensor readings higher than 200 mm and less than 2000 mm
+    3) Added function 'RclTracking::void updateBotPosition(RclSensor* sens)' to allow position corrections based on targeted distance sensors
+    4) Added calls to 'RclTracking::void setRclPose()' alongside 'chassis.setPose()' in auton functions

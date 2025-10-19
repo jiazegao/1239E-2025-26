@@ -6,6 +6,7 @@
 //              intersection math.
 
 #include "custom/RclTracking.h"
+#include <cstdint>
 
 // Timer class for timeouts
 Timer::Timer(double timeoutMs_) : timeoutMs(timeoutMs_), startTime(std::chrono::high_resolution_clock::now()) {}
@@ -138,9 +139,10 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
 }
 
 bool RclSensor::isValid(double distVal) const {
-    if (distVal > 390.0) return false;  // Invalid Distance
-    if (std::abs( std::fmod(sp.heading, 90.0) ) > angleTolerance &&
-        std::abs( std::fmod(sp.heading, 90.0) ) < (90 - angleTolerance)) return false;   // Limit heading to intervals around 90 degrees to increase accuracy
+    if (distVal > 2000) return false;  // Invalid Distance
+    if (distVal > 200 && this->sensor->get_confidence() < 32) return false; // Invalid confidence
+    if (std::abs( std::fmod(this->sp.heading, 90.0) ) > angleTolerance &&
+        std::abs( std::fmod(this->sp.heading, 90.0) ) < (90 - angleTolerance)) return false;   // Limit heading to intervals around 90 degrees to increase accuracy
     // Detect if the ray is intersecting with any circular obstacles
     for (auto* item : Circle_Obstacle::obstacleCollection) { if (item->isIntersecting(sp)) return false; }
     // Detect if the ray is intersectign with any line obstacles
@@ -152,11 +154,16 @@ bool RclSensor::isValid(double distVal) const {
 // Return which coordinate (X or Y) and its value
 std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose, double accum) {
 
+    // Update sensor pose
+    this->updatePose(botPose);
+
     // accumulative?
-    double val = std::isnan(accum) ? sensor->get() * mmToInch : accum;
+    double val = std::isnan(accum) ? sensor->get() : accum;
 
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
+
+    val *= mmToInch;
 
     // Determine which wall
     int wall;
@@ -190,7 +197,7 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     return {type, res};
 }
 
-double RclSensor::rawReading() const { return sensor->get() * mmToInch; }
+int RclSensor::rawReading() const { return sensor->get(); }
 SensorPose RclSensor::getPose() const { return sp; }
 
 // Main RCL Tracking
@@ -230,20 +237,36 @@ void RclTracking::stopTracking() {
     if (miscLoopTask != nullptr) { miscLoopTask->remove(); delete miscLoopTask; miscLoopTask = nullptr; } 
 }
 // Accessors
-lemlib::Pose RclTracking::getRclPosition() const {
+lemlib::Pose RclTracking::getRclPose() const {
     auto chassisPose = chassis->getPose();
     return { latestPrecise.x + (chassisPose.x - poseAtLatest.x),
                 latestPrecise.y + (chassisPose.y - poseAtLatest.y),
                 chassisPose.theta };
 }
-void RclTracking::setRclPosition(const lemlib::Pose& p) {
+void RclTracking::setRclPose(const lemlib::Pose& p) {
     latestPrecise = p;
     poseAtLatest = chassis->getPose();
 }
-void RclTracking::updateBotPosition() {
-    auto p = getRclPosition();
+void RclTracking::updateBotPose() {
+    auto p = getRclPose();
     chassis->setPose(p);
-    setRclPosition(p);
+    setRclPose(p);
+}
+void RclTracking::updateBotPose(RclSensor* sens) {
+    if (sens != nullptr && chassis != nullptr) {
+        // Get data from the target sensor
+        auto data = sens->getBotCoord(chassis->getPose());
+        // Retrieve Lemlib pose as the base
+        auto pose = chassis->getPose();
+
+        // Update pose based on sensor reading
+        if (data.first == CoordType::X) pose.x = data.second;
+        else if (data.first == CoordType::Y) pose.y = data.second;
+
+        // Sync to Lemlib
+        chassis->setPose(pose);
+        setRclPose(pose);
+    }
 }
 
 // Accumulation control
@@ -267,7 +290,7 @@ void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
         // Accumulators
-        std::vector<double> accTotal(RclSensor::sensorCollection.size());
+        std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
         // If accumulating, gather readings
         while (accumulating) {
@@ -282,7 +305,7 @@ void RclTracking::mainUpdate() {
         std::vector<double> xs, ys;
 
         // Make sure RclPosition doesn't deviate too much from the chassis position
-        auto botPose = getRclPosition();
+        auto botPose = getRclPose();
         double diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
         if (diff_from_lemlib > maxDeltaFromLemlib) {
             botPose.x += (chassis->getPose().x-botPose.x) / diff_from_lemlib;
@@ -292,9 +315,8 @@ void RclTracking::mainUpdate() {
         // Loop sensors
         for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
             auto sens = RclSensor::sensorCollection[i];
-            sens->updatePose(botPose);
 
-            double avg = (accCount[i] > 0) ? (accTotal[i] / accCount[i]) : NAN;
+            double avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
 
             // Validate and collect
@@ -320,7 +342,7 @@ void RclTracking::mainUpdate() {
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
-            updateBotPosition();
+            updateBotPose();
     }
 }
 void RclTracking::syncUpdate() {
@@ -333,7 +355,7 @@ void RclTracking::syncUpdate() {
     double y_update = 0.0;
 
     // retrive rcl-based position
-    lemlib::Pose currRclPosition = getRclPosition();
+    lemlib::Pose currRclPosition = getRclPose();
 
     // calculate differences
     x_diff = currRclPosition.x - chassis->getPose().x;

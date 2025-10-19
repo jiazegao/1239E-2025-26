@@ -115,10 +115,10 @@ inline pros::Distance right_dist(3);
 inline pros::Distance left_dist(4);
 
 // Rcl setup
-static RclSensor rcl1(&back_dist, 5.375, -4.25, 180, 15.0);
-static RclSensor rcl2(&right_dist, 4.5, 0.0, 90.0, 15.0);
-static RclSensor rcl3(&left_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclTracking RclMain(&chassis, 10, false, 0.5, 10, 10, 2, 30);
+static RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
+static RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
+static RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclTracking RclMain(&chassis, 10, false);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);
