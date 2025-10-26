@@ -10,8 +10,9 @@ void initialize() {
     chassis.setPose(64, -62, 0);
 
     init_auton_selector();
-	startControllerAutonSelectorDisplay();
-
+//	startControllerAutonSelectorDisplay();
+//startControllerRclDisplay();
+startControllerDisplay();
     RclMain.startTracking();
 }
 
@@ -27,9 +28,10 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendRightArm();
+		skills();
 
 	// Auton Selection
-	if (runningSkills) {
+	/*if (runningSkills) {
 		skills();
 		return;
 	}
@@ -76,7 +78,7 @@ void autonomous() {
 		default:
 			blue_soloAWP();
 			return;
-	}	
+	}	*/
 
 
 }
