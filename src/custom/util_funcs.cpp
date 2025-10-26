@@ -226,6 +226,16 @@ void startBrainDisplay() {
         });
     }
 }
+void startBrainFBDisplay() {
+    stopBrainDisplay();
+    if (brainScreenTask == nullptr) {
+        brainScreenTask = new pros::Task ([&]() {
+            image = lv_image_create(lv_screen_active());
+            lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
+            lv_image_set_src(image, &FB_Logo);
+        });
+    }
+}
 void startControllerDisplay() {
     stopControllerDisplay();
     if (controllerScreenTask == nullptr) {

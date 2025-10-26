@@ -92,6 +92,9 @@ void opcontrol() {
 	extendLeftArm();
 	extendRightArm();
 
+	// Display FB Logo
+	startBrainFBDisplay();
+
 	while (true) {
 		// Update Controls
 		updateTankDrive();

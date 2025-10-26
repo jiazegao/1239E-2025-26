@@ -1,6 +1,7 @@
 #pragma once
 
 #include "custom/configs.h"
+#include "liblvgl/lvgl.h"
 
 // Controls
 void updateIntake();
@@ -29,10 +30,14 @@ void retractRightArm();
 
 // Display
 inline pros::Task* controllerScreenTask = nullptr;
-void startControllerDisplay();
 void stopControllerDisplay();
-inline pros::Task* brainScreenTask = nullptr;
-void startBrainDisplay();
-void stopBrainDisplay();
+void startControllerDisplay();
 void startControllerAutonSelectorDisplay();
 void startControllerRclDisplay();
+
+LV_IMAGE_DECLARE(FB_Logo);
+inline lv_obj_t *image;
+inline pros::Task* brainScreenTask = nullptr;
+void stopBrainDisplay();
+void startBrainDisplay();
+void startBrainFBDisplay();
