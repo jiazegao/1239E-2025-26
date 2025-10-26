@@ -36,7 +36,6 @@ void startControllerAutonSelectorDisplay();
 void startControllerRclDisplay();
 
 LV_IMAGE_DECLARE(FB_Logo);
-inline lv_obj_t *image;
 inline pros::Task* brainScreenTask = nullptr;
 void stopBrainDisplay();
 void startBrainDisplay();

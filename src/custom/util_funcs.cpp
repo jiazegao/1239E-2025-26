@@ -230,7 +230,7 @@ void startBrainFBDisplay() {
     stopBrainDisplay();
     if (brainScreenTask == nullptr) {
         brainScreenTask = new pros::Task ([&]() {
-            image = lv_image_create(lv_screen_active());
+            static lv_obj_t* image = lv_image_create(lv_screen_active());
             lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
             lv_image_set_src(image, &FB_Logo);
         });

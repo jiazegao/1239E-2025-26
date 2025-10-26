@@ -85,8 +85,7 @@ void autonomous() {
 
 void opcontrol() {
 	
-	stopControllerDisplay();
-	startControllerRclDisplay();
+	startControllerDisplay();
 
 	odomLift.extend();
 
@@ -95,7 +94,7 @@ void opcontrol() {
 	extendRightArm();
 
 	// Display FB Logo
-	startBrainFBDisplay();
+	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
 
 	while (true) {
 		// Update Controls

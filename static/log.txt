@@ -56,3 +56,4 @@
     4) Added calls to 'RclTracking::void setRclPose()' alongside 'chassis.setPose()' in auton functions
 10/26/2025
     1) Added Flashbang Logo Display feature
+    2) Fixed the status of RclSensor objects from 'static' to 'inline'
