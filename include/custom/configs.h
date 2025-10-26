@@ -115,9 +115,9 @@ inline pros::Distance right_dist(3);
 inline pros::Distance left_dist(4);
 
 // Rcl setup
-static RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
-static RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
-static RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
+inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
+inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclTracking RclMain(&chassis, 10, false);
 
 // loaders
