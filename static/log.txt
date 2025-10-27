@@ -58,3 +58,4 @@
     1) Added Flashbang Logo Display feature
     2) Fixed the status of RclSensor objects from 'static' to 'inline'
     3) Tuning of Skills
+    4) Increased minimum confidence for RclTracking
