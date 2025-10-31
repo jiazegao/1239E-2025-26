@@ -119,7 +119,7 @@ std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol)
     : sensor(distSensor), mainAngle(mainAng), angleTolerance(std::abs(angleTol)) {
     offsetDist = std::hypot(horizOffset, vertOffset);
-    offsetAngle = std::atan2(vertOffset, horizOffset) * 180.0 / M_PI;
+    offsetAngle = std::fmod(((std::atan2(vertOffset, horizOffset)*180.0/M_PI) + 360), 360);
     RclSensor::sensorCollection.push_back(this);
 }
 
