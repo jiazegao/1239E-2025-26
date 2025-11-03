@@ -1,5 +1,4 @@
 #include "main.h"
-#include "custom/RclTracking.h"
 #include "custom/configs.h"
 #include "custom/auton.h"
 #include "custom/util_funcs.h"
@@ -7,14 +6,37 @@
 
 void initialize() {
     chassis.calibrate();
-    chassis.setPose(64, -62, 0);
-
+    chassis.setPose(0, 0, 0);
     init_auton_selector();
-//	startControllerAutonSelectorDisplay();
-//startControllerRclDisplay();
-startControllerDisplay();
-    RclMain.startTracking();
+    startControllerAutonSelectorDisplay();
+
+    // --- Monte Carlo Localization Initialization ---
+extern lemlib::Chassis chassis;
+
+pros::Task mclTask([]() {
+    lemlib::Pose prev = chassis.getPose();
+    while (true) {
+        lemlib::Pose cur = chassis.getPose();
+        const double dx = cur.x - prev.x;          // inches, field-frame
+        const double dy = cur.y - prev.y;          // inches, field-frame
+        const double dth = cur.theta - prev.theta; // radians
+
+        const double b = back_dist.get();  // mm
+        const double l = left_dist.get();  // mm
+        const double r = right_dist.get(); // mm
+
+        MclMain.update(dx, dy, dth, b, l, r);
+
+        // (optional) show estimate
+        auto est = MclMain.getPoseEstimate();
+        pros::lcd::print(5, "MCL  X=%.2f  Y=%.2f  Th=%.2f", est.x, est.y, est.theta);
+
+        prev = cur;
+        pros::delay(50);
+    }
+});
 }
+
 
 void disabled() {}
 
@@ -31,7 +53,7 @@ void autonomous() {
 		skills();
 
 	// Auton Selection
-	/*if (runningSkills) {
+	if (runningSkills) {
 		skills();
 		return;
 	}
@@ -78,7 +100,7 @@ void autonomous() {
 		default:
 			blue_soloAWP();
 			return;
-	}	*/
+	}	
 
 
 }

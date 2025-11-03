@@ -13,6 +13,9 @@
 #include "cmath"
 
 #include "custom/RclTracking.h"
+#include "custom/MclTracking.h"
+
+// Monte Carlo Localization
 
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
@@ -108,6 +111,13 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
                         angular_controller, // angular PID settings
                         sensors // odometry sensors
 );
+
+
+
+// Monte Carlo Localization
+inline MclTracking MclMain(&chassis, 100); // 100 particles; adjust as needed
+
+
 
 // Distance
 inline pros::Distance back_dist(15);

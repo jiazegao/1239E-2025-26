@@ -1,12 +1,5 @@
-// RclTracking.cpp
-// Description: This file implements the RCL Tracking system for a robot, including
-//              sensor management, obstacle detection, position tracking and syncing
-//              using VEX V5 distance sensors.
-//              Most functionalities are achieved through basic sensor fusion and
-//              intersection math.
 
 #include "custom/RclTracking.h"
-#include <cstdint>
 
 // Timer class for timeouts
 Timer::Timer(double timeoutMs_) : timeoutMs(timeoutMs_), startTime(std::chrono::high_resolution_clock::now()) {}

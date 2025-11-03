@@ -1,7 +1,5 @@
 #pragma once
 
-#include "custom/configs.h"
-#include "custom/util_funcs.h"
 
 void red_left();
 void red_right_scoreMid();
@@ -14,3 +12,4 @@ void blue_right_noScoreMid();
 void blue_soloAWP();
 
 void skills();
+void skills2();

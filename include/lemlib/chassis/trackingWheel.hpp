@@ -1,6 +1,5 @@
 #pragma once
 
-#include "pros/motors.hpp"
 #include "pros/motor_group.hpp"
 #include "pros/adi.hpp"
 #include "pros/rotation.hpp"
