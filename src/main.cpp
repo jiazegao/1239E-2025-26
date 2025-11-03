@@ -28,10 +28,10 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendRightArm();
-		skills();
+	
 
 	// Auton Selection
-	/*if (runningSkills) {
+	if (runningSkills) {
 		skills();
 		return;
 	}
@@ -78,7 +78,7 @@ void autonomous() {
 		default:
 			blue_soloAWP();
 			return;
-	}	*/
+	}	
 
 
 }

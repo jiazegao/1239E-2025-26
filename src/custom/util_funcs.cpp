@@ -182,11 +182,11 @@ void updatePneumatics() {
         middleDescore.toggle();
     }
     // Button Left - Left descore arm (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         leftDescoreArm.toggle();
     }
     // Button Down - Right descore arm (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
         rightDescoreArm.toggle();
     }
     // Button X - Match load mech (Toggle)
