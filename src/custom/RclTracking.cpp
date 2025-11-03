@@ -119,7 +119,7 @@ std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol)
     : sensor(distSensor), mainAngle(mainAng), angleTolerance(std::abs(angleTol)) {
     offsetDist = std::hypot(horizOffset, vertOffset);
-    offsetAngle = std::atan2(vertOffset, horizOffset) * 180.0 / M_PI;
+    offsetAngle = std::fmod(((std::atan2(vertOffset, horizOffset)*180.0/M_PI) + 360), 360);
     RclSensor::sensorCollection.push_back(this);
 }
 
@@ -140,7 +140,7 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
 
 bool RclSensor::isValid(double distVal) const {
     if (distVal > 2000) return false;  // Invalid Distance
-    if (distVal > 200 && this->sensor->get_confidence() < 32) return false; // Invalid confidence
+    if (distVal > 200 && this->sensor->get_confidence() < 60) return false; // Invalid confidence
     if (std::abs( std::fmod(this->sp.heading, 90.0) ) > angleTolerance &&
         std::abs( std::fmod(this->sp.heading, 90.0) ) < (90 - angleTolerance)) return false;   // Limit heading to intervals around 90 degrees to increase accuracy
     // Detect if the ray is intersecting with any circular obstacles
