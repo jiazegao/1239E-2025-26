@@ -85,9 +85,11 @@ void autonomous() {
 
 void opcontrol() {
 	
-	startControllerDisplay();
+	//startControllerDisplay();
+	startControllerDistDataDisplay();
 
-	odomLift.extend();
+	//odomLift.extend();
+	odomLift.retract();
 
 	// Retract both descore arms
 	extendLeftArm();

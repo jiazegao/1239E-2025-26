@@ -287,3 +287,22 @@ void startControllerRclDisplay() {
         });
     }
 }
+
+// Test Functions
+void startControllerDistDataDisplay() {
+    stopControllerDisplay();
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
+                pros::delay(50);
+                controller.print(0, 0, "Back Sens: %d", back_dist.get_distance());
+                pros::delay(50);
+                controller.print(0, 0, "Right Sens: %d", right_dist.get_distance());
+                pros::delay(100);
+            }
+        });
+    }
+}

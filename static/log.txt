@@ -61,3 +61,5 @@
     4) Increased minimum confidence for RclTracking
 10/30/2025
     1) Ensured that offset angles for RclSensors are positive
+11/8/2025
+    1) Modified code for distance sensor testing

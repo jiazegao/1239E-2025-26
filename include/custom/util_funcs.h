@@ -40,3 +40,6 @@ inline pros::Task* brainScreenTask = nullptr;
 void stopBrainDisplay();
 void startBrainDisplay();
 void startBrainFBDisplay();
+
+// Test Functions
+void startControllerDistDataDisplay();
