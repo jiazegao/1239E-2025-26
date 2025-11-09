@@ -114,6 +114,15 @@ void startOuttake() {
     frontOut();
     topIn();
 }
+double pivot(double curr_corrd, double pivot_coord) {
+    return curr_corrd+std::abs(curr_corrd-pivot_coord)*std::abs(curr_corrd-pivot_coord)/(curr_corrd-pivot_coord);
+}
+double pivot_x(double pivot_coord) {
+    return pivot(chassis.getPose().x, pivot_coord);
+}
+double pivot_y(double pivot_coord) {
+    return pivot(chassis.getPose().y, pivot_coord);
+}
 
 
 // Function for managing intake controls

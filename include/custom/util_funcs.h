@@ -17,6 +17,9 @@ void startTopScore(int velocity = 127);
 void stopTopScore();
 void startMidScore();
 void stopMidScore();
+double pivot(double curr_corrd, double pivot_coord);
+double pivot_x(double pivot_coord);
+double pivot_y(double pivot_coord);
 
 // Pneumatics functions
 void openGate();

@@ -14,3 +14,4 @@ void blue_right_noScoreMid();
 void blue_soloAWP();
 
 void skills();
+void skills_v2();
