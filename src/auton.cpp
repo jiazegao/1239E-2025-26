@@ -610,14 +610,20 @@ void skills_v2() {
 
     // Clear red parking zone
     startIntake();
+    odomLift.extend(); // Entering parking zone, lift up odom
     chassis.moveToPoint(-63, 0, 800, {.minSpeed=60, .earlyExitRange=6}, false);
     pros::delay(1200);
     chassis.moveToPoint(-46, 0, 800, {.forwards=false}, false);
     RclMain.updateBotPose(&left_rcl); // Position correction
     RclMain.updateBotPose(&right_rcl); // Position correction
+    odomLift.retract(); // Leaving parking zone, resume odom
+    chassis.turnToHeading(0, 600, {}, false);
+    pros::delay(400);
+    RclMain.updateBotPose(&left_rcl); // Position correction
+    RclMain.updateBotPose(&back_rcl); // Position correction
     
     // Score Top Mid Goal
-    chassis.turnToPoint(-18, 18, 800, {}, false);
+    chassis.turnToPoint(-18, 18, 600, {}, false);
     chassis.moveToPoint(-18, 18, 1300, {.maxSpeed=50}, false);
     chassis.turnToPoint(pivot_x(-11), pivot_y(11), 800, {}, false);
     stopIntake();
@@ -681,6 +687,7 @@ void skills_v2() {
     chassis.moveToPoint(38, 0, 800, {.maxSpeed=50}, false);
     chassis.turnToPoint(63, 0, 600, {}, false);
     startIntake();
+    odomLift.extend(); // Entering parking zone, lift up odom
     chassis.moveToPoint(63, 0, 1000, {.minSpeed=60, .earlyExitRange=6}, false);
     pros::delay(1200);
 
@@ -688,6 +695,7 @@ void skills_v2() {
     chassis.moveToPoint(38, 0, 1200, {.forwards=false}, false);
     RclMain.updateBotPose(&left_rcl); // Position correction
     RclMain.updateBotPose(&right_rcl); // Position correction
+    odomLift.retract(); // Leaving parking zone, resume odom
     chassis.turnToHeading(180, 800, {}, false);
     pros::delay(400);
     RclMain.updateBotPose(&left_rcl); // Position correction
