@@ -28,6 +28,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendRightArm();
+
+	//red_left();
 	
 
 	// Auton Selection
@@ -86,7 +88,9 @@ void autonomous() {
 void opcontrol() {
 	
 	//startControllerDisplay();
-	startControllerDistDataDisplay();
+	startControllerRclDisplay();
+    chassis.setPose(-46, 0, 270);
+	RclMain.setRclPose(chassis.getPose());
 
 	//odomLift.extend();
 	odomLift.retract();

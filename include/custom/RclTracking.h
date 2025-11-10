@@ -330,8 +330,8 @@ public:
                 bool autoSync_ = true,
                 double minDelta_ = 0.5,
                 double maxDelta_ = 4.0,
-                double maxDeltaFromLemlib_ = 8.0,
-                double maxSyncPerSec_ = 2.0,
+                double maxDeltaFromLemlib_ = 10.0,
+                double maxSyncPerSec_ = 6.0,
                 int minPause_ = 20);
 
     // Start background task

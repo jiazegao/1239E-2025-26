@@ -333,11 +333,17 @@ void RclTracking::mainUpdate() {
         // Update means
         if (!xs.empty()) {
             double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
-            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) latestPrecise.x = meanX, poseAtLatest.x = chassis->getPose().x;
+            if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) {
+                latestPrecise.x = meanX;
+                poseAtLatest.x = chassis->getPose().x;
+            }
         }
         if (!ys.empty()) {
             double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
-            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) latestPrecise.y = meanY, poseAtLatest.y = chassis->getPose().y;
+            if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) {
+                latestPrecise.y = meanY;
+                poseAtLatest.y = chassis->getPose().y;
+            }
         }
 
         // Determine if bot position should be automatically updated
@@ -365,6 +371,10 @@ void RclTracking::syncUpdate() {
     // If within maximum sync distance, update the chassis pose directly
     if (real_diff <= maxSyncPT) {
         chassis->setPose(currRclPosition.x, currRclPosition.y, chassis->getPose().theta);
+        
+        poseAtLatest.x += x_diff;
+        poseAtLatest.y += y_diff;
+        poseAtLatest.theta = chassis->getPose().theta;
     }
     // Otherwise, only sync part of the discrepency
     else {
@@ -374,6 +384,10 @@ void RclTracking::syncUpdate() {
 
         // Update (Sync)
         chassis->setPose(chassis->getPose().x+x_update, chassis->getPose().y+y_update, chassis->getPose().theta);
+        
+        poseAtLatest.x += x_update;
+        poseAtLatest.y += y_update;
+        poseAtLatest.theta = chassis->getPose().theta;
     }
 }
 void RclTracking::lifeTimeUpdate() {
@@ -418,7 +432,7 @@ void RclTracking::miscLoop() {
 
         // main update functions
         if (autoSync) { syncUpdate(); }
-        lifeTimeUpdate();
+        // lifeTimeUpdate();
 
         // Pause for the remaining time
         if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause

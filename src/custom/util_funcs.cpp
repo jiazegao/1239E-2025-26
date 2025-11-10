@@ -307,9 +307,9 @@ void startControllerDistDataDisplay() {
                 pros::delay(50);
                 controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
                 pros::delay(50);
-                controller.print(0, 0, "Back Sens: %d", back_dist.get_distance());
+                controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
                 pros::delay(50);
-                controller.print(0, 0, "Right Sens: %d", right_dist.get_distance());
+                controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
                 pros::delay(100);
             }
         });

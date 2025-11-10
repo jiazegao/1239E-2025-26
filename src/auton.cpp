@@ -2,7 +2,61 @@
 #include "custom/configs.h"
 #include "custom/util_funcs.h"
 #include "pros/motors.h"
+void right(){
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(48.75, -16.125, 270);
+    RclMain.setRclPose(chassis.getPose());
 
+    // Intake three balls
+    stopIntake();
+    startIntake();
+    //topMotor.move_velocity(50);
+    chassis.moveToPoint(17, -28, 1500, {}, true);
+    pros::delay(450);
+    openGate();
+
+    // Intake two balls
+    chassis.turnToHeading(190, 800, {}, true);
+    pros::delay(100);
+    closeGate();
+    chassis.moveToPoint(7, -45, 2000, {.maxSpeed=70}, false);
+
+    // Backoff and score middle goal
+    chassis.moveToPoint(19, -18, 1200, {.forwards=false}, false);
+    stopIntake();
+    chassis.turnToHeading(135, 800, {}, false);
+    middleMech.retract();
+    chassis.moveToPoint(12, -12, 1500, {.forwards=false, .maxSpeed=70}, false);
+    startTopScore();
+    pros::delay(850);
+    middleMech.extend();
+    stopTopScore();
+
+    // Move towards long goal and score
+    chassis.moveToPoint(42, -50, 2500, {}, false);
+    openGate();
+    chassis.turnToHeading(90, 500, {}, false);
+    /*chassis.moveToPoint(-27, 51, 1100, {.forwards=false, .maxSpeed=80}, false);
+    startTopScore();
+    pros::delay(1000);
+    stopTopScore();		*/
+
+    // Refill at matchloader
+    startIntake();
+    openGate();
+    chassis.moveToPoint(68, -48, 1200, {.maxSpeed=80, .minSpeed=50}, false);
+    pros::delay(100);
+
+    // Score again
+    chassis.moveToPoint(25, -48, 1100, {.forwards=false, .maxSpeed=80}, false);
+    closeGate();
+    startTopScore();
+    pros::delay(2300);
+    stopTopScore();
+    chassis.moveToPoint(42, -48, 1500, {.minSpeed=60}, false);
+    chassis.moveToPoint(27, -48, 750, {.forwards=false, .minSpeed=90}, false);
+    startTopScore();
+}
 // 9 balls -> Top Middle Goal + Top Long Goal
 void red_left() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -62,7 +116,7 @@ void red_left() {
     pros::delay(1000);
     stopTopScore();
     chassis.moveToPoint(-42, 52, 1500, {.minSpeed=60}, false);
-    chassis.moveToPoint(-27, 54, 750, {.forwards=false, .minSpeed=90}, false);
+    chassis.moveToPoint(-27, 52, 750, {.forwards=false, .minSpeed=90}, false);
     startTopScore();
 }
 void blue_left() {
@@ -82,10 +136,10 @@ void blue_left() {
     chassis.turnToHeading(190, 800, {}, true);
     pros::delay(100);
     closeGate();
-    chassis.moveToPoint(10, -45, 2000, {.maxSpeed=70}, false);
+    chassis.moveToPoint(7, -45, 2000, {.maxSpeed=70}, false);
 
     // Backoff and score middle goal
-    chassis.moveToPoint(19, -19, 1200, {.forwards=false}, false);
+    chassis.moveToPoint(19, -18, 1200, {.forwards=false}, false);
     stopIntake();
     chassis.turnToHeading(135, 800, {}, false);
     middleMech.retract();
@@ -107,17 +161,17 @@ void blue_left() {
     // Refill at matchloader
     startIntake();
     openGate();
-    chassis.moveToPoint(68, -50, 1200, {.maxSpeed=80, .minSpeed=50}, false);
+    chassis.moveToPoint(68, -48, 1200, {.maxSpeed=80, .minSpeed=50}, false);
     pros::delay(100);
 
     // Score again
-    chassis.moveToPoint(25, -50, 1100, {.forwards=false, .maxSpeed=80}, false);
+    chassis.moveToPoint(25, -48, 1100, {.forwards=false, .maxSpeed=80}, false);
     closeGate();
     startTopScore();
     pros::delay(2300);
     stopTopScore();
-    chassis.moveToPoint(42, -52, 1500, {.minSpeed=60}, false);
-    chassis.moveToPoint(27, -54, 750, {.forwards=false, .minSpeed=90}, false);
+    chassis.moveToPoint(42, -48, 1500, {.minSpeed=60}, false);
+    chassis.moveToPoint(27, -48, 750, {.forwards=false, .minSpeed=90}, false);
     startTopScore();
 }
 
@@ -608,10 +662,13 @@ void skills_v2() {
     chassis.setPose(-46, 0, 270);
     RclMain.setRclPose(chassis.getPose());
 
+    // Back off to gain momentum
+    chassis.moveToPoint(-26, 0, 1500, {.forwards=false}, false);
+
     // Clear red parking zone
     startIntake();
     odomLift.extend(); // Entering parking zone, lift up odom
-    chassis.moveToPoint(-63, 0, 800, {.minSpeed=60, .earlyExitRange=6}, false);
+    chassis.moveToPoint(-70, 0, 800, {.earlyExitRange=6}, false);
     pros::delay(1200);
     chassis.moveToPoint(-46, 0, 800, {.forwards=false}, false);
     RclMain.updateBotPose(&left_rcl); // Position correction
@@ -647,7 +704,7 @@ void skills_v2() {
     closeGate();
     stopIntake();
     
-    chassis.turnToHeading(45, 800, {}, false);
+    chassis.turnToHeading(35, 800, {}, false);
     chassis.moveToPose(-15, 59, 90, 1500, {.lead=0.3, .minSpeed=55}, false);
     chassis.moveToPoint(20, 59, 1200, {.minSpeed=30, .earlyExitRange=12}, false);
     chassis.moveToPoint(38, 59, 1000, {.maxSpeed=60}, false);
@@ -721,7 +778,7 @@ void skills_v2() {
     closeGate();
     stopIntake();
     
-    chassis.turnToHeading(225, 800, {}, false);
+    chassis.turnToHeading(215, 800, {}, false);
     chassis.moveToPose(15, -59, 270, 1500, {.lead=0.3, .minSpeed=55}, false);
     chassis.moveToPoint(-20, -59, 1200, {.minSpeed=30, .earlyExitRange=12}, false);
     chassis.moveToPoint(-38, -59, 1000, {.maxSpeed=60}, false);
