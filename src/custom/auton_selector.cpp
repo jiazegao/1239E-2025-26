@@ -1,6 +1,7 @@
 
 #include "custom/auton_selector.h"
 #include "liblvgl/widgets/image/lv_image.h"
+#include "auton.h"
 
 // Button event callback functions
 void toggle_color(lv_event_t* e) {
@@ -11,9 +12,10 @@ void toggle_color(lv_event_t* e) {
 
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
-        case autonTypes::LEFT: autonType = autonTypes::RIGHT_NOMID; lv_label_set_text(label_type, "RIGHT_NO_MID"); break;
-        case autonTypes::RIGHT_NOMID: autonType = autonTypes::RIGHT_WMID; lv_label_set_text(label_type, "RIGHT_WITH_MID"); break;
-        case autonTypes::RIGHT_WMID: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
+        case autonTypes::LEFT: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
+        case autonTypes::LEFT_RUSH: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
+        case autonTypes::RIGHT: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT RUSH"); break;
+        case autonTypes::RIGHT_RUSH: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO AWP"); break;
         case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
         default: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
     }
@@ -60,5 +62,36 @@ void init_auton_selector() {
     lv_obj_add_event_cb(btn_recalibrate, recalibrate, LV_EVENT_CLICKED, NULL);
     label_recalibrate = lv_label_create(btn_recalibrate);
     lv_label_set_text(label_recalibrate, "Recal");
+}
+
+// Call the according autonomous
+void runAuton() {
+    // Auton Selection
+	if (runningSkills) {
+		skills();
+		return;
+	}
+
+    switch (autonType) {
+        case autonTypes::LEFT:
+            left();
+            return;
+        case autonTypes::LEFT_RUSH:
+            leftControlRush();
+            return;
+        case autonTypes::RIGHT:
+            right();
+            return;
+        case autonTypes::RIGHT_RUSH:
+            rightControlRush();
+            return;
+        case autonTypes::SOLO_AWP:
+            soloSAWP();
+            return;
+        default:
+            soloSAWP();
+            return;
+			
+    }
 }
 
