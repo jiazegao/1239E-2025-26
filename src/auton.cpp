@@ -2,6 +2,104 @@
 #include "custom/configs.h"
 #include "custom/util_funcs.h"
 #include "pros/motors.h"
+#include "pros/rtos.hpp"
+
+void soloSAWP(){
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(-47, -13.25, 180);
+    RclMain.setRclPose(chassis.getPose());
+
+    // Head towards the matchloader and intake
+    openGate();
+    chassis.moveToPoint(-47, -38.5, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
+    chassis.turnToHeading(265, 800, {.minSpeed=60, .earlyExitRange=4});
+    startIntake();
+    //pros::delay(200);
+    chassis.moveToPoint(-64, -47.5, 1150, {.maxSpeed=70}, false);
+    //pros::delay(800);
+
+    // Score the long goal
+    chassis.moveToPoint(-24, -47, 1000, {.forwards=false, .maxSpeed=90}, false);
+    startTopScore();
+    closeGate();
+    pros::delay(1200);
+
+    // Back off
+    
+    chassis.moveToPoint(-40, -47, 600, {.minSpeed=60, .earlyExitRange=3});
+    chassis.turnToHeading(45, 800, {.minSpeed=60, .earlyExitRange=3});
+    stopTopScore();
+    // Intake 3 balls
+    chassis.moveToPoint(-26, -24, 1000, {.maxSpeed=65, .minSpeed=30, .earlyExitRange=4}, true);
+    // Intake 3 other balls
+    pros::delay(900);
+    openGate();
+    startIntake();
+    chassis.turnToHeading(0, 300, {.minSpeed=60, .earlyExitRange=3});
+ 
+ 
+// Intake 3 other balls
+
+chassis.moveToPoint(-24.5, 29.5, 1500, {.maxSpeed=85, .minSpeed=50, .earlyExitRange=3}, true);
+    pros::delay(40);
+    closeGate();
+    pros::delay(900);
+    openGate();
+// Score the mid goal
+
+    pros::delay(600);
+    stopIntake();
+    //  chassis.turnToPoint(-21, 15,700,  {.forwards = false});    
+    topMotor.move(127);
+    frontMotor.move(-60);
+    pros::delay(200);
+    frontMotor.move(0);
+    //topMotor.move(0);
+    //chassis.turnToHeading(315, 800, {}, false);
+   
+   // chassis.turnToHeading(330, 400, {}, false);
+    //chassis.moveToPoint(-18, 9, 1000, {.forwards=false, .maxSpeed=70}, false);
+    chassis.moveToPose(-9, 9, 330, 2000, {.forwards=false, .minSpeed = 80});
+    pros::delay(500);
+    startTopScore();
+    startMidScore();
+    chassis.waitUntilDone();
+    pros::delay(750);
+    middleMech.extend();
+    stopMidScore();
+    stopTopScore();
+    startIntake();
+    //stopTopScore();
+    
+    // Move towards long goal and score
+    //RclMain.mainUpdate();
+    
+    chassis.turnToPoint(-42, 47, 700, { .earlyExitRange = 3});
+    chassis.moveToPoint(-45, 47, 3500, {});
+    //closeGate();
+    pros::delay(300);
+    chassis.turnToHeading(270, 500, {}, false);
+    /*chassis.moveToPoint(-27, 51, 1100, {.forwards=false, .maxSpeed=80}, false);
+    startTopScore();
+    pros::delay(1000);
+    stopTopScore();*/
+
+    // Refill at matchloader
+    startIntake();
+    openGate();
+    //RclMain.updateBotPose();
+    chassis.moveToPoint(-70, 48, 1200, {.maxSpeed=100, .minSpeed=50}, false);
+    pros::delay(200);
+
+    // Score again
+    chassis.moveToPoint(-25, 50, 1100, {.forwards = false, .maxSpeed=80}, false);
+    //closeGate();
+    startTopScore();
+}
+
+
+
+
 void right(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(48.75, -16.125, 270);

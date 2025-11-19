@@ -4,6 +4,7 @@
 #include "custom/auton.h"
 #include "custom/util_funcs.h"
 #include "custom/auton_selector.h" // IWYU pragma: keep
+#include "pros/motors.h"
 
 void initialize() {
     chassis.calibrate();
@@ -29,9 +30,8 @@ void autonomous() {
 	extendLeftArm();
 	extendRightArm();
 
-	//red_left();
-	
-
+	soloSAWP();	
+/*
 	// Auton Selection
 	if (runningSkills) {
 		skills();
@@ -81,7 +81,7 @@ void autonomous() {
 			blue_soloAWP();
 			return;
 	}	
-
+*/
 
 }
 
@@ -91,9 +91,9 @@ void opcontrol() {
 	startControllerRclDisplay();
     chassis.setPose(-46, 0, 270);
 	RclMain.setRclPose(chassis.getPose());
+	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	//odomLift.extend();
-	odomLift.retract();
+	odomLift.extend();
 
 	// Retract both descore arms
 	extendLeftArm();
