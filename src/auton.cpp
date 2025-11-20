@@ -4,7 +4,6 @@
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 
-// Autonts
 void soloSAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, -13.25, 180);

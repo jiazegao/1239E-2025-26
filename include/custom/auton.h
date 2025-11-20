@@ -10,6 +10,10 @@ void soloSAWP();
 void leftControlRush();
 void rightControlRush();
 
-// Skills
+void left();
+void right();
+
+void soloSAWP();
+
 void skills();
 void skills_v2();
