@@ -30,7 +30,7 @@ void autonomous() {
 	extendLeftArm();
 	extendRightArm();
 
-	soloSAWP();	
+	skills();	
 /*
 	// Auton Selection
 	if (runningSkills) {
