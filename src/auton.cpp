@@ -4,7 +4,7 @@
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 
-void soloSAWP(){
+void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, -13.25, 180);
     RclMain.setRclPose(chassis.getPose());

@@ -31,11 +31,11 @@ void autonomous() {
 	extendLeftArm();
 	extendRightArm();
 
-	soloSAWP();	
-	
-	leftControlRush();
+	//soloAWP();	
 
-	runAuton();
+	//leftControlRush();
+
+	//runAuton();
 
 }
 

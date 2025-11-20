@@ -6,14 +6,9 @@
 // Autons
 void left();
 void right();
-void soloSAWP();
+void soloAWP();
 void leftControlRush();
 void rightControlRush();
-
-void left();
-void right();
-
-void soloSAWP();
 
 void skills();
 void skills_v2();
