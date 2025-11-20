@@ -5,6 +5,7 @@
 #include "custom/util_funcs.h"
 #include "custom/auton_selector.h" // IWYU pragma: keep
 #include "pros/motors.h"
+#include "pros/motors.h"
 
 void initialize() {
     chassis.calibrate();
@@ -31,57 +32,16 @@ void autonomous() {
 	extendRightArm();
 
 	skills();	
-/*
+
 	// Auton Selection
 	if (runningSkills) {
 		skills();
 		return;
 	}
 
-	switch (allianceColor) {
-		case alliance_color::RED:
-			switch (autonType) {
-				case autonTypes::LEFT:
-					red_left();
-					return;
-				case autonTypes::RIGHT_NOMID:
-					red_right_noScoreMid();
-					return;
-				case autonTypes::RIGHT_WMID:
-					red_right_scoreMid();
-					return;
-				case autonTypes::SOLO_AWP:
-					red_soloAWP();
-					return;
-				default:
-					red_left();
-					return;
-			}
-			return;
-		case alliance_color::BLUE:
-			switch (autonType) {
-				case autonTypes::LEFT:
-					blue_left();
-					return;
-				case autonTypes::RIGHT_NOMID:
-					blue_right_noScoreMid();
-					return;
-				case autonTypes::RIGHT_WMID:
-					blue_right_scoreMid();
-					return;
-				case autonTypes::SOLO_AWP:
-					blue_soloAWP();
-					return;
-				default:
-					blue_left();
-					return;
-			}
-			return;
-		default:
-			blue_soloAWP();
-			return;
-	}	
-*/
+	//leftControlRush();
+
+	//runAuton();
 
 }
 

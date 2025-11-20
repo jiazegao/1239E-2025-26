@@ -271,7 +271,7 @@ void startControllerAutonSelectorDisplay() {
                 pros::delay(50);
                 controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
                 pros::delay(50);
-                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::RIGHT_NOMID ? "RIGHT_NOMID" : autonType == autonTypes::RIGHT_WMID ? "RIGHT_WMID" : "SOLO_AWP");
+                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
                 pros::delay(50);
                 controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
                 pros::delay(100);
