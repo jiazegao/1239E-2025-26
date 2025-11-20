@@ -46,9 +46,7 @@ void opcontrol() {
     chassis.setPose(-46, 0, 270);
 	RclMain.setRclPose(chassis.getPose());
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
-	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.extend();
 	odomLift.extend();
 
 	// Retract both descore arms

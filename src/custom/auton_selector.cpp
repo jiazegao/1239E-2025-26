@@ -86,10 +86,10 @@ void runAuton() {
             rightControlRush();
             return;
         case autonTypes::SOLO_AWP:
-            soloSAWP();
+            soloAWP();
             return;
         default:
-            soloSAWP();
+            soloAWP();
             return;
 			
     }
