@@ -66,22 +66,22 @@ inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
 
 // Lateral PID controller
 inline lemlib::ControllerSettings lateral_controller(
-                                              5, // proportional gain (kP)
+                                              9, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              25 , // derivative gain (kD)
-                                              3, // anti windup
+                                              50, // derivative gain (kD)
+                                              0, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
                                               500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              0 // maximum acceleration (slew)
 );
 
 // Angular PID controller
-inline lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
-                                            .1, // integral gain (kI)
-                                              10.5, // derivative gain (kD)
-                                              3, // anti windup
+inline lemlib::ControllerSettings angular_controller(3.5, // proportional gain (kP)
+                                            0, // integral gain (kI)
+                                              30, // derivative gain (kD)
+                                              0, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in degrees
@@ -130,6 +130,9 @@ inline Circle_Obstacle upLongGoalLeft(-21, 47.5, 4);
 inline Circle_Obstacle upLongGoalRight(21, 47.5, 4);
 inline Circle_Obstacle downLongGoalLeft(-21, -47.5, 4);
 inline Circle_Obstacle downLongGoalRight(21, -47.5, 4);
+
+// Disable Line
+inline Line_Obstacle disableLine(0, FIELD_NEG_HALF_LENGTH, 0, FIELD_HALF_LENGTH);
 
 inline Circle_Obstacle centerGoals(0, 0, 5);
 

@@ -9,11 +9,14 @@ void updatePneumatics();
 void updateTankDrive();
 
 // Auton functions
+inline pros::Task* colorOuttakeTask;
+inline bool outtakeTaskRunning = false;
 void startIntake();
 void stopIntake();
 void startOuttake();
 void stopOuttake();
 void startTopScore(int velocity = 127);
+void startTopScore(alliance_color color);
 void stopTopScore();
 void startMidScore();
 void stopMidScore();

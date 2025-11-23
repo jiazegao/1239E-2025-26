@@ -9,13 +9,17 @@
 
 void initialize() {
     chassis.calibrate();
-    chassis.setPose(64, -62, 0);
+    chassis.setPose(0, 0, 0);
 
-    init_auton_selector();
-//	startControllerAutonSelectorDisplay();
-//startControllerRclDisplay();
-startControllerDisplay();
+	//Ensure odom pod is down
+	odomLift.retract();
+
+	// Auton Selection
+	startControllerDisplay();
+	init_auton_selector();
+
     RclMain.startTracking();
+	topOptic.set_led_pwm(100);
 }
 
 void disabled() {}
@@ -24,23 +28,12 @@ void competition_initialize() {}
 
 void autonomous() {
 
-	//Ensure odom pod is down
-	odomLift.retract();
+	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendRightArm();
-
-	skills();	
-
-	// Auton Selection
-	if (runningSkills) {
-		skills();
-		return;
-	}
-
-	//leftControlRush();
-
+	right();
 	//runAuton();
 
 }
@@ -49,8 +42,6 @@ void opcontrol() {
 	
 	//startControllerDisplay();
 	startControllerRclDisplay();
-    chassis.setPose(-46, 0, 270);
-	RclMain.setRclPose(chassis.getPose());
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
 	odomLift.extend();
@@ -58,6 +49,7 @@ void opcontrol() {
 	// Retract both descore arms
 	extendLeftArm();
 	extendRightArm();
+	stopTopScore();
 
 	// Display FB Logo
 	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});

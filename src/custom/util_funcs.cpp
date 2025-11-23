@@ -26,7 +26,7 @@ void topOut(int velocity = 127) {
     topMotor.move(-1 * std::abs(velocity));
 }
 void slowTopOut() {
-    topMotor.move(-20);
+    topMotor.move(-35);
 }
 void stopTop() {
     topMotor.move(0);
@@ -86,6 +86,9 @@ void stopIntake() {
 };
 void stopTopScore() {
     stopIntake();
+    if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
+        colorOuttakeTask->remove();
+    }
 };
 void stopMidScore() {
     stopIntake();
@@ -104,6 +107,28 @@ void startTopScore(int velocity) {
     frontIn();
     topOut(velocity);
 };
+void startTopScore(alliance_color color) {
+    if (color == alliance_color::RED) {
+        colorOuttakeTask = new pros::Task ([](){
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                if (!topOpticIsBlue()) startTopScore(127);
+                else startIntake();
+                pros::delay(20);
+            }
+        });
+    }
+    else if (color == alliance_color::BLUE) {
+        colorOuttakeTask = new pros::Task ([](){
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                if (!topOpticIsRed()) startTopScore(127);
+                else startIntake();
+                pros::delay(20);
+            }
+        });
+    }
+}
 void startMidScore() {
     stopIntake();
     middleMech.retract();
