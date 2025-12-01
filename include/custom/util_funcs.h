@@ -25,6 +25,8 @@ double pivot_x(double pivot_coord);
 double pivot_y(double pivot_coord);
 
 // Pneumatics functions
+void moveForward(double inches, int timeout, float maxSpeed=127, float minSpeed=1, bool async=true);
+void jiggle(int repeats);
 void openGate();
 void closeGate();
 void openMid();
@@ -49,3 +51,5 @@ void startBrainFBDisplay();
 
 // Test Functions
 void startControllerDistDataDisplay();
+void startControllerOpticDisplay();
+void startControllerRCLUpdate();

@@ -264,8 +264,8 @@ void RclTracking::updateBotPose(RclSensor* sens) {
         else if (data.first == CoordType::Y) pose.y = data.second;
 
         // Sync to Lemlib
-        chassis->setPose(pose);
-        setRclPose(pose);
+        chassis->setPose({pose.x, pose.y, chassis->getPose().theta});
+        setRclPose({pose.x, pose.y, chassis->getPose().theta});
     }
 }
 

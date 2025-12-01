@@ -13,7 +13,8 @@ void toggle_color(lv_event_t* e) {
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
         case autonTypes::LEFT: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
-        case autonTypes::LEFT_RUSH: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
+        case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_ULT_RUSH; lv_label_set_text(label_type, "LEFT_ULT_RUSH"); break;
+        case autonTypes::LEFT_ULT_RUSH: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
         case autonTypes::RIGHT: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT RUSH"); break;
         case autonTypes::RIGHT_RUSH: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO AWP"); break;
         case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
@@ -78,6 +79,9 @@ void runAuton() {
             return;
         case autonTypes::LEFT_RUSH:
             leftControlRush();
+            return;
+        case autonTypes::LEFT_ULT_RUSH:
+            leftUltRush();
             return;
         case autonTypes::RIGHT:
             right();

@@ -3,11 +3,14 @@
 #include "RclTracking.h"
 #include "custom/configs.h"
 #include "custom/auton.h"
+#include "lemlib/pose.hpp"
 #include "liblvgl/misc/lv_types.h"
 #include "pros/misc.h"
 #include "pros/motors.h"
 
 #include "auton_selector.h"
+#include <cmath>
+#include <numbers>
 
 // Indexer control
 void frontIn() {
@@ -44,10 +47,10 @@ void unlockFront() {
     frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
 }
 bool topOpticIsRed() {
-    return (345 < topOptic.get_hue() || topOptic.get_hue() < 15);
+    return (335 < topOptic.get_hue() || topOptic.get_hue() < 25);
 }
 bool topOpticIsBlue() {
-    return (195 < topOptic.get_hue() && topOptic.get_hue() < 225);
+    return (185 < topOptic.get_hue() && topOptic.get_hue() < 235);
 }
 
 // Pneumatics functions
@@ -77,6 +80,16 @@ void retractRightArm() {
 };
 
 // Auton functions
+void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
+    chassis.moveToPoint(chassis.getPose().x+inches*std::cos((-1)*(chassis.getPose().theta-90+360*10)/180*std::numbers::pi), chassis.getPose().y+inches*std::sin((-1)*(chassis.getPose().theta-90+360*10)/180*std::numbers::pi), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
+}
+void jiggle(int repeats) {
+    for (int i = 0; i < repeats; i++) {
+        lemlib::Pose orig_p = chassis.getPose();
+        moveForward(3, 200, 41, 40, false);
+        moveForward(-0.1, 200, 41, 40, false);
+    }
+}
 void stopIntake() {
     middleMech.extend();
     lockTop();
@@ -85,10 +98,11 @@ void stopIntake() {
     stopFront();
 };
 void stopTopScore() {
-    stopIntake();
     if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
+        outtakeTaskRunning = false;
         colorOuttakeTask->remove();
     }
+    stopIntake();
 };
 void stopMidScore() {
     stopIntake();
@@ -108,23 +122,73 @@ void startTopScore(int velocity) {
     topOut(velocity);
 };
 void startTopScore(alliance_color color) {
+    stopTopScore();
     if (color == alliance_color::RED) {
         colorOuttakeTask = new pros::Task ([](){
+            Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
-                if (!topOpticIsBlue()) startTopScore(127);
-                else startIntake();
-                pros::delay(20);
+                // General Control
+                if (!topOpticIsBlue() || topOptic.get_proximity() < 200) {
+                    frontIn();
+                    topOut(127);
+                }
+                else startOuttake();
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
+                    startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
+                    timer.reset();
+                }
+                pros::delay(40);
             }
         });
     }
     else if (color == alliance_color::BLUE) {
         colorOuttakeTask = new pros::Task ([](){
+            Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
-                if (!topOpticIsRed()) startTopScore(127);
-                else startIntake();
-                pros::delay(20);
+                // General Control
+                if (!topOpticIsRed() || topOptic.get_proximity() < 200) {
+                    frontIn();
+                    topOut(127);
+                }
+                else startOuttake();
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
+                    startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
+                    timer.reset();
+                }
+                pros::delay(40);
+            }
+        });
+    }
+    else if (color == alliance_color::NONE) {
+        colorOuttakeTask = new pros::Task ([](){
+            Timer timer(800);
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
+                    startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
+                    timer.reset();
+                }
+                pros::delay(40);
             }
         });
     }
@@ -335,6 +399,38 @@ void startControllerDistDataDisplay() {
                 controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
                 pros::delay(50);
                 controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
+                pros::delay(100);
+            }
+        });
+    }
+}
+void startControllerOpticDisplay() {
+    stopControllerDisplay();
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "Hue: %f", topOptic.get_hue());
+                pros::delay(50);
+                controller.print(1, 0, "Prox: %d", topOptic.get_proximity());
+                pros::delay(100);
+            }
+        });
+    }
+}
+void startControllerRCLUpdate() {
+    stopControllerDisplay();
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "X: %f, %f", chassis.getPose().x, RclMain.getRclPose().x);
+                pros::delay(50);
+                controller.print(1, 0, "Y: %f, %f", chassis.getPose().y, RclMain.getRclPose().y);
+                pros::delay(50);
+                controller.print(2, 0, "Heading: %f, %f", chassis.getPose().theta, RclMain.getRclPose().theta);
                 pros::delay(100);
             }
         });

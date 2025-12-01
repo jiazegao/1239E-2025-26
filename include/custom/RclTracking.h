@@ -331,7 +331,7 @@ public:
                 double minDelta_ = 0.5,
                 double maxDelta_ = 4.0,
                 double maxDeltaFromLemlib_ = 10.0,
-                double maxSyncPerSec_ = 6.0,
+                double maxSyncPerSec_ = 3.0,
                 int minPause_ = 20);
 
     // Start background task

@@ -73,19 +73,19 @@ inline lemlib::ControllerSettings lateral_controller(
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
+                                              300, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
 // Angular PID controller
 inline lemlib::ControllerSettings angular_controller(3.5, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                              30, // derivative gain (kD)
+                                              25, // derivative gain (kD)
                                               0, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in degrees
-                                              500, // large error range timeout, in milliseconds
+                                              300, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
@@ -117,7 +117,7 @@ inline pros::Distance left_dist(4);
 inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
 inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclTracking RclMain(&chassis, 20, true);
+inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 4.0, 20);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);

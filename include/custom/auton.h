@@ -8,6 +8,7 @@ void left();
 void right();
 void soloAWP();
 void leftControlRush();
+void leftUltRush();
 void rightControlRush();
 
 void skills();

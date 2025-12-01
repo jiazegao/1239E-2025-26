@@ -15,7 +15,7 @@ void initialize() {
 	odomLift.retract();
 
 	// Auton Selection
-	startControllerDisplay();
+	startControllerAutonSelectorDisplay();
 	init_auton_selector();
 
     RclMain.startTracking();
@@ -30,12 +30,14 @@ void autonomous() {
 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
+	startControllerRCLUpdate();
+
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendRightArm();
-	right();
-	//runAuton();
-
+	
+	//skills();
+	runAuton();
 }
 
 void opcontrol() {
