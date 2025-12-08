@@ -58,7 +58,7 @@ void opcontrol() {
 
 	while (true) {
 		// Update Controls
-		updateTankDrive();
+		updateArcadeDrive();
 		updateIntake();
 		updatePneumatics();
 
