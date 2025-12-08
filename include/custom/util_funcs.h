@@ -7,7 +7,7 @@
 void updateIntake();
 void updatePneumatics();
 void updateTankDrive();
-
+void updateArcadeDrive();
 // Auton functions
 inline pros::Task* colorOuttakeTask;
 inline bool outtakeTaskRunning = false;

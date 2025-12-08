@@ -295,6 +295,8 @@ void updatePneumatics() {
 
 // Tank drive
 void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
+//Arcade drive
+void updateArcadeDrive() { chassis.arcade(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)); }
 
 // Display
 void stopBrainDisplay() {
