@@ -294,10 +294,13 @@ void updatePneumatics() {
 }
 
 // Tank drive
-void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
+void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)); }
 //Arcade drive
 void updateArcadeDrive() { chassis.arcade(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), -controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)); }
-
+//Curvature drive
+void updateCurvatureDrive() { chassis.curvature(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), -controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X), controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)); }
+//Single Stick drive
+void updateSingleStickDrive() { chassis.arcade(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), -controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X)); }
 // Display
 void stopBrainDisplay() {
     if (brainScreenTask != nullptr) {
