@@ -23,13 +23,13 @@ void stopFront() {
     frontMotor.move(0);
 }
 void topIn() {
-    topMotor.move(127);
+    topMotor.move(-127);
 }
 void topOut(int velocity = 127) {
-    topMotor.move(-1 * std::abs(velocity));
+    topMotor.move(1 * std::abs(velocity));
 }
 void slowTopOut() {
-    topMotor.move(-35);
+    topMotor.move(35);
 }
 void stopTop() {
     topMotor.move(0);
