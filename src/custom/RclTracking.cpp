@@ -5,7 +5,7 @@
 //              Most functionalities are achieved through basic sensor fusion and
 //              intersection math.
 
-#include "custom/RclTracking.h"
+#include "custom/RclTracking.hpp"
 #include <cstdint>
 
 // Timer class for timeouts
@@ -110,7 +110,7 @@ bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
     if (d > radius) return false;
     double dx = xi - sp.x;
     double dy = yi - sp.y;
-    double ang = degToRad(sp.heading);
+    double ang = degToRad( botToTrig(sp.heading) );
     return (dx * std::cos(ang) > 0) || (dy * std::sin(ang) > 0);
 }
 
@@ -134,7 +134,7 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
     if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
     if (sp.heading == 180) sp.heading += 0.00001;  // avoid 180
     // slope and y-intercept
-    sp.slope = 1.0 / std::tan(degToRad(sp.heading));
+    sp.slope = std::tan(degToRad(botToTrig(sp.heading)));
     sp.yIntercept = sp.y - sp.slope * sp.x;
 }
 

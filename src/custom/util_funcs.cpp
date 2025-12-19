@@ -1,14 +1,7 @@
 
-#include "custom/util_funcs.h"
-#include "RclTracking.h"
-#include "custom/configs.h"
-#include "custom/auton.h"
-#include "lemlib/pose.hpp"
-#include "liblvgl/misc/lv_types.h"
-#include "pros/misc.h"
-#include "pros/motors.h"
+#include "custom/util_funcs.hpp"
 
-#include "auton_selector.h"
+#include "custom/auton_selector.hpp"
 #include <cmath>
 #include <numbers>
 

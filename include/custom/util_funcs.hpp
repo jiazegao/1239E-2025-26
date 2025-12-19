@@ -1,6 +1,6 @@
 #pragma once
 
-#include "custom/configs.h"
+#include "custom/configs.hpp"
 #include "liblvgl/lvgl.h"
 
 // Controls

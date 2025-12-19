@@ -1,7 +1,7 @@
 #pragma once
 
-#include "custom/configs.h"
-#include "custom/util_funcs.h"
+#include "custom/configs.hpp"
+#include "custom/util_funcs.hpp"
 
 // Autons
 void left();

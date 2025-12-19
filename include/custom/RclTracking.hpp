@@ -12,6 +12,8 @@
 enum class TimeUnit { SECOND, MILLISECOND };
 enum class CoordType { X, Y, INVALID };
 
+inline double botToTrig (double ang) { return (std::fmod(360.0-std::abs(90.0-ang), 360.0)); }
+
 // Timer
 class Timer {
     public:
@@ -295,8 +297,6 @@ public:
     // Check if sensor ray intersects this obstacle circle
     bool isIntersecting(const SensorPose& sp) const;
 
-    
-private:
     double x, y, radius;
     Timer lifeTimer;
 };

@@ -1,9 +1,9 @@
 #include "main.h"
-#include "custom/RclTracking.h"
-#include "custom/configs.h"
-#include "custom/auton.h"
-#include "custom/util_funcs.h"
-#include "custom/auton_selector.h" // IWYU pragma: keep
+#include "custom/RclTracking.hpp"
+#include "custom/configs.hpp"
+#include "custom/auton.hpp"
+#include "custom/util_funcs.hpp"
+#include "custom/auton_selector.hpp" // IWYU pragma: keep
 #include "pros/motors.h"
 #include "pros/motors.h"
 

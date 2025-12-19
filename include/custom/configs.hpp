@@ -10,9 +10,9 @@
 #include "pros/motors.hpp"   // IWYU pragma: keep
 #include "pros/optical.hpp"     // IWYU pragma: keep
 #include "pros/rotation.hpp" // IWYU pragma: keep
-#include "cmath"
+#include <cmath>
 
-#include "custom/RclTracking.h"
+#include "custom/RclTracking.hpp"
 
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
@@ -120,10 +120,10 @@ inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 4.0, 20);
 
 // loaders
-inline Circle_Obstacle redUpLoader(-67.5, 46.5, 4);
-inline Circle_Obstacle redDownLoader(-67.5, -46.5, 4);
-inline Circle_Obstacle blueUpLoader(67.5, 46.5, 4);
-inline Circle_Obstacle blueDownLoader(67.5, -46.5, 4);
+inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);
+inline Circle_Obstacle redDownLoader(-67.5, -46.5, 3);
+inline Circle_Obstacle blueUpLoader(67.5, 46.5, 3);
+inline Circle_Obstacle blueDownLoader(67.5, -46.5, 3);
 
 // legs
 inline Circle_Obstacle upLongGoalLeft(-21, 47.5, 4);

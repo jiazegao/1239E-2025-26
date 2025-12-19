@@ -1,7 +1,7 @@
 
-#include "custom/auton_selector.h"
+#include "custom/auton_selector.hpp"
 #include "liblvgl/widgets/image/lv_image.h"
-#include "auton.h"
+#include "custom/auton.hpp"
 
 // Button event callback functions
 void toggle_color(lv_event_t* e) {

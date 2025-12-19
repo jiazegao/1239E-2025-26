@@ -1,7 +1,6 @@
 #pragma once
 
 #include "main.h" // IWYU pragma: keep
-#include "configs.h"
 
 // Autonomous selection variables
 enum class autonTypes { TYPE_NONE, LEFT, RIGHT, LEFT_RUSH, RIGHT_RUSH, LEFT_ULT_RUSH, SOLO_AWP };
