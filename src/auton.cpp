@@ -151,11 +151,11 @@ void right(){
 
     // Push
     closeGate();
-    chassis.moveToPoint(-46, -36, 1200, {.minSpeed=60, .earlyExitRange=1}, false);
-    chassis.turnToPoint(-16, -37, 500, {.forwards=false}, false);
+    chassis.moveToPoint(-46, -35.5, 1200, {.minSpeed=60, .earlyExitRange=1}, false);
+    chassis.turnToPoint(-16, -35.5, 500, {.forwards=false}, false);
     retractLeftArm();
-    chassis.moveToPoint(-16, -37, 1000, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-16, -37, 9999, {.forwards=false}, false);
+    chassis.moveToPoint(-16, -35.5, 1000, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-16, -35.5, 9999, {.forwards=false}, false);
 }
 void left() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -186,7 +186,7 @@ void left() {
     pros::delay(450);
     startMidScore();
     closeGate();
-    pros::delay(1300); // middle goal score time
+    pros::delay(1150); // middle goal score time
     stopMidScore();
     middleMech.extend();
 
@@ -203,11 +203,11 @@ void left() {
     // Refill at matchloader
     startIntake();
     openGate();
-    chassis.moveToPoint(-68, 49, 900, {.maxSpeed=70, .minSpeed=50}, false);
+    chassis.moveToPoint(-68, 48, 900, {.maxSpeed=70, .minSpeed=50}, false);
     pros::delay(300);
 
     // Score again
-    chassis.moveToPoint(-25, 49, 1100, {.forwards = false}, true);
+    chassis.moveToPoint(-25, 48, 1100, {.forwards = false}, true);
     pros::delay(500);
     //closeGate();
     startTopScore(allianceColor);
@@ -216,12 +216,12 @@ void left() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-46, 61, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(-18, 60, 500, {.forwards=false}, false);
+    chassis.moveToPoint(-46, 58, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
+    chassis.turnToPoint(-16, 58, 500, {.forwards=false}, false);
     retractLeftArm();
-    chassis.moveToPoint(-18, 60, 1000, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-18, 60, 9999, {.forwards=false}, false);
-   
+    chassis.moveToPoint(-16, 58, 1200, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-16, 58, 9999, {.forwards=false}, false);
+    chassis.turnToHeading(-105, 700);
 }
 void leftControlRush() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -277,7 +277,7 @@ void leftUltRush() {
     chassis.turnToHeading(275, 400, {});
     startIntake();
     //pros::delay(200);
-    chassis.moveToPoint(-64, 48, 900, {.maxSpeed=70}, false);
+    chassis.moveToPoint(-63.4, 48, 900, {.maxSpeed=70}, false);
     pros::delay(400);
 
     // Score the long goal
@@ -285,17 +285,17 @@ void leftUltRush() {
     pros::delay(350);
     startTopScore();
     closeGate();
-    pros::delay(800);
+    pros::delay(850);
     RclMain.updateBotPose(&left_rcl);
     pros::delay(500);
 
     // Push
     closeGate();
-    chassis.moveToPoint(-46, 61, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(pivot_x(-16), pivot_y(61), 500, {}, false);
+    chassis.moveToPoint(-46, 59, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
+    chassis.turnToPoint(pivot_x(-16), pivot_y(58), 500, {}, false);
     retractLeftArm();
-    chassis.moveToPoint(-16, 61, 1000, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-16, 61, 9999, {.forwards=false}, false);
+    chassis.moveToPoint(-16, 58, 1000, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-16, 58, 9999, {.forwards=false}, false);
 }
 void rightControlRush() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -329,12 +329,12 @@ void rightControlRush() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-46, -36, 1200, {.minSpeed=60, .earlyExitRange=1}, false);
-    chassis.turnToPoint(-16, -37, 500, {.forwards=false}, false);
+    chassis.moveToPoint(-46, -35.25, 1200, {.minSpeed=60, .earlyExitRange=1}, false);
+    chassis.turnToPoint(-15, -35.25, 500, {.forwards=false}, false);
     retractLeftArm();
-    chassis.moveToPoint(-16, -37, 1000, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-16, -37, 9999, {.forwards=false}, false);
-
+    chassis.moveToPoint(-15, -35.25, 1000, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-15, -35.25, 9999, {.forwards=false}, false);
+    chassis.turnToHeading(256, 700);
     //temporary
     //startTopScore();
 }
