@@ -66,3 +66,6 @@
     2) Skills_v2 draft completed
 11/19/2025
     1) Finished left / right control rush drafts and modified auton selector accordingly
+12/23/2025
+    1) Added MclTracking to main branch
+    2) Added auto descore macro

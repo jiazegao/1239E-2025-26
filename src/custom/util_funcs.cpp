@@ -59,12 +59,6 @@ void openMid() {
 void closeMid() {
     middleMech.extend();
 };
-void extendLeftArm() {
-    leftDescoreArm.extend();
-};
-void retractLeftArm() {
-    leftDescoreArm.retract();
-};
 void extendRightArm() {
     rightDescoreArm.extend();
 };
