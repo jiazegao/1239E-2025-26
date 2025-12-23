@@ -267,22 +267,29 @@ void updateIntake() {
 }
 
 // Fucntion for managing pneumatics controls
+bool descoreMacroActivated = false;
 void updatePneumatics() {
-    // Button Y - Middle goal descore mech (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-        middleDescore.toggle();
-    }
-    // Button Left - Left descore arm (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-        leftDescoreArm.toggle();
-    }
-    // Button Down - Right descore arm (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
-        rightDescoreArm.toggle();
-    }
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
         matchLoadGate.toggle();
+    }
+    // Button Down - Right descore arm (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+        rightDescoreArm.toggle();
+        descoreMacroActivated = false; // Shutdown macro
+    }
+    // Button Right - Descore macro (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+        descoreMacroActivated = !descoreMacroActivated;
+        extendRightArm();
+    }
+
+    // Descore macro update
+    if (descoreMacroActivated) {
+        // Release descore arm if distance less than 15 cm
+        if (descoreDist.get() < 150) {
+            retractRightArm();
+        }
     }
 }
 
@@ -374,6 +381,19 @@ void startControllerRclDisplay() {
                 pros::delay(50);
                 controller.print(2, 0, "(%.1f, %.1f, %.1f)", left_rcl.getBotCoord(chassis.getPose()).second, back_rcl.getBotCoord(chassis.getPose()).second, right_rcl.getBotCoord(chassis.getPose()).second);
                 pros::delay(100);
+            }
+        });
+    }
+}
+void startControllerMatchDisplay() {
+    stopControllerDisplay();
+    if (controllerScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+            while (true) {
+                controller.clear();
+                pros::delay(50);
+                controller.print(0, 0, "DESC_MAC: %s", descoreMacroActivated ? "TRUE" : "false");
+                pros::delay(150);
             }
         });
     }
