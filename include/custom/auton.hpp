@@ -12,6 +12,7 @@ void leftFastRush();
 void rightControlRush();
 void rightFastRush();
 void leftv2();
+void rightv2();
 
 void skills();
 void skills_v2();

@@ -435,6 +435,9 @@ void leftv2() {
     chassis.moveToPoint(-16, 37, 9999, {}, false);
     chassis.turnToHeading(105, 700);
 }
+void rightv2() {
+    
+}
 
 void skills() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);

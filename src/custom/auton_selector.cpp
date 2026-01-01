@@ -13,10 +13,13 @@ void toggle_color(lv_event_t* e) {
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
         case autonTypes::LEFT: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
-        case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_ULT_RUSH; lv_label_set_text(label_type, "LEFT_ULT_RUSH"); break;
-        case autonTypes::LEFT_ULT_RUSH: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
-        case autonTypes::RIGHT: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT RUSH"); break;
-        case autonTypes::RIGHT_RUSH: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO AWP"); break;
+        case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_FAST; lv_label_set_text(label_type, "LEFT_FAST"); break;
+        case autonTypes::LEFT_FAST: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
+        case autonTypes::LEFT_V2: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
+        case autonTypes::RIGHT: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
+        case autonTypes::RIGHT_RUSH: autonType = autonTypes::RIGHT_FAST; lv_label_set_text(label_type, "RIGHT_FAST"); break;
+        case autonTypes::RIGHT_FAST: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
+        case autonTypes::RIGHT_V2: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
         case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
         default: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
     }
@@ -80,14 +83,23 @@ void runAuton() {
         case autonTypes::LEFT_RUSH:
             leftControlRush();
             return;
-        case autonTypes::LEFT_ULT_RUSH:
+        case autonTypes::LEFT_FAST:
             leftFastRush();
+            return;
+        case autonTypes::LEFT_V2:
+            leftv2();
             return;
         case autonTypes::RIGHT:
             right();
             return;
         case autonTypes::RIGHT_RUSH:
             rightControlRush();
+            return;
+        case autonTypes::RIGHT_FAST:
+            rightFastRush();
+            return; 
+        case autonTypes::RIGHT_V2:
+            rightv2();
             return;
         case autonTypes::SOLO_AWP:
             soloAWP();
