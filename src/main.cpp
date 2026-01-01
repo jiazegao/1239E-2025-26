@@ -42,8 +42,7 @@ void autonomous() {
 
 void opcontrol() {
 	
-	//startControllerDisplay();
-	startControllerRclDisplay();
+	startControllerMatchDisplay();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
 	odomLift.extend();
