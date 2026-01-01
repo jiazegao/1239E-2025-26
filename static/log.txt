@@ -69,3 +69,6 @@
 12/23/2025
     1) Added MclTracking to main branch
     2) Added auto descore macro
+1/1/2026
+    1) Fixed LeftArmDescre
+    2) Code Builds now
