@@ -203,7 +203,7 @@ void left() {
     // Refill at matchloader
     startIntake();
     openGate();
-    chassis.moveToPoint(-68, 48, 900, {.maxSpeed=70, .minSpeed=50}, false);
+    chassis.moveToPoint(-68, 50, 900, {.maxSpeed=70, .minSpeed=50}, false);
     pros::delay(300);
 
     // Score again
