@@ -81,7 +81,7 @@ void runAuton() {
             leftControlRush();
             return;
         case autonTypes::LEFT_ULT_RUSH:
-            leftUltRush();
+            leftFastRush();
             return;
         case autonTypes::RIGHT:
             right();
