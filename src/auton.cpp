@@ -409,8 +409,8 @@ void skills() {
     RclMain.updateBotPose(&back_rcl);
 
     // Head towards top-right match loader
-    chassis.moveToPoint(45, 47, 1300, {.minSpeed=80}, false);
-    chassis.moveToPoint(45, 47, 1000, {.maxSpeed=60}, false);
+    chassis.moveToPoint(45, 48, 1300, {.minSpeed=80}, false);
+    chassis.moveToPoint(45, 48, 1000, {.maxSpeed=60}, false);
     RclMain.updateBotPose(&right_rcl);
     chassis.turnToHeading(90, 500, {}, false);
     pros::delay(200);
@@ -468,7 +468,8 @@ void skills() {
     chassis.moveToPoint(-42, 48, 1000, {});
     stopTopScore();
     // Park
-    chassis.moveToPose(-66, 18, 200, 2800, {.lead = .25}, false);
+    chassis.moveToPoint(-48, 48, 1000);
+    chassis.moveToPose(-67, 18, 200, 2800, {.lead = .25}, false);
     //chassis.moveToPose(-64, 18, 180, 2500, {.maxSpeed = 100}, false);
     odomLift.extend();
     startOuttake();

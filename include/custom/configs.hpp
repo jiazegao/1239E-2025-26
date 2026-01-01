@@ -50,7 +50,7 @@ inline pros::adi::Pneumatics matchLoadGate('F', false, false);
 inline pros::adi::Pneumatics middleMech('B', true, true);
 //inline pros::adi::Pneumatics middleDescore('C', false, false);
 //inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
-inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
+inline pros::adi::Pneumatics rightDescoreArm('A', false, false);
 inline pros::adi::Pneumatics odomLift('G', false, false);
 
 // Odometry
@@ -109,7 +109,7 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Distance
-inline pros::Distance descoreDist(20);
+inline pros::Distance descoreDist(2);
 inline pros::Distance back_dist(15);
 inline pros::Distance right_dist(3);
 inline pros::Distance left_dist(4);

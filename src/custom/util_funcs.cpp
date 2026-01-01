@@ -1,6 +1,7 @@
 
 #include "custom/util_funcs.hpp"
 
+#include "configs.hpp"
 #include "custom/auton_selector.hpp"
 #include <cmath>
 #include <numbers>
@@ -280,9 +281,11 @@ void updatePneumatics() {
 
     // Descore macro update
     if (descoreMacroActivated) {
+        controller.rumble(".");
         // Release descore arm if distance less than 15 cm
-        if (descoreDist.get() < 150) {
+        if (descoreDist.get() < 160) {
             retractLeftArm();
+            //controller.rumble("-");
         }
     }
 }
