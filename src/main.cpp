@@ -2,6 +2,7 @@
 #include "custom/RclTracking.hpp"
 #include "custom/configs.hpp"
 #include "custom/auton.hpp"
+
 #include "custom/util_funcs.hpp"
 #include "custom/auton_selector.hpp" // IWYU pragma: keep
 #include "pros/motors.h"
@@ -34,22 +35,24 @@ void autonomous() {
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
-	extendRightArm();
+	extendLeftArm();
 	
-	//skills();
+	//Change this back later
+	skills();
+	
 	runAuton();
 }
 
 void opcontrol() {
 	
-	startControllerMatchDisplay();
+	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
 	odomLift.extend();
 
 	// Retract both descore arms
 	extendLeftArm();
-	extendRightArm();
+	extendLeftArm();
 	stopTopScore();
 
 	// Display FB Logo

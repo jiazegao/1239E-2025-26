@@ -33,8 +33,7 @@ void openMid();
 void closeMid();
 void extendLeftArm();
 void retractLeftArm();
-void extendRightArm();
-void retractRightArm();
+
 
 // Display
 inline pros::Task* controllerScreenTask = nullptr;

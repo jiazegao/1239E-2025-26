@@ -59,10 +59,10 @@ void openMid() {
 void closeMid() {
     middleMech.extend();
 };
-void extendRightArm() {
+void extendLeftArm() {
     rightDescoreArm.extend();
 };
-void retractRightArm() {
+void retractLeftArm() {
     rightDescoreArm.retract();
 };
 
@@ -275,14 +275,14 @@ void updatePneumatics() {
     // Button Right - Descore macro (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
         descoreMacroActivated = !descoreMacroActivated;
-        extendRightArm();
+        extendLeftArm();
     }
 
     // Descore macro update
     if (descoreMacroActivated) {
         // Release descore arm if distance less than 15 cm
         if (descoreDist.get() < 150) {
-            retractRightArm();
+            retractLeftArm();
         }
     }
 }
