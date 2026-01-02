@@ -38,9 +38,9 @@ void autonomous() {
 	extendLeftArm();
 	
 	//Change this back later
-	skills();
+	//skills();
 	
-	//runAuton();
+	runAuton();
 }
 
 void opcontrol() {
