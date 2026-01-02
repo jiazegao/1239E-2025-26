@@ -40,7 +40,7 @@ void autonomous() {
 	//Change this back later
 	skills();
 	
-	runAuton();
+	//runAuton();
 }
 
 void opcontrol() {

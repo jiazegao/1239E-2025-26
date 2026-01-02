@@ -462,7 +462,7 @@ void skills() {
     closeGate();
     //chassis.moveToPoint(-38, -48, 1000, {.forwards=false});
     //chassis.turnToHeading(180, 800, {}, false);
-    chassis.moveToPoint(-49, -48,  1000, {.forwards=false}, false);
+    chassis.moveToPoint(-49, -47,  1000, {.forwards=false}, false);
     chassis.turnToHeading(145, 800, {}, false);
 
     // Score bottom-right
@@ -474,9 +474,9 @@ void skills() {
     chassis.moveToPoint(40, -61, 1000, {.maxSpeed=60}, false);
     chassis.turnToHeading(0, 600, {});
     chassis.moveToPoint(38, -48, 1200, {}, true);
-    RclMain.updateBotPose(&right_rcl);
+    //RclMain.updateBotPose(&right_rcl);
     pros::delay(150);
-    RclMain.updateBotPose(&back_rcl);
+   // RclMain.updateBotPose(&back_rcl);
     chassis.turnToHeading(90, 600, {}, false);
 
     chassis.moveToPoint(24, -48, 1000, {.forwards=false, .maxSpeed=70}, false);
@@ -534,9 +534,9 @@ void skills() {
     // Score the top-left goal
     //chassis.moveToPoint(38, 56, 1200, {}, false);
     //chassis.turnToHeading(270, 800, {});
-    chassis.moveToPose(15, 62.5, 270, 1500, {.lead=0.4, .minSpeed=55}, false);
-    chassis.moveToPoint(-20, 61.25, 2000, {.minSpeed=40, .earlyExitRange=12}, false);
-    chassis.moveToPoint(-38, 61.25, 1000, {.maxSpeed=60}, false);
+    chassis.moveToPose(12, 62.5, 270, 1500, {.lead=0.4, .minSpeed=55}, false);
+    chassis.moveToPoint(-20, 62.25, 2000, {.minSpeed=40, .earlyExitRange=12}, false);
+    chassis.moveToPoint(-38, 62.25, 1000, {.maxSpeed=60}, false);
     chassis.turnToHeading(180, 800, {});
     RclMain.updateBotPose(&back_rcl);
     RclMain.updateBotPose(&right_rcl);
@@ -552,9 +552,9 @@ void skills() {
     stopTopScore();
     startIntake();
     openGate();
-    chassis.moveToPoint(-68, 48, 1200, {.maxSpeed=60}, false);
+    chassis.moveToPoint(-68, 47, 1200, {.maxSpeed=60}, false);
     chassis.moveToPoint(-61.5, 47, 400, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-78, 48, 1300, {.maxSpeed=60}, false);     
+    chassis.moveToPoint(-70, 47, 1300, {.maxSpeed=60}, false);     
     pros::delay(2000);
 
     // Score the long goal
@@ -568,12 +568,12 @@ void skills() {
     chassis.moveToPoint(-42, 48, 1000, {});
     stopTopScore();
     // Park
-    chassis.moveToPoint(-48, 48, 1000);
-    chassis.moveToPose(-67, 18, 200, 2800, {.lead = .25}, false);
+    chassis.moveToPoint(-55, 48, 1000);
+    chassis.moveToPose(-70, 18, 200, 3500, {.lead = .25}, false);
     //chassis.moveToPose(-64, 18, 180, 2500, {.maxSpeed = 100}, false);
     odomLift.extend();
     startOuttake();
-    pros::delay(250);
+    pros::delay(50);
     leftMotors.move(127);
     rightMotors.move(127);
     pros::delay(800);
