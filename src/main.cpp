@@ -5,6 +5,7 @@
 
 #include "custom/util_funcs.hpp"
 #include "custom/auton_selector.hpp" // IWYU pragma: keep
+#include "liblvgl/llemu.hpp"
 #include "pros/motors.h"
 #include "pros/motors.h"
 
@@ -16,8 +17,9 @@ void initialize() {
 	odomLift.retract();
 
 	// Auton Selection
-	startControllerAutonSelectorDisplay();
-	init_auton_selector();
+	//startControllerAutonSelectorDisplay();
+	//init_auton_selector();
+	pros::lcd::initialize();
 
     RclMain.startTracking();
 	topOptic.set_led_pwm(100);
