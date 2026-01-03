@@ -55,6 +55,9 @@ void opcontrol() {
 	extendLeftArm();
 	stopTopScore();
 
+	// Mcl testing
+	startMclBenchmark();
+
 	// Display FB Logo
 	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
 
