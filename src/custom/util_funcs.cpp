@@ -65,11 +65,17 @@ void openMid() {
 void closeMid() {
     middleMech.extend();
 };
+void extendMidDescore() {
+    middleDescore.extend();
+};
+void retractMidDescore() {
+    middleDescore.retract();
+};
 void extendLeftArm() {
-    rightDescoreArm.extend();
+    leftDescoreArm.extend();
 };
 void retractLeftArm() {
-    rightDescoreArm.retract();
+    leftDescoreArm.retract();
 };
 
 // Auton functions
@@ -272,16 +278,22 @@ void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
         matchLoadGate.toggle();
+        retractMidDescore();
     }
     // Button Down - Right descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-        rightDescoreArm.toggle();
+        leftDescoreArm.toggle();
         descoreMacroActivated = false; // Shutdown macro
     }
     // Button Right - Descore macro (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
         descoreMacroActivated = !descoreMacroActivated;
         extendLeftArm();
+    }
+    // Button Y - Middle descore mech (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+        middleDescore.toggle();
+        closeGate();
     }
 
     // Descore macro update

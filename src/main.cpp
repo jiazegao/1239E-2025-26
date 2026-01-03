@@ -55,11 +55,10 @@ void opcontrol() {
 	extendLeftArm();
 	stopTopScore();
 
+	// Display FB Logo
+	//pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
 	// Mcl testing
 	startMclBenchmark();
-
-	// Display FB Logo
-	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
 
 	while (true) {
 		// Update Controls

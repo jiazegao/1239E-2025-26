@@ -31,6 +31,8 @@ void openGate();
 void closeGate();
 void openMid();
 void closeMid();
+void extendMidDescore();
+void retractMidDescore();
 void extendLeftArm();
 void retractLeftArm();
 
