@@ -1,10 +1,15 @@
 
 #include "custom/util_funcs.hpp"
 
+#include "RclTracking.hpp"
 #include "configs.hpp"
 #include "custom/auton_selector.hpp"
 #include <cmath>
 #include <numbers>
+
+#include "MclTracking.hpp"
+#include "pros/misc.h"
+#include "pros/rtos.h"
 
 // Indexer control
 void frontIn() {
@@ -60,11 +65,17 @@ void openMid() {
 void closeMid() {
     middleMech.extend();
 };
+void extendMidDescore() {
+    middleDescore.extend();
+};
+void retractMidDescore() {
+    middleDescore.retract();
+};
 void extendLeftArm() {
-    rightDescoreArm.extend();
+    leftDescoreArm.extend();
 };
 void retractLeftArm() {
-    rightDescoreArm.retract();
+    leftDescoreArm.retract();
 };
 
 // Auton functions
@@ -267,16 +278,22 @@ void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
         matchLoadGate.toggle();
+        retractMidDescore();
     }
     // Button Down - Right descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-        rightDescoreArm.toggle();
+        leftDescoreArm.toggle();
         descoreMacroActivated = false; // Shutdown macro
     }
     // Button Right - Descore macro (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
         descoreMacroActivated = !descoreMacroActivated;
         extendLeftArm();
+    }
+    // Button Y - Middle descore mech (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+        middleDescore.toggle();
+        closeGate();
     }
 
     // Descore macro update
@@ -444,5 +461,78 @@ void startControllerRCLUpdate() {
                 pros::delay(100);
             }
         });
+    }
+}
+
+// Mcl Benchmark with Heading Conversion for LCD
+void startMclBenchmark() {
+    stopControllerDisplay();
+    stopBrainDisplay();
+
+    if (controllerScreenTask == nullptr && brainScreenTask == nullptr) {
+        controllerScreenTask = new pros::Task ([&](){
+
+            // 1. Initial Sync
+            RclMain.updateBotPose(&left_rcl);
+            RclMain.updateBotPose(&right_rcl);
+            RclMain.updateBotPose(&back_rcl);
+            lemlib::Pose odomLast = chassis.getPose();
+
+            Timer t(100);   // 10 Hz update
+            int minPause = 20;
+
+            // 2. Mcl Setup
+            int particles = 800;
+            MclTracking MclMain(800, odomLast.x, odomLast.y, odomLast.theta);
+            
+            while (true) {
+                t.reset();
+
+                // Get Sensors
+                std::vector<double> dists = {back_dist.get()*mmToInch, right_dist.get()*mmToInch, left_dist.get()*mmToInch};
+                std::vector<int> confs = {back_dist.get_confidence(), right_dist.get_confidence(), left_dist.get_confidence()};
+
+                // Calculate displacement
+                double dx = chassis.getPose().x - odomLast.x;
+                double dy = chassis.getPose().y - odomLast.y;
+                double move_dist = std::sqrt(dx * dx + dy * dy);
+
+                // --- Corrected Direction Logic ---
+                // Convert current VEX heading to Standard Math Radians
+                double std_theta = MclMain.vexToStd(chassis.getPose().theta); 
+                
+                // If moving against the heading, flip move_dist sign
+                double headX = std::cos(std_theta);
+                double headY = std::sin(std_theta);
+                if ((dx * headX + dy * headY) < 0) {
+                    move_dist *= -1.0;
+                }
+                
+                // 3. Update Filter
+                Pose rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs);
+                odomLast = chassis.getPose();
+
+                // 4. Convert MCL Result back to VEX Degrees for the LCD
+                // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
+                double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
+                while (mclVexTheta < 0) mclVexTheta += 360;
+                while (mclVexTheta >= 360) mclVexTheta -= 360;
+
+                // 5. Display Stats
+                pros::lcd::print(0, "MCL Rate: %.1f Hz", 1000.0 / t.elapsed(TimeUnit::MILLISECOND));
+                pros::lcd::print(1, "Compute Time: %d ms", t.elapsed(TimeUnit::MILLISECOND));
+                pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclVexTheta);
+                pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
+
+                // 6. Sync On Demand
+                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                    chassis.setPose(rawMcl.x, rawMcl.y, mclVexTheta);
+                }
+            
+                if (t.timeLeft() < minPause) pros::delay(minPause);
+                else pros::delay(t.timeLeft());
+            }
+        }, TASK_PRIORITY_DEFAULT-1);
+        brainScreenTask = controllerScreenTask;
     }
 }

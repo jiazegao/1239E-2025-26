@@ -31,9 +31,10 @@ void openGate();
 void closeGate();
 void openMid();
 void closeMid();
+void extendMidDescore();
+void retractMidDescore();
 void extendLeftArm();
 void retractLeftArm();
-
 
 // Display
 inline pros::Task* controllerScreenTask = nullptr;
@@ -52,3 +53,5 @@ void startBrainFBDisplay();
 void startControllerDistDataDisplay();
 void startControllerOpticDisplay();
 void startControllerRCLUpdate();
+
+void startMclBenchmark();

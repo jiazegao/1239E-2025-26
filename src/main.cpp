@@ -5,6 +5,7 @@
 
 #include "custom/util_funcs.hpp"
 #include "custom/auton_selector.hpp" // IWYU pragma: keep
+#include "liblvgl/llemu.hpp"
 #include "pros/motors.h"
 #include "pros/motors.h"
 
@@ -16,8 +17,9 @@ void initialize() {
 	odomLift.retract();
 
 	// Auton Selection
-	startControllerAutonSelectorDisplay();
-	init_auton_selector();
+	//startControllerAutonSelectorDisplay();
+	//init_auton_selector();
+	pros::lcd::initialize();
 
     RclMain.startTracking();
 	topOptic.set_led_pwm(100);
@@ -48,7 +50,7 @@ void opcontrol() {
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.extend();
+	odomLift.retract();
 
 	// Retract both descore arms
 	extendLeftArm();
@@ -56,7 +58,9 @@ void opcontrol() {
 	stopTopScore();
 
 	// Display FB Logo
-	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
+	//pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
+	// Mcl testing
+	startMclBenchmark();
 
 	while (true) {
 		// Update Controls
