@@ -396,13 +396,14 @@ void leftv2() {
     chassis.moveToPoint(-6, 44, 1300, {.maxSpeed=70}, false);
 
     // Head to long goal
-    chassis.moveToPose(-21, 38, 140, 2000, {.forwards=false, .minSpeed=50}, false);
-    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 1000, {.minSpeed=60}, false);
-
+    chassis.moveToPose(-40, 44, 140, 2000, {.forwards=false, .minSpeed=100}, false);
+    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 1500, {.direction = lemlib::AngularDirection::CW_CLOCKWISE, .minSpeed=127}, false);
+    chassis.moveToPoint(-24, 48, 1200, {.forwards=false, .maxSpeed=100}, true);
     // Score
+    pros::delay(500);
     startTopScore();
     closeGate();
-    pros::delay(1200);
+    pros::delay(1050);
     RclMain.updateBotPose(&right_rcl);
     pros::delay(500);
     stopTopScore();
@@ -410,30 +411,34 @@ void leftv2() {
     // Refill at match loader
     startIntake();
     openGate();
-    chassis.moveToPoint(-63, 50, 1400, {.maxSpeed=70, .minSpeed=50}, false);
-    pros::delay(400);
 
+    chassis.moveToPoint(-63, 47.5, 1400, {.maxSpeed=60, .minSpeed=50}, false);
+    
+    //closeGate();
+    pros::delay(800);
     // Score top mid
-    chassis.turnToPoint(-13, 11.5, 600, {.forwards=false}, false);
-    chassis.moveToPoint(-13, 11.5, 1400, {.forwards=false}, true);
+    chassis.turnToPoint(-10, 10, 600, {.forwards=false}, false);
+    chassis.moveToPoint(-10, 10, 400, {.forwards=false}, true);
+    chassis.moveToPoint(-10, 10, 1200, {.forwards=false, .maxSpeed = 80}, true);
     startOuttake();
-    frontMotor.move(-25);
+    topMotor.move(-80);
+    frontMotor.move(-35);
     middleMech.retract();
     pros::delay(400);
     stopIntake();
     pros::delay(1000);
     startMidScore();
     closeGate();
-    pros::delay(800);
+    pros::delay(1200);
     stopMidScore();
 
     // Push
-    chassis.moveToPoint(-36, 36, 1200, {}, false);
-    chassis.turnToPoint(-16, 37, 700, {}, false);
+    chassis.moveToPoint(-36, 37, 1200, {}, false);
+    chassis.turnToPoint(-10, 37, 700, {}, false);
     retractLeftArm();
-    chassis.moveToPoint(-16, 37, 1200, {.maxSpeed=60}, false);
-    chassis.moveToPoint(-16, 37, 9999, {}, false);
-    chassis.turnToHeading(105, 700);
+    chassis.moveToPoint(-10, 37, 1300, {.maxSpeed=60}, false);
+    chassis.moveToPoint(-10, 37, 9999, {}, false);
+    chassis.turnToHeading(135, 700, {.minSpeed= 120});
 }
 void rightv2() {
     

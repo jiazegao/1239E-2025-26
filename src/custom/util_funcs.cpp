@@ -283,7 +283,7 @@ void updatePneumatics() {
     if (descoreMacroActivated) {
         controller.rumble(".");
         // Release descore arm if distance less than 15 cm
-        if (descoreDist.get() < 160) {
+        if (descoreDist.get() < 140) {
             retractLeftArm();
             //controller.rumble("-");
         }
