@@ -8,36 +8,7 @@
 #include "custom/RclTracking.hpp"
 #include <cstdint>
 
-// Timer class for timeouts
-Timer::Timer(double timeoutMs_) : timeoutMs(timeoutMs_), startTime(std::chrono::high_resolution_clock::now()) {}
 
-void Timer::reset() {
-    startTime = std::chrono::high_resolution_clock::now();
-}
-
-void Timer::hardReset(double newTimeoutMs) {
-    timeoutMs = newTimeoutMs;
-    reset();
-}
-
-bool Timer::timeIsUp() const {
-    return elapsedMs() > timeoutMs;
-}
-    
-int Timer::timeLeft() const {
-    double e = elapsedMs();
-    return e < timeoutMs ? std::round(timeoutMs - e) : 0;
-}
-    
-double Timer::elapsed(TimeUnit unit) const {
-    double ms = elapsedMs();
-    return (unit == TimeUnit::SECOND) ? (ms / 1000.0) : ms;
-}
-
-double Timer::elapsedMs() const {
-    auto dt = std::chrono::high_resolution_clock::now() - startTime;
-    return std::chrono::duration<double, std::milli>(dt).count();
-}
 
 // Line obstacle class
 Singly_Linked_List<Line_Obstacle> Line_Obstacle::obstacleCollection = Singly_Linked_List<Line_Obstacle>();

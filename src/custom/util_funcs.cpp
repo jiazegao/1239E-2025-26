@@ -472,7 +472,7 @@ void startMclBenchmark() {
     if (controllerScreenTask == nullptr && brainScreenTask == nullptr) {
         controllerScreenTask = new pros::Task ([&](){
 
-            // 1. Initial Sync
+            // Initial Sync
             RclMain.updateBotPose(&left_rcl);
             RclMain.updateBotPose(&right_rcl);
             RclMain.updateBotPose(&back_rcl);
@@ -481,10 +481,6 @@ void startMclBenchmark() {
             Timer t(100);   // 10 Hz update
             int minPause = 20;
 
-            // 2. Mcl Setup
-            int particles = 800;
-            MclTracking MclMain(800, odomLast.x, odomLast.y, odomLast.theta);
-            
             while (true) {
                 t.reset();
 
@@ -499,7 +495,7 @@ void startMclBenchmark() {
 
                 // --- Corrected Direction Logic ---
                 // Convert current VEX heading to Standard Math Radians
-                double std_theta = MclMain.vexToStd(chassis.getPose().theta); 
+                double std_theta = vexToStd(chassis.getPose().theta); 
                 
                 // If moving against the heading, flip move_dist sign
                 double headX = std::cos(std_theta);

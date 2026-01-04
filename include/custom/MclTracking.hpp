@@ -1,17 +1,21 @@
 #ifndef MCLTRACKING_HPP
 #define MCLTRACKING_HPP
 
+#include "lemlib/chassis/chassis.hpp"
+#include "main.h"
 #include <vector>
 #include <cmath>
 #include <algorithm>
 #include <random>
+#include "Tracking_Util.hpp"
 
 // --- Configuration Constants ---
-const double MAX_RANGE = 78.0;      
-const double BASE_DIST_SIGMA = 4.0; 
+const double MAX_RANGE = 78.0;  
+const double BASE_DIST_SIGMA = 2.5; 
 const double HEADING_SIGMA = 0.08; 
 const double PASS_THROUGH_CHANCE = 0.40; 
 const int CONFIDENCE_THRESHOLD = 32; 
+const int PARTICLE_COUNT = 400;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -31,7 +35,9 @@ private:
     std::vector<Pose> sensor_mounts;
     struct Trig { double cos_m, sin_m; };
     std::vector<Trig> mountTrigs;
-    int num_particles;
+    lemlib::Chassis* chassis;
+    pros::Task* MclTrackingTask;
+    std::vector<pros::Distance*> distance_collection;
 
     double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin) {
         double x1 = wall.p1.x; double y1 = wall.p1.y;
@@ -74,8 +80,9 @@ private:
     }
 
 public:
-    MclTracking(int count, double start_x, double start_y, double start_vex_theta) {
-        num_particles = count;
+    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, double start_x, double start_y, double start_vex_theta) {
+        this->chassis = chassis;
+        this->distance_collection = dist_collection;
         std::random_device rd;
         gen = std::mt19937(rd());
         
@@ -84,7 +91,7 @@ public:
         std::normal_distribution<double> y_init(start_y, 2.0);
         std::normal_distribution<double> t_init(start_std_theta, 0.05);
 
-        for (int i = 0; i < num_particles; ++i) {
+        for (int i = 0; i < PARTICLE_COUNT; ++i) {
             particles.push_back({{x_init(gen), y_init(gen), t_init(gen)}, 1.0});
         }
 
@@ -196,8 +203,8 @@ public:
         std::vector<double> weights;
         for (const auto& p : particles) weights.push_back(p.weight);
         std::discrete_distribution<int> sampler(weights.begin(), weights.end());
-        std::vector<Particle> new_gen(num_particles);
-        for (int i = 0; i < num_particles; ++i) {
+        std::vector<Particle> new_gen(PARTICLE_COUNT);
+        for (int i = 0; i < PARTICLE_COUNT; ++i) {
             Particle selected = particles[sampler(gen)];
             std::uniform_real_distribution<double> jitter(-0.2, 0.2);
             selected.pose.x += jitter(gen);
@@ -216,8 +223,8 @@ public:
             cos_sum += std::cos(p.pose.theta);
         }
         return {
-            x / num_particles, 
-            y / num_particles, 
+            x / PARTICLE_COUNT, 
+            y / PARTICLE_COUNT, 
             std::atan2(sin_sum, cos_sum) // This handles the 359/1 degree wrap-around
         };
     }
@@ -242,11 +249,59 @@ public:
         }
     }
 
-    double vexToStd(double vexDegrees) {
-        double rads = (90.0 - vexDegrees) * (M_PI / 180.0);
-        while (rads > M_PI) rads -= 2 * M_PI;
-        while (rads < -M_PI) rads += 2 * M_PI;
-        return rads;
+    void startTracking() {
+        if (MclTrackingTask == nullptr) {
+            MclTrackingTask = new pros::Task([this](){
+
+                lemlib::Pose odomLast = chassis->getPose();
+                Timer t(50);   // 20 Hz update
+                int minPause = 20;
+                
+                while (true) {
+                    t.reset();
+
+                    // Get Sensors
+                    std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
+                    std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
+
+                    // Calculate displacement
+                    double dx = chassis->getPose().x - odomLast.x;
+                    double dy = chassis->getPose().y - odomLast.y;
+                    double move_dist = std::sqrt(dx * dx + dy * dy);
+
+                    // --- Corrected Direction Logic ---
+                    // Convert current VEX heading to Standard Math Radians
+                    double std_theta = vexToStd(this->chassis->getPose().theta); 
+                    
+                    // If moving against the heading, flip move_dist sign
+                    double headX = std::cos(std_theta);
+                    double headY = std::sin(std_theta);
+                    if ((dx * headX + dy * headY) < 0) {
+                        move_dist *= -1.0;
+                    }
+                    
+                    // Update Filter
+                    Pose rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs);
+                    
+                    // Convert MCL Result back to VEX Degrees for the LCD
+                    // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
+                    double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
+                    while (mclVexTheta < 0) mclVexTheta += 360;
+                    while (mclVexTheta >= 360) mclVexTheta -= 360;
+
+                    // Sync
+                    chassis->setPose(rawMcl.x, rawMcl.y, mclVexTheta);
+                    odomLast = this->chassis->getPose();
+                
+                    if (t.timeLeft() < minPause) pros::delay(minPause);
+                    else pros::delay(t.timeLeft());
+                }
+            });
+        }
+    }
+
+    void stopTracking() {
+        if (MclTrackingTask != nullptr) { MclTrackingTask->remove(); delete MclTrackingTask; MclTrackingTask = nullptr; }
     }
 };
 

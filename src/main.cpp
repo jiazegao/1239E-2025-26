@@ -17,8 +17,8 @@ void initialize() {
 	odomLift.retract();
 
 	// Auton Selection
-	//startControllerAutonSelectorDisplay();
-	//init_auton_selector();
+	// startControllerAutonSelectorDisplay();
+	// init_auton_selector();
 	pros::lcd::initialize();
 
     RclMain.startTracking();

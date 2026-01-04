@@ -7,29 +7,10 @@
 #include <vector>
 #include <numeric> // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
+#include "Tracking_Util.hpp"
 
 // Enumerations
-enum class TimeUnit { SECOND, MILLISECOND };
 enum class CoordType { X, Y, INVALID };
-
-inline double botToTrig (double ang) { return (std::fmod(360.0-std::abs(90.0-ang), 360.0)); }
-
-// Timer
-class Timer {
-    public:
-        Timer(double timeoutMs_ = 0);
-        void reset();
-        void hardReset(double newTimeoutMs);
-        bool timeIsUp() const;
-        int timeLeft() const;
-        double elapsed(TimeUnit unit = TimeUnit::MILLISECOND) const;
-    
-    private:
-        double timeoutMs;
-        std::chrono::high_resolution_clock::time_point startTime;
-
-        double elapsedMs() const;
-};
 
 // Singly linked list for quick removal / insertion
 template <typename AnyType>
@@ -240,16 +221,6 @@ private:
     int length;
 
 };
-
-
-// Constants
-constexpr double mmToInch = 0.039370078740157;
-constexpr double MAX_OBSTACLE_DURATION = 1e12;         // ms
-constexpr double FIELD_HALF_LENGTH = 70.5;         // inches
-constexpr double FIELD_NEG_HALF_LENGTH = -70.5;
-
-// Utility conversions
-inline double degToRad(double deg) { return deg * M_PI / 180.0; }
 
 // Pose of a distance sensor (ray) for intersection math
 struct SensorPose {
