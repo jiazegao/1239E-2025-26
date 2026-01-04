@@ -478,12 +478,12 @@ void startMclBenchmark() {
             RclMain.updateBotPose(&back_rcl);
             lemlib::Pose odomLast = chassis.getPose();
 
-            Timer t(50);   // 10 Hz update
+            Timer t(100);   // 10 Hz update
             int minPause = 20;
 
             // 2. Mcl Setup
-            int particles = 500;
-            MclTracking MclMain(500, odomLast.x, odomLast.y, odomLast.theta);
+            int particles = 800;
+            MclTracking MclMain(800, odomLast.x, odomLast.y, odomLast.theta);
             
             while (true) {
                 t.reset();
