@@ -22,6 +22,9 @@ void initialize() {
 	pros::lcd::initialize();
 
     RclMain.startTracking();
+	startControllerRCLUpdate();
+
+	// Set Optical LED
 	topOptic.set_led_pwm(100);
 }
 
@@ -38,9 +41,9 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-	
+
 	//Change this back later
-	leftv2();
+	skills_v2();
 	
 	//runAuton();
 }
@@ -50,7 +53,7 @@ void opcontrol() {
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.retract();
+	odomLift.extend();
 
 	// Retract both descore arms
 	extendLeftArm();
@@ -68,7 +71,7 @@ void opcontrol() {
 		updateIntake();
 		updatePneumatics();
 
-		pros::delay(10);
+		pros::delay(20);
 	}
 
 	

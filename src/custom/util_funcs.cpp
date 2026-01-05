@@ -80,15 +80,24 @@ void retractLeftArm() {
 
 // Auton functions
 void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
-    chassis.moveToPoint(chassis.getPose().x+inches*std::cos((-1)*(chassis.getPose().theta-90+360*10)/180*std::numbers::pi), chassis.getPose().y+inches*std::sin((-1)*(chassis.getPose().theta-90+360*10)/180*std::numbers::pi), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
+    chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta)), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
-void jiggle(int repeats) {
+void jiggle(int repeats, int time) {
     for (int i = 0; i < repeats; i++) {
-        lemlib::Pose orig_p = chassis.getPose();
-        moveForward(3, 200, 41, 40, false);
-        moveForward(-0.1, 200, 41, 40, false);
+        moveForward(3, time/repeats*2/3, 41, 40, false);
+        moveForward(-0.1, time/repeats/3, 41, 40, false);
     }
 }
+void shake(int repeats, int time) {
+    double orig_theta = chassis.getPose().theta;
+    for (int i = 0; i < repeats; i++) {
+        chassis.turnToHeading(orig_theta + 10, time/repeats/4, {.maxSpeed=60}, false);
+        chassis.turnToHeading(orig_theta - 10, time/repeats/4, {.maxSpeed=60}, false);
+        chassis.turnToHeading(orig_theta, time/repeats/4, {.maxSpeed=60}, false);
+        moveForward(8, time/repeats/4, 81, 40, false);
+    }
+}
+
 void stopIntake() {
     middleMech.extend();
     lockTop();
@@ -453,11 +462,11 @@ void startControllerRCLUpdate() {
             while (true) {
                 controller.clear();
                 pros::delay(50);
-                controller.print(0, 0, "X: %f, %f", chassis.getPose().x, RclMain.getRclPose().x);
+                controller.print(0, 0, "X: %.1f, %.1f", chassis.getPose().x, RclMain.getRclPose().x);
                 pros::delay(50);
-                controller.print(1, 0, "Y: %f, %f", chassis.getPose().y, RclMain.getRclPose().y);
+                controller.print(1, 0, "Y: %.1f, %.1f", chassis.getPose().y, RclMain.getRclPose().y);
                 pros::delay(50);
-                controller.print(2, 0, "Heading: %f, %f", chassis.getPose().theta, RclMain.getRclPose().theta);
+                controller.print(2, 0, "Heading: %.1f, %.1f", chassis.getPose().theta, RclMain.getRclPose().theta);
                 pros::delay(100);
             }
         });
@@ -478,7 +487,9 @@ void startMclBenchmark() {
             RclMain.updateBotPose(&back_rcl);
             lemlib::Pose odomLast = chassis.getPose();
 
-            Timer t(100);   // 10 Hz update
+            MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
+
+            Timer t(40);   // 25 Hz update
             int minPause = 20;
 
             while (true) {
@@ -507,6 +518,7 @@ void startMclBenchmark() {
                 // 3. Update Filter
                 Pose rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs);
                 odomLast = chassis.getPose();
+                lemlib::Pose RclPose = RclMain.getRclPose();
 
                 // 4. Convert MCL Result back to VEX Degrees for the LCD
                 // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
@@ -519,13 +531,14 @@ void startMclBenchmark() {
                 pros::lcd::print(1, "Compute Time: %d ms", t.elapsed(TimeUnit::MILLISECOND));
                 pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclVexTheta);
                 pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
+                pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
 
                 // 6. Sync On Demand
                 if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                     chassis.setPose(rawMcl.x, rawMcl.y, mclVexTheta);
                 }
             
-                if (t.timeLeft() < minPause) pros::delay(minPause);
+                if (t.timeIsUp() || t.timeLeft() < minPause) pros::delay(minPause);
                 else pros::delay(t.timeLeft());
             }
         }, TASK_PRIORITY_DEFAULT-1);

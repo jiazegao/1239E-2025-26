@@ -450,16 +450,19 @@ void skills() {
     RclMain.setRclPose(chassis.getPose());
 
     RclMain.updateBotPose();
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
+	//MclMain.startTracking();
 
     // Head towards bottom-left match loader
-    chassis.moveToPoint(-47, -46, 1800, {}, false);
+    chassis.moveToPoint(-47, -47, 1800, {}, false);
     chassis.turnToHeading(270, 700, {});
     startIntake();
     openGate();
-    chassis.moveToPoint(-68.5, -46, 1200, {.maxSpeed=60}, false);
-    chassis.moveToPoint(-61.5, -46, 300, {.forwards=false, .maxSpeed=60}, false);
-    chassis.moveToPoint(-68.5, -46, 1000, {.maxSpeed=60}, false);
+    chassis.moveToPoint(-68.5, -47, 1200, {.maxSpeed=60}, false);
+    chassis.moveToPoint(-61.5, -47, 300, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-68.5, -47, 1000, {.maxSpeed=60}, false);
     RclMain.updateBotPose(&left_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     pros::delay(1000);
 
     // Back off (#1)
@@ -497,6 +500,7 @@ void skills() {
     chassis.moveToPoint(78, -48, 1000, {.maxSpeed=60}, false);
     pros::delay(1500);
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
 
     // Score the long goal
     chassis.moveToPoint(24, -48, 1100, {.forwards=false, .maxSpeed=70}, false);
@@ -504,6 +508,7 @@ void skills() {
     startTopScore();
     closeGate();
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     pros::delay(3000);
 
     // Back off (#2)
@@ -512,14 +517,17 @@ void skills() {
     stopTopScore();
     pros::delay(200);
     RclMain.updateBotPose(&back_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
 
     // Head towards top-right match loader
     chassis.moveToPoint(45, 48, 1300, {.minSpeed=80}, false);
     chassis.moveToPoint(45, 48, 1000, {.maxSpeed=60}, false);
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     chassis.turnToHeading(90, 500, {}, false);
     pros::delay(200);
     RclMain.updateBotPose(&left_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     startIntake();
     openGate();
     chassis.moveToPoint(68, 47, 1200, {.maxSpeed=60}, false); //
@@ -534,6 +542,7 @@ void skills() {
     //chassis.turnToHeading(0, 800, {}, false);
     chassis.moveToPoint(49, 49, 1000, {.forwards=false}, false);
     RclMain.updateBotPose(&left_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     chassis.turnToHeading(325, 700, {}, false);
 
     // Score the top-left goal
@@ -545,12 +554,14 @@ void skills() {
     chassis.turnToHeading(180, 800, {});
     RclMain.updateBotPose(&back_rcl);
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     chassis.moveToPoint(-38, 48, 1200, {}, false);
     chassis.turnToHeading(270, 800, {}, false);
     
     chassis.moveToPoint(-22, 48, 1100, {.forwards=false, .maxSpeed=70}, false);
     startTopScore();
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     pros::delay(3000);
     
     // Intake from top-left match loader
@@ -567,6 +578,7 @@ void skills() {
     startTopScore();
     closeGate();
     RclMain.updateBotPose(&right_rcl);
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
     pros::delay(3000);
 
     // Back off (#4)
@@ -591,86 +603,100 @@ void skills_v2() {
     chassis.setPose(-48.75, 16.125, 90);
     RclMain.setRclPose(chassis.getPose());
 
+    RclMain.updateBotPose();
+    //MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
+    //MclMain.startTracking();
+
     // Intake three balls
     stopIntake();
     startIntake();
-    //topMotor.move_velocity(50);
-    chassis.moveToPoint(-19, 19, 1000, {}, true);
-    pros::delay(300);
+    chassis.moveToPoint(-18, 26, 2000, {.maxSpeed=70}, true);
+    pros::delay(1000);
     openGate();
 
     // Score two red
-    chassis.turnToPoint(-10.5, 10.5, 800,{.forwards=false}, false);
+    chassis.turnToPoint(-9, 9, 800,{.forwards=false}, false);
     startOuttake();
     frontMotor.move(-25);
     middleMech.retract();
-    chassis.moveToPoint(-10.5, 10.5, 1000, {.forwards=false, .maxSpeed = 70}, true);
-    pros::delay(450);
+    chassis.moveToPose(-6, 6, 315, 3400, {.forwards=false}, true);
+    pros::delay(1400);
+    stopIntake();
+    pros::delay(800);
     startMidScore();
     closeGate();
-    pros::delay(600); // middle goal score time
+    pros::delay(1400); // middle goal score time
     stopMidScore();
+    startOuttake();
+    pros::delay(400);
     middleMech.extend();
 
     // Empty top-left loader
-    chassis.moveToPoint(-47, 47, 1500, {}, false);
+    chassis.moveToPoint(-47, 49.5, 2000, {}, false);
     openGate();
     chassis.turnToPoint(-63, 47, 600, {}, false);
     startIntake();
-    chassis.moveToPoint(-63, 47, 1000, {.maxSpeed=50}, false);
-    pros::delay(1500);
+    chassis.moveToPoint(-70, 47, 3000, {.maxSpeed=50}, false);
+    RclMain.updateBotPose(&right_rcl);
     stopIntake();
+    closeGate();
 
     // Score at top-right long goal
-    chassis.moveToPose(-25, 60.5, 90, 1200, {.forwards=false}, false);
-    chassis.moveToPoint(28, 60.5, 1500, {.forwards=false}, false);
-    chassis.moveToPose(28, 47, 270, 1500, {.forwards=false}, false);
+    chassis.turnToHeading(225, 200, {}, false);
+    chassis.moveToPose(-25, 61, 270, 1200, {.forwards=false, .lead=0.5, .minSpeed=50}, false);
+    chassis.moveToPoint(38, 61, 1500, {.forwards=false}, false);
+    chassis.turnToHeading(180, 600, {}, false);
+    pros::delay(400);
+    chassis.moveToPoint(38 , 47.5, 1200, {}, false);
+    chassis.turnToPoint(28, 47.5, 600, {.forwards=false}, false);
+    chassis.moveToPoint(28, 47.5, 1000, {.forwards=false, .maxSpeed=70}, false);
     startTopScore();
-    pros::delay(1500);
+    pros::delay(3000);
     stopTopScore();
 
     // Refill at top-right loader then score again
     openGate();
     startIntake();
-    chassis.moveToPoint(63, 47, 1500, {.maxSpeed=50}, false);
-    pros::delay(1500);
-    chassis.moveToPoint(28, 47, 1500, {.forwards=false, .maxSpeed=80}, false);
+    chassis.moveToPoint(72, 46, 5000, {.maxSpeed=60}, false);
+    chassis.moveToPoint(28, 47.5, 2000, {.forwards=false, .maxSpeed=80}, false);
     startTopScore();
-    pros::delay(1500);
+    pros::delay(3000);
     stopTopScore();
+    closeGate();
 
     // Clear park zone and get red balls
-    chassis.moveToPoint(51, 41, 800, {}, false);
-    chassis.moveToPose(62.5, 29, 180, 1200, {}, false);
+    chassis.moveToPoint(67, 28, 2000, {}, false);
+    chassis.swingToPoint(180, 800, lemlib::DriveSide::RIGHT, false);
     odomLift.extend();
     startIntake();
-    chassis.moveToPoint(64, -36, 4000, {.maxSpeed=90}, true);
-    pros::delay(3000);
-    openGate();
-    pros::delay(1000);
-    closeGate();
+    chassis.moveToPoint(67, -36, 3000, {.maxSpeed=80}, false);
     odomLift.retract();
 
     // Reset location
-    chassis.turnToHeading(270, 800, {}, false);
-    chassis.moveToPoint(chassis.getPose().x-7, chassis.getPose().y, 600, {}, false);
-    pros::delay(300);
-    RclMain.updateBotPose(&left_rcl);
+    chassis.turnToHeading(270, 600, {}, false);
+    chassis.moveToPoint(chassis.getPose().x-7, chassis.getPose().y, 1200, {}, false);
+    pros::delay(1000);
     RclMain.updateBotPose(&back_rcl);
+    RclMain.updateBotPose(&left_rcl);
 
     // Get one more red ball then score everything in top mid
     chassis.turnToPoint(31.5, -21, 500, {}, false);
     chassis.moveToPoint(31.5, -21, 1200, {.maxSpeed=60}, false);
     chassis.turnToPoint(10.5, -10.5, 800, {.forwards=false}, false);
+    openGate();
     startOuttake();
     frontMotor.move(-25);
     middleMech.retract();
-    chassis.moveToPoint(10.5, -10.5, 1000, {.forwards=false, .maxSpeed = 70}, true);
-    pros::delay(450);
+    chassis.moveToPose(6, -6, 135, 3400, {.forwards=false}, true);
+    pros::delay(1400);
+    stopIntake();
+    pros::delay(800);
     startMidScore();
     closeGate();
-    pros::delay(600); // middle goal score time
+    pros::delay(1400); // middle goal score time
     stopMidScore();
+    startOuttake();
+    pros::delay(400);
     middleMech.extend();
 
     // Empty bottom-right loader
@@ -681,27 +707,34 @@ void skills_v2() {
     chassis.moveToPoint(63, -47, 1200, {.maxSpeed=60}, false);
 
     // Score at bottom-left long goal
-    chassis.moveToPose(25, -60.5, 270, 1200, {.forwards=false}, false);
-    chassis.moveToPoint(-28, -60.5, 1500, {.forwards=false}, false);
-    chassis.moveToPose(-28, -47, 90, 1500, {.forwards=false}, false);
+    chassis.turnToHeading(45, 200, {}, false);
+    chassis.moveToPose(25, -61, 90, 1200, {.forwards=false, .lead=0.5, .minSpeed=50}, false);
+    chassis.moveToPoint(-38, -61, 1500, {.forwards=false}, false);
+    chassis.turnToHeading(0, 600, {}, false);
+    pros::delay(400);
+    chassis.moveToPoint(-38 , -47, 1200, {}, false);
+    chassis.turnToPoint(-28, -47, 600, {.forwards=false}, false);
+    chassis.moveToPoint(-28, -47, 1000, {.forwards=false, .maxSpeed=70}, false);
     startTopScore();
-    pros::delay(1500);
+    pros::delay(3000);
     stopTopScore();
 
     // Refill at bottom-left loader then score again
     openGate();
     startIntake();
-    chassis.moveToPoint(-63, -47, 1500, {.maxSpeed=50}, false);
-    pros::delay(1500);
-    chassis.moveToPoint(-28, -47, 1500, {.forwards=false, .maxSpeed=80}, false);
+    chassis.moveToPoint(-66, -46, 3000, {.maxSpeed=60}, false);
+    pros::delay(1000);
+    chassis.moveToPoint(-28, -47.5, 2000, {.forwards=false, .maxSpeed=80}, false);
     startTopScore();
-    pros::delay(1500);
+    pros::delay(3000);
     stopTopScore();
+    closeGate();
 
     // Park
-    chassis.moveToPoint(-51, -41, 800, {}, false);
-    chassis.moveToPose(-62.5, -29, 0, 1200, {}, false);
+    chassis.moveToPoint(-60, -35, 2000, {}, false);
+    chassis.turnToHeading(0, 800, {}, false);
+    chassis.moveToPose(-67, -29, 180, 1400, {.lead=0.4}, false);
     odomLift.extend();
     startIntake();
-    chassis.moveToPoint(-64, 0, 2000, {.maxSpeed=90}, true);
+    chassis.moveToPoint(-67, 0, 2000, {.maxSpeed=90}, true);
 }

@@ -11,11 +11,12 @@
 
 // --- Configuration Constants ---
 const double MAX_RANGE = 78.0;  
-const double BASE_DIST_SIGMA = 2.5; 
-const double HEADING_SIGMA = 0.08; 
-const double PASS_THROUGH_CHANCE = 0.40; 
-const int CONFIDENCE_THRESHOLD = 32; 
-const int PARTICLE_COUNT = 400;
+const double BASE_DIST_SIGMA = 1.0;
+const double RESAMPLE_VARIANCE = 0.3;
+const double HEADING_SIGMA = 0.05; 
+const double PASS_THROUGH_CHANCE = 0.30; 
+const int CONFIDENCE_THRESHOLD = 40; 
+const int PARTICLE_COUNT = 300;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -30,8 +31,8 @@ private:
 
     std::vector<Particle> particles;
     std::mt19937 gen;
-    std::vector<Circle> obstacles;
-    std::vector<Line_> walls;
+    std::vector<Circle> circle_obstacles;
+    std::vector<Line_> solid_line_obstacles, see_through_line_obstacles;
     std::vector<Pose> sensor_mounts;
     struct Trig { double cos_m, sin_m; };
     std::vector<Trig> mountTrigs;
@@ -95,21 +96,32 @@ public:
             particles.push_back({{x_init(gen), y_init(gen), t_init(gen)}, 1.0});
         }
 
-        // Walls set to 70.5 (inner playable area)
-        walls = {
-            {{-70.5, -70.5}, { 70.5, -70.5}}, 
+        // Solid line obstacles
+        solid_line_obstacles = {
+            {{-70.5, -70.5}, { 70.5, -70.5}},   // Walls 
             {{ 70.5, -70.5}, { 70.5,  70.5}}, 
             {{ 70.5,  70.5}, {-70.5,  70.5}}, 
-            {{-70.5,  70.5}, {-70.5, -70.5}}  
+            {{-70.5,  70.5}, {-70.5, -70.5}},
+            {{-6.7171, 9.1919}, {9.1919, -6.7171}},
+            {{-9.1919, 6.7171}, {6.7171, -9.1919}}
         };
 
-        // Added centerGoal(0, 0, 5) to the map
-        obstacles = {
-            {0.0, 0.0, 3.0},     // Center Goal
+        // See-through line obstacles
+        see_through_line_obstacles = {
+            {{-21, 47}, {-21.7955, 47.7955}},
+            {{-21, 47}, {-21.7955, 46.2045}},
+            {{21, 47}, {21.7955, 47.7955}},
+            {{21, 47}, {21.7955, 46.2045}},
+            {{-21, -47}, {-21.7955, -46.2045}},
+            {{-21, -47}, {-21.7955, -47.7955}},
+            {{21, -47}, {21.7955, -46.2045}},
+            {{21, -47}, {21.7955, -47.7955}}
+        };
+
+        // Circle obstacles
+        circle_obstacles = {
             {-67.5, 46.5, 2.75},  {-67.5, -46.5, 2.75}, // Match loaders
-            {67.5, 46.5, 2.75},   {67.5, -46.5, 2.75},
-            {-21.5, 47, 4.0},  {21.5, 47, 4.0},   // Long goals
-            {-21.5, -47, 4.0}, {21.5, -47, 4.0}
+            {67.5, 46.5, 2.75},   {67.5, -46.5, 2.75}
         };
 
         // Sensor mounts
@@ -128,7 +140,7 @@ public:
     }
 
     void predict(double dist_traveled, double current_std_theta) {
-        std::normal_distribution<double> dist_noise(0, 0.3);
+        std::normal_distribution<double> dist_noise(0, 0.2);
         std::normal_distribution<double> theta_noise(0, 0.002);
         for (auto& p : particles) {
             double d_theta = current_std_theta - p.pose.theta;
@@ -178,11 +190,14 @@ public:
                 double rayCos = pCos * mountTrigs[i].cos_m - pSin * mountTrigs[i].sin_m;
                 double raySin = pSin * mountTrigs[i].cos_m + pCos * mountTrigs[i].sin_m;
 
-                for (const auto& w : walls) {
-                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, w, MAX_RANGE, rayCos, raySin));
+                for (const auto& slo : solid_line_obstacles) {
+                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, slo, MAX_RANGE, rayCos, raySin));
                 }
-                for (const auto& c : obstacles) {
-                    double d = intersect_circle({s_x, s_y, s_theta}, c, MAX_RANGE, rayCos, raySin);
+                for (const auto& c : circle_obstacles) {
+                    p_dist = std::min(p_dist, intersect_circle({s_x, s_y, s_theta}, c, MAX_RANGE, rayCos, raySin));
+                }
+                for (const auto& stlo : see_through_line_obstacles) {
+                    double d = intersect_line({s_x, s_y, s_theta}, stlo, MAX_RANGE, rayCos, raySin);
                     if (d < p_dist) { p_dist = d; hit_hollow = true; }
                 }
 
@@ -206,7 +221,7 @@ public:
         std::vector<Particle> new_gen(PARTICLE_COUNT);
         for (int i = 0; i < PARTICLE_COUNT; ++i) {
             Particle selected = particles[sampler(gen)];
-            std::uniform_real_distribution<double> jitter(-0.2, 0.2);
+            std::uniform_real_distribution<double> jitter(-RESAMPLE_VARIANCE, RESAMPLE_VARIANCE);
             selected.pose.x += jitter(gen);
             selected.pose.y += jitter(gen);
             new_gen[i] = selected;
@@ -254,8 +269,8 @@ public:
             MclTrackingTask = new pros::Task([this](){
 
                 lemlib::Pose odomLast = chassis->getPose();
-                Timer t(50);   // 20 Hz update
-                int minPause = 20;
+                Timer t(33);   // 30 Hz update
+                int minPause = 15;
                 
                 while (true) {
                     t.reset();

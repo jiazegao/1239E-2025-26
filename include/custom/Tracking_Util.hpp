@@ -57,6 +57,12 @@ inline double vexToStd(double vexDegrees) {
     while (rads < -M_PI) rads += 2 * M_PI;
     return rads;
 }
+inline double stdToVex(double stdRads) {
+    double deg = 90.0 - (stdRads * 180.0 / M_PI);
+    while (deg < 0) deg += 360;
+    while (deg >= 360) deg -= 360;
+    return deg;
+}
 
 // Utility conversions
 inline double degToRad(double deg) { return deg * M_PI / 180.0; }
