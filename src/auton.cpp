@@ -9,14 +9,19 @@
 
 void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-47, -13.25, 180);
+    chassis.setPose(-47, 0, 0);
     RclMain.setRclPose(chassis.getPose());
 
     RclMain.updateBotPose();
 
+    // Push teammate and get their preload
+    startIntake();
+    chassis.moveToPoint(-47, 40, 500, {.minSpeed=127}, false);
+
     // Head towards the matchloader and intake
+    chassis.moveToPoint(-47, -39, 1600, {.forwards=false, .minSpeed=60, .earlyExitRange=3}, true);
+    pros::delay(400);
     openGate();
-    chassis.moveToPoint(-47, -39, 1200, {.minSpeed=60, .earlyExitRange=3}, false);
     chassis.turnToHeading(265, 400, {});
     startIntake();
     //pros::delay(200);

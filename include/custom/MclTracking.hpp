@@ -11,12 +11,13 @@
 
 // --- Configuration Constants ---
 const double MAX_RANGE = 78.0;  
-const double BASE_DIST_SIGMA = 1.0;
-const double RESAMPLE_VARIANCE = 0.3;
-const double HEADING_SIGMA = 0.05; 
-const double PASS_THROUGH_CHANCE = 0.30; 
+const double BASE_DIST_SIGMA = 1.5;
+const double RESAMPLE_VARIANCE = 0.2;
+const double HEADING_SIGMA = 0.04; 
+const double PASS_THROUGH_CHANCE = 0.40; 
 const int CONFIDENCE_THRESHOLD = 40; 
 const int PARTICLE_COUNT = 300;
+const int RESAMPLE_COUNT = 5;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -139,7 +140,9 @@ public:
 
     }
 
-    void predict(double dist_traveled, double current_std_theta) {
+    std::vector<Trig> predict(double dist_traveled, double current_std_theta) {
+        std::vector<Trig> pTrigs;
+
         std::normal_distribution<double> dist_noise(0, 0.2);
         std::normal_distribution<double> theta_noise(0, 0.002);
         for (auto& p : particles) {
@@ -148,12 +151,19 @@ public:
             while (d_theta < -M_PI) d_theta += 2 * M_PI;
 
             p.pose.theta += d_theta + theta_noise(gen);
-            p.pose.x += std::cos(p.pose.theta) * dist_traveled + dist_noise(gen);
-            p.pose.y += std::sin(p.pose.theta) * dist_traveled + dist_noise(gen);
+
+            double pCos = std::cos(p.pose.theta);
+            double pSin = std::sin(p.pose.theta);
+            pTrigs.push_back({pCos, pSin});
+
+            p.pose.x += pCos * dist_traveled + dist_noise(gen);
+            p.pose.y += pSin * dist_traveled + dist_noise(gen);
         }
+
+        return pTrigs;
     }
 
-    void update_weights(const std::vector<double>& sensor_readings, const std::vector<int>& confidences, double current_std_theta) {
+    void update_weights(const std::vector<double>& sensor_readings, const std::vector<int>& confidences, double current_std_theta, const std::vector<Trig>& pTrigs) {
 
         double robotCos = std::cos(current_std_theta);
         double robotSin = std::sin(current_std_theta);
@@ -164,12 +174,9 @@ public:
             sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
         }
         
-        for (auto& p : particles) {
+        for (int count = 0; count < PARTICLE_COUNT; count++) {
+            auto& p = particles[count];
             double combined_prob = 1.0;
-
-            // Pre-calcuolate particle trig
-            double pCos = std::cos(p.pose.theta);
-            double pSin = std::sin(p.pose.theta);
 
             double diff = p.pose.theta - current_std_theta;
             while (diff > M_PI) diff -= 2 * M_PI;
@@ -187,8 +194,8 @@ public:
                 double p_dist = MAX_RANGE;
                 bool hit_hollow = false;
 
-                double rayCos = pCos * mountTrigs[i].cos_m - pSin * mountTrigs[i].sin_m;
-                double raySin = pSin * mountTrigs[i].cos_m + pCos * mountTrigs[i].sin_m;
+                double rayCos = pTrigs[count].cos_m * mountTrigs[i].cos_m - pTrigs[count].sin_m  * mountTrigs[i].sin_m;
+                double raySin = pTrigs[count].sin_m * mountTrigs[i].cos_m + pTrigs[count].cos_m  * mountTrigs[i].sin_m;
 
                 for (const auto& slo : solid_line_obstacles) {
                     p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, slo, MAX_RANGE, rayCos, raySin));
@@ -229,13 +236,14 @@ public:
         particles = new_gen;
     }
 
-    Pose get_estimate() {
+    Pose get_estimate(const std::vector<Trig>& pTrigs) {
         double x = 0, y = 0, sin_sum = 0, cos_sum = 0;
-        for (const auto& p : particles) { 
+        for (int count = 0; count < PARTICLE_COUNT; count++) {
+            const auto& p = particles[count];
             x += p.pose.x; 
             y += p.pose.y; 
-            sin_sum += std::sin(p.pose.theta);
-            cos_sum += std::cos(p.pose.theta);
+            sin_sum += pTrigs[count].sin_m;
+            cos_sum += pTrigs[count].cos_m;
         }
         return {
             x / PARTICLE_COUNT, 
@@ -244,12 +252,12 @@ public:
         };
     }
 
-    Pose step(double dist, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs) {
+    Pose step(double dist, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
         double std_theta = vexToStd(vex_theta);
-        predict(dist, std_theta);
-        update_weights(dists, confs, std_theta);
-        resample();
-        return get_estimate();
+        auto pTrigs = predict(dist, std_theta);
+        update_weights(dists, confs, std_theta, pTrigs);
+        if (do_resample) resample();
+        return get_estimate(pTrigs);
     }
 
     void set_pose(double x, double y, double vex_theta) {
@@ -268,9 +276,11 @@ public:
         if (MclTrackingTask == nullptr) {
             MclTrackingTask = new pros::Task([this](){
 
-                lemlib::Pose odomLast = chassis->getPose();
-                Timer t(33);   // 30 Hz update
+                lemlib::Pose odomLast = this->chassis->getPose();
+                Timer t(30);   // 33 Hz update
                 int minPause = 15;
+                Pose rawMcl;
+                int resample_counter = 1;
                 
                 while (true) {
                     t.reset();
@@ -280,8 +290,8 @@ public:
                     std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
 
                     // Calculate displacement
-                    double dx = chassis->getPose().x - odomLast.x;
-                    double dy = chassis->getPose().y - odomLast.y;
+                    double dx = this->chassis->getPose().x - odomLast.x;
+                    double dy = this->chassis->getPose().y - odomLast.y;
                     double move_dist = std::sqrt(dx * dx + dy * dy);
 
                     // --- Corrected Direction Logic ---
@@ -296,7 +306,14 @@ public:
                     }
                     
                     // Update Filter
-                    Pose rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs);
+                    if (resample_counter < RESAMPLE_COUNT) {
+                        rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs, false);
+                    }
+                    else {
+                        rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs, true);
+                        resample_counter = 0;
+                    }
+                    resample_counter++;
                     
                     // Convert MCL Result back to VEX Degrees for the LCD
                     // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
@@ -305,7 +322,7 @@ public:
                     while (mclVexTheta >= 360) mclVexTheta -= 360;
 
                     // Sync
-                    chassis->setPose(rawMcl.x, rawMcl.y, mclVexTheta);
+                    this->chassis->setPose(rawMcl.x, rawMcl.y, mclVexTheta);
                     odomLast = this->chassis->getPose();
                 
                     if (t.timeLeft() < minPause) pros::delay(minPause);

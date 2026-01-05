@@ -232,6 +232,11 @@ void updateIntake() {
         frontOut();
         topIn();
     }
+    // Button A - Slow outtake
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        frontMotor.move(-25);
+        topIn();
+    }
     // Button R2 - Score top
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
         frontIn();
@@ -489,15 +494,17 @@ void startMclBenchmark() {
 
             MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
 
-            Timer t(40);   // 25 Hz update
-            int minPause = 20;
+            Timer t(30);   // 33 Hz update
+            int minPause = 15;
+            int resample_counter = 1;
+            Pose rawMcl;
 
             while (true) {
                 t.reset();
 
                 // Get Sensors
-                std::vector<double> dists = {back_dist.get()*mmToInch, right_dist.get()*mmToInch, left_dist.get()*mmToInch};
-                std::vector<int> confs = {back_dist.get_confidence(), right_dist.get_confidence(), left_dist.get_confidence()};
+                std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
+                std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
 
                 // Calculate displacement
                 double dx = chassis.getPose().x - odomLast.x;
@@ -515,33 +522,41 @@ void startMclBenchmark() {
                     move_dist *= -1.0;
                 }
                 
-                // 3. Update Filter
-                Pose rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs);
-                odomLast = chassis.getPose();
-                lemlib::Pose RclPose = RclMain.getRclPose();
-
-                // 4. Convert MCL Result back to VEX Degrees for the LCD
+                // Update Filter
+                if (resample_counter < RESAMPLE_COUNT) {
+                    rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs, false);
+                }
+                else {
+                    rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs, true);
+                    resample_counter = 0;
+                }
+                resample_counter++;
+                
+                // Convert MCL Result back to VEX Degrees for the LCD
                 // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
                 double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
                 while (mclVexTheta < 0) mclVexTheta += 360;
                 while (mclVexTheta >= 360) mclVexTheta -= 360;
 
-                // 5. Display Stats
+                // Sync On Demand
+                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                   chassis.setPose(rawMcl.x, rawMcl.y, mclVexTheta);
+                }
+                odomLast = chassis.getPose();
+                lemlib::Pose RclPose = RclMain.getRclPose();
+
+                // Display Stats
                 pros::lcd::print(0, "MCL Rate: %.1f Hz", 1000.0 / t.elapsed(TimeUnit::MILLISECOND));
                 pros::lcd::print(1, "Compute Time: %d ms", t.elapsed(TimeUnit::MILLISECOND));
                 pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclVexTheta);
                 pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
                 pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
-
-                // 6. Sync On Demand
-                if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
-                    chassis.setPose(rawMcl.x, rawMcl.y, mclVexTheta);
-                }
             
-                if (t.timeIsUp() || t.timeLeft() < minPause) pros::delay(minPause);
+                if (t.timeLeft() < minPause) pros::delay(minPause);
                 else pros::delay(t.timeLeft());
             }
-        }, TASK_PRIORITY_DEFAULT-1);
+        }, TASK_PRIORITY_DEFAULT);
         brainScreenTask = controllerScreenTask;
     }
 }
+
