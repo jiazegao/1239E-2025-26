@@ -495,7 +495,7 @@ void startMclBenchmark() {
             MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
 
             Timer t(30);   // 33 Hz update
-            int minPause = 15;
+            int minPause = 30;
             int resample_counter = 1;
             Pose rawMcl;
 
