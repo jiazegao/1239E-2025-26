@@ -17,7 +17,7 @@ const double HEADING_SIGMA = 0.04;
 const double PASS_THROUGH_CHANCE = 0.40; 
 const int CONFIDENCE_THRESHOLD = 40; 
 const int PARTICLE_COUNT = 800;
-const int RESAMPLE_COUNT = 100000;
+const int RESAMPLE_COUNT = 5;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -148,11 +148,11 @@ public:
 
     }
 
-    std::vector<Trig> predict(double dist_traveled, double current_std_theta) {
+    std::vector<Trig> predict(double dx, double dy, double current_std_theta) {
         std::vector<Trig> pTrigs;
 
-        std::normal_distribution<double> dist_noise(0, 0.0);
-        std::normal_distribution<double> theta_noise(0, 0.000);
+        std::normal_distribution<double> dist_noise(0, 0.2);
+        std::normal_distribution<double> theta_noise(0, 0.002);
         for (auto& p : particles) {
             double d_theta = current_std_theta - p.pose.theta;
             while (d_theta > M_PI) d_theta -= 2 * M_PI;
@@ -164,8 +164,8 @@ public:
             double pSin = std::sin(p.pose.theta);
             pTrigs.push_back({pCos, pSin});
 
-            p.pose.x += pCos * dist_traveled + dist_noise(gen);
-            p.pose.y += pSin * dist_traveled + dist_noise(gen);
+            p.pose.x += dx + dist_noise(gen);
+            p.pose.y += dy + dist_noise(gen);
         }
 
         return pTrigs;
@@ -260,9 +260,9 @@ public:
         };
     }
 
-    Pose step(double dist, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
+    Pose step(double dx, double dy, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
         double std_theta = vexToStd(vex_theta);
-        auto pTrigs = predict(dist, std_theta);
+        auto pTrigs = predict(dx, dy, std_theta);
         update_weights(dists, confs, std_theta, pTrigs);
         if (do_resample) resample();
         return get_estimate(pTrigs);
@@ -290,25 +290,13 @@ public:
         // Calculate displacement
         double dx = chassis->getPose().x - odomLast.x;
         double dy = chassis->getPose().y - odomLast.y;
-        double move_dist = std::sqrt(dx * dx + dy * dy);
 
-        // --- Corrected Direction Logic ---
-        // Convert current VEX heading to Standard Math Radians
-        double std_theta = vexToStd(this->chassis->getPose().theta); 
-        
-        // If moving against the heading, flip move_dist sign
-        double headX = std::cos(std_theta);
-        double headY = std::sin(std_theta);
-        if ((dx * headX + dy * headY) < 0) {
-            move_dist *= -1.0;
-        }
-        
         // Update Filter
         if (resample_counter < RESAMPLE_COUNT) {
-            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, false);
+            rawMcl = step(dx, dy, chassis->getPose().theta, dists, confs, false);
         }
         else {
-            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, true);
+            rawMcl = step(dx, dy, chassis->getPose().theta, dists, confs, true);
             resample_counter = 0;
         }
         resample_counter++;
