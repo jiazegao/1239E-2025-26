@@ -23,9 +23,9 @@ class Timer {
             return elapsedMs() > timeoutMs;
         };
 
-        int timeLeft() const {
+        double timeLeft() const {
             double e = elapsedMs();
-            return e < timeoutMs ? std::round(timeoutMs - e) : 0;
+            return e < timeoutMs ? (timeoutMs - e) : 0;
         };
 
         double elapsed(TimeUnit unit = TimeUnit::MILLISECOND) const {

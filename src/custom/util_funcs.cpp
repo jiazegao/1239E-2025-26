@@ -479,46 +479,53 @@ void startControllerRCLUpdate() {
 }
 
 // Mcl Benchmark with Heading Conversion for LCD
+inline Pose rawMcl = {0,0,0};
+inline Timer MclT(15);
+inline double MclRate = 0.0;
+inline double MclComputeTime = 0.0;
+
 void startMclBenchmark() {
     stopControllerDisplay();
     stopBrainDisplay();
 
+    // Initial Sync
+    chassis.setPose(0, 0, 270);
+    RclMain.updateBotPose(&left_rcl);
+    RclMain.updateBotPose(&right_rcl);
+    RclMain.updateBotPose(&back_rcl);
+    lemlib::Pose odomLast = chassis.getPose();
+    MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
+
     if (controllerScreenTask == nullptr && brainScreenTask == nullptr) {
+
         controllerScreenTask = new pros::Task ([&](){
-
-            // Initial Sync
-            RclMain.updateBotPose(&left_rcl);
-            RclMain.updateBotPose(&right_rcl);
-            RclMain.updateBotPose(&back_rcl);
-            lemlib::Pose odomLast = chassis.getPose();
-
-            MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
-
-            Timer t(30);   // 33 Hz update
-            int resample_counter = 1;
-            Pose rawMcl = {0, 0, 0};
-
             while (true) {
+                MclT.reset();
                 rawMcl = MclMain.updateMcl();
-
                 // Sync On Demand
                 if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                    MclMain.updateBotPose();
                 }
-                odomLast = chassis.getPose();
-                lemlib::Pose RclPose = RclMain.getRclPose();
+                MclComputeTime = MclT.elapsed();
+                pros::delay(7);
+                MclRate = 1000.0 / (7+MclComputeTime);
+            }
+        });
 
+        brainScreenTask = new pros::Task ([&](){
+            while (true) {
+                lemlib::Pose odomLast = chassis.getPose();
+                lemlib::Pose RclPose = RclMain.getRclPose();
                 // Display Stats
-                pros::lcd::print(0, "MCL Rate: %.1f Hz", 1000.0 / t.elapsed(TimeUnit::MILLISECOND));
-                pros::lcd::print(1, "Compute Time: %.1f ms", t.elapsed(TimeUnit::MILLISECOND));
+                pros::lcd::print(0, "Mcl Rate: %.1f Hz", MclRate);
+                pros::lcd::print(1, "Net Compute Time: %.4f ms", MclComputeTime);
                 pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
                 pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
                 pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
-                t.reset();
-            
-                pros::delay(30);
+                pros::lcd::print(5, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
+                pros::delay(60);
             }
         });
-        brainScreenTask = controllerScreenTask;
+
     }
 }

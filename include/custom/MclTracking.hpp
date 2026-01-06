@@ -16,8 +16,8 @@ const double RESAMPLE_VARIANCE = 0.2;
 const double HEADING_SIGMA = 0.04; 
 const double PASS_THROUGH_CHANCE = 0.40; 
 const int CONFIDENCE_THRESHOLD = 40; 
-const int PARTICLE_COUNT = 300;
-const int RESAMPLE_COUNT = 5;
+const int PARTICLE_COUNT = 800;
+const int RESAMPLE_COUNT = 100000;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -151,8 +151,8 @@ public:
     std::vector<Trig> predict(double dist_traveled, double current_std_theta) {
         std::vector<Trig> pTrigs;
 
-        std::normal_distribution<double> dist_noise(0, 0.2);
-        std::normal_distribution<double> theta_noise(0, 0.002);
+        std::normal_distribution<double> dist_noise(0, 0.0);
+        std::normal_distribution<double> theta_noise(0, 0.000);
         for (auto& p : particles) {
             double d_theta = current_std_theta - p.pose.theta;
             while (d_theta > M_PI) d_theta -= 2 * M_PI;
