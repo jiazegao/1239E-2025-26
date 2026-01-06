@@ -388,6 +388,8 @@ void leftv2() {
     chassis.setPose(-48.75, 16.125, 90);
     RclMain.setRclPose(chassis.getPose());
 
+    RclMain.updateBotPose();
+
     // Intake three balls
     stopIntake();
     startIntake();
@@ -446,7 +448,65 @@ void leftv2() {
     chassis.turnToHeading(135, 700, {.minSpeed= 120});
 }
 void rightv2() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(-48.75, -16.125, 90);
+    RclMain.setRclPose(chassis.getPose());
+
+    RclMain.updateBotPose();
+
+    // Intake three balls
+    stopIntake();
+    startIntake();
+    chassis.moveToPoint(-19, -24, 1000, {}, true);
+    pros::delay(300);
+    openGate();
+
+    // Intake two balls
+    chassis.turnToPoint(-6, -44, 350, {}, true);
+    closeGate();
+    chassis.moveToPoint(-6, -44, 1300, {.maxSpeed=70}, false);
+
+    // Head to long goal
+    chassis.moveToPose(-40, -44, 40, 2000, {.forwards=false, .minSpeed=100}, false);
+    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 1500, {.direction = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE, .minSpeed=127}, false);
+    chassis.moveToPoint(-24, -48, 1200, {.forwards=false, .maxSpeed=100}, true);
+    // Score
+    pros::delay(500);
+    startTopScore();
+    closeGate();
+    pros::delay(1050);
+    RclMain.updateBotPose(&left_rcl);
+    pros::delay(500);
+    stopTopScore();
+
+    // Refill at match loader
+    startIntake();
+    openGate();
+
+    chassis.moveToPoint(-63, -47.5, 1400, {.maxSpeed=60, .minSpeed=50}, false);
     
+    //closeGate();
+    pros::delay(800);
+    // Score lower mid
+    chassis.moveToPoint(-47.5, -47.5, 900, {.forwards=false, .minSpeed=60, .earlyExitRange=4}, true);
+    pros::delay(600);
+    closeGate();
+    chassis.turnToPoint(-10, -10, 600, {}, false);
+    chassis.moveToPoint(-10, -10, 400, {}, true);
+    chassis.moveToPoint(-10, -10, 1200, {.maxSpeed = 80}, true);
+    pros::delay(800);
+    startOuttake();
+    frontMotor.move(-25);
+    pros::delay(1000);
+    stopIntake();
+
+    // Push
+    chassis.moveToPoint(-36, -37, 1200, {.forwards=false}, false);
+    chassis.turnToPoint(-10, -37, 700, {.forwards=false}, false);
+    retractLeftArm();
+    chassis.moveToPoint(-10, -37, 1300, {.forwards=false, .maxSpeed=60}, false);
+    chassis.moveToPoint(-10, -37, 9999, {.forwards=false}, false);
+    chassis.turnToHeading(225, 700, {.minSpeed= 120});
 }
 
 void skills() {

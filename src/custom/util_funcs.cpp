@@ -517,12 +517,13 @@ void startMclBenchmark() {
                 lemlib::Pose odomLast = chassis.getPose();
                 lemlib::Pose RclPose = RclMain.getRclPose();
                 // Display Stats
-                pros::lcd::print(0, "Mcl Rate: %.1f Hz", MclRate);
-                pros::lcd::print(1, "Net Compute Time: %.4f ms", MclComputeTime);
-                pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
-                pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
-                pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
-                pros::lcd::print(5, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
+                pros::lcd::print(0, "Mcl Rate: %.1f Hz, %.4f ms", MclRate, MclComputeTime);
+                pros::lcd::print(1, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
+                pros::lcd::print(2, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
+                pros::lcd::print(3, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
+                pros::lcd::print(4, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
+                pros::lcd::print(5, "Confs: B:%d L:%d R:%d", back_dist.get_confidence(), left_dist.get_confidence(), right_dist.get_confidence());
+                pros::lcd::print(6, "Cumulative Delta: X: %.1f Y:%.1f", totalDelta.x, totalDelta.y);
                 pros::delay(60);
             }
         });

@@ -12,16 +12,17 @@
 // --- Configuration Constants ---
 const double MAX_RANGE = 78.0;  
 const double BASE_DIST_SIGMA = 1.5;
-const double RESAMPLE_VARIANCE = 0.2;
-const double HEADING_SIGMA = 0.04; 
-const double PASS_THROUGH_CHANCE = 0.40; 
+const double RESAMPLE_VARIANCE = 0.3;
+const double HEADING_SIGMA = 0.03; 
 const int CONFIDENCE_THRESHOLD = 40; 
-const int PARTICLE_COUNT = 800;
+const int PARTICLE_COUNT = 500;
 const int RESAMPLE_COUNT = 5;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
 struct Line_ { Pose p1, p2; };
+
+inline Pose totalDelta = {0.0, 0.0, 0.0};
 
 class MclTracking {
 private:
@@ -33,7 +34,7 @@ private:
     std::vector<Particle> particles;
     std::mt19937 gen;
     std::vector<Circle> circle_obstacles;
-    std::vector<Line_> solid_line_obstacles, see_through_line_obstacles;
+    std::vector<Line_> walls, solid_line_obstacles, see_through_line_obstacles;
     std::vector<Pose> sensor_mounts;
     struct Trig { double cos_m, sin_m; };
     std::vector<Trig> mountTrigs;
@@ -105,12 +106,17 @@ public:
             particles.push_back({{x_init(gen), y_init(gen), t_init(gen)}, 1.0});
         }
 
-        // Solid line obstacles
-        solid_line_obstacles = {
+        // Walls
+        walls = {
             {{-70.5, -70.5}, { 70.5, -70.5}},   // Walls 
             {{ 70.5, -70.5}, { 70.5,  70.5}}, 
             {{ 70.5,  70.5}, {-70.5,  70.5}}, 
-            {{-70.5,  70.5}, {-70.5, -70.5}},
+            {{-70.5,  70.5}, {-70.5, -70.5}}
+        };
+
+        // Solid line obstacles
+        solid_line_obstacles = {
+            
             {{-6.7171, 9.1919}, {9.1919, -6.7171}},
             {{-9.1919, 6.7171}, {6.7171, -9.1919}}
         };
@@ -148,7 +154,7 @@ public:
 
     }
 
-    std::vector<Trig> predict(double dx, double dy, double current_std_theta) {
+    std::vector<Trig> predict(double dist_traveled, double current_std_theta) {
         std::vector<Trig> pTrigs;
 
         std::normal_distribution<double> dist_noise(0, 0.2);
@@ -158,14 +164,13 @@ public:
             while (d_theta > M_PI) d_theta -= 2 * M_PI;
             while (d_theta < -M_PI) d_theta += 2 * M_PI;
 
-            p.pose.theta += d_theta + theta_noise(gen);
-
-            double pCos = std::cos(p.pose.theta);
-            double pSin = std::sin(p.pose.theta);
+            double pCos = std::cos(p.pose.theta + (d_theta/2));
+            double pSin = std::sin(p.pose.theta + (d_theta/2));
             pTrigs.push_back({pCos, pSin});
 
-            p.pose.x += dx + dist_noise(gen);
-            p.pose.y += dy + dist_noise(gen);
+            p.pose.x += pCos * dist_traveled + dist_noise(gen);
+            p.pose.y += pSin * dist_traveled + dist_noise(gen);
+            p.pose.theta += d_theta + theta_noise(gen);
         }
 
         return pTrigs;
@@ -181,7 +186,7 @@ public:
             double s = BASE_DIST_SIGMA * (63.0 / (double)confidences[i]);
             sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
         }
-        
+
         for (int count = 0; count < PARTICLE_COUNT; count++) {
             auto& p = particles[count];
             double combined_prob = 1.0;
@@ -195,9 +200,11 @@ public:
                 if (i >= sensor_mounts.size()) break; 
                 if (confidences[i] < CONFIDENCE_THRESHOLD || sensor_readings[i] > MAX_RANGE) continue;
 
+                double current_sigma_sq = sigmas_sq_2[i];
+
                 double s_theta = p.pose.theta + sensor_mounts[i].theta;
-                double s_x = p.pose.x + (robotCos * sensor_mounts[i].x) - (robotSin * sensor_mounts[i].y);
-                double s_y = p.pose.y + (robotSin * sensor_mounts[i].x) + (robotCos * sensor_mounts[i].y);
+                double s_x = p.pose.x + (pTrigs[count].cos_m * sensor_mounts[i].x) - (pTrigs[count].sin_m * sensor_mounts[i].y);
+                double s_y = p.pose.y + (pTrigs[count].sin_m * sensor_mounts[i].x) + (pTrigs[count].cos_m * sensor_mounts[i].y);
 
                 double p_dist = MAX_RANGE;
                 bool hit_hollow = false;
@@ -205,6 +212,9 @@ public:
                 double rayCos = pTrigs[count].cos_m * mountTrigs[i].cos_m - pTrigs[count].sin_m  * mountTrigs[i].sin_m;
                 double raySin = pTrigs[count].sin_m * mountTrigs[i].cos_m + pTrigs[count].cos_m  * mountTrigs[i].sin_m;
 
+                for (const auto& wall : walls) {
+                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, wall, MAX_RANGE, rayCos, raySin));
+                }
                 for (const auto& slo : solid_line_obstacles) {
                     p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, slo, MAX_RANGE, rayCos, raySin));
                 }
@@ -216,14 +226,18 @@ public:
                     if (d < p_dist) { p_dist = d; hit_hollow = true; }
                 }
 
-                double error = std::abs(sensor_readings[i] - p_dist);
-                double prob_match = std::exp(-(error * error) / sigmas_sq_2[i]);
-
-                if (hit_hollow && sensor_readings[i] > p_dist + 4.0) {
-                    combined_prob *= (prob_match + PASS_THROUGH_CHANCE);
-                } else {
-                    combined_prob *= prob_match;
+                if (sensor_readings[i] < (p_dist - 10.0)) {
+                    continue; // Skip this sensor for this particle; don't update combined_prob
                 }
+
+                if (hit_hollow) {
+                    current_sigma_sq *= 3.0;
+                }
+
+                double error = std::abs(sensor_readings[i] - p_dist);
+                double prob_match = std::exp(-(error * error) / current_sigma_sq);
+                
+                combined_prob *= (prob_match + 0.02);
             }
             p.weight = combined_prob + 1e-300;
         }
@@ -232,40 +246,57 @@ public:
     void resample() {
         std::vector<double> weights;
         for (const auto& p : particles) weights.push_back(p.weight);
+
         std::discrete_distribution<int> sampler(weights.begin(), weights.end());
         std::vector<Particle> new_gen(PARTICLE_COUNT);
+        std::uniform_real_distribution<double> jitter(-RESAMPLE_VARIANCE, RESAMPLE_VARIANCE);
+
         for (int i = 0; i < PARTICLE_COUNT; ++i) {
             Particle selected = particles[sampler(gen)];
-            std::uniform_real_distribution<double> jitter(-RESAMPLE_VARIANCE, RESAMPLE_VARIANCE);
             selected.pose.x += jitter(gen);
             selected.pose.y += jitter(gen);
+            selected.weight = 1.0;
             new_gen[i] = selected;
         }
         particles = new_gen;
     }
 
     Pose get_estimate(const std::vector<Trig>& pTrigs) {
-        double x = 0, y = 0, sin_sum = 0, cos_sum = 0;
-        for (int count = 0; count < PARTICLE_COUNT; count++) {
-            const auto& p = particles[count];
-            x += p.pose.x; 
-            y += p.pose.y; 
-            sin_sum += pTrigs[count].sin_m;
-            cos_sum += pTrigs[count].cos_m;
-        }
-        return {
-            x / PARTICLE_COUNT, 
-            y / PARTICLE_COUNT, 
-            std::atan2(sin_sum, cos_sum) // This handles the 359/1 degree wrap-around
-        };
+    double x = 0, y = 0, sin_sum = 0, cos_sum = 0;
+    double total_weight = 0;
+
+    for (int count = 0; count < PARTICLE_COUNT; count++) {
+        const auto& p = particles[count];
+        
+        // Multiply each coordinate by the particle's weight
+        x += p.pose.x * p.weight;
+        y += p.pose.y * p.weight;
+        sin_sum += pTrigs[count].sin_m * p.weight;
+        cos_sum += pTrigs[count].cos_m * p.weight;
+        
+        total_weight += p.weight;
     }
 
-    Pose step(double dx, double dy, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
+    // Handle the case where all weights are zero (safety)
+    if (total_weight < 1e-9) return rawMcl; 
+
+    return {
+        x / total_weight, 
+        y / total_weight, 
+        std::atan2(sin_sum, cos_sum)
+    };
+    }
+
+    Pose step(double dist, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
         double std_theta = vexToStd(vex_theta);
-        auto pTrigs = predict(dx, dy, std_theta);
+        auto pTrigs = predict(dist, std_theta);
         update_weights(dists, confs, std_theta, pTrigs);
+
+        Pose estimate = get_estimate(pTrigs);
+
         if (do_resample) resample();
-        return get_estimate(pTrigs);
+
+        return estimate;
     }
 
     void set_pose(double x, double y, double vex_theta) {
@@ -290,22 +321,31 @@ public:
         // Calculate displacement
         double dx = chassis->getPose().x - odomLast.x;
         double dy = chassis->getPose().y - odomLast.y;
+        double move_dist = std::sqrt(dx * dx + dy * dy);
 
+        totalDelta.x += dx;
+        totalDelta.y += dy;
+
+        // --- Corrected Direction Logic ---
+        // Convert current VEX heading to Standard Math Radians
+        double std_theta = vexToStd(chassis->getPose().theta); 
+        
+        // If moving against the heading, flip move_dist sign
+        double headX = std::cos(std_theta);
+        double headY = std::sin(std_theta);
+        if ((dx * headX + dy * headY) < 0) {
+            move_dist *= -1.0;
+        }
+        
         // Update Filter
         if (resample_counter < RESAMPLE_COUNT) {
-            rawMcl = step(dx, dy, chassis->getPose().theta, dists, confs, false);
+            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, false);
         }
         else {
-            rawMcl = step(dx, dy, chassis->getPose().theta, dists, confs, true);
+            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, true);
             resample_counter = 0;
         }
         resample_counter++;
-        
-        // Convert MCL Result back to VEX Degrees for the LCD
-        // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
-        double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
-        while (mclVexTheta < 0) mclVexTheta += 360;
-        while (mclVexTheta >= 360) mclVexTheta -= 360;
 
         // Sync
         if (autoSync) updateBotPose();
@@ -328,7 +368,7 @@ public:
                     this->updateMcl();
                 
                     if (t.timeLeft() < minPause) pros::delay(minPause);
-                    else pros::delay(t.timeLeft());
+                    else pros::delay(round(t.timeLeft()));
                 }
             });
         }
