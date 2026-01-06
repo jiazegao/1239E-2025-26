@@ -497,7 +497,7 @@ void startMclBenchmark() {
             Timer t(30);   // 33 Hz update
             int minPause = 30;
             int resample_counter = 1;
-            Pose rawMcl;
+            Pose rawMcl = {0, 0, 0};
 
             while (true) {
                 // Get Sensors
@@ -521,6 +521,7 @@ void startMclBenchmark() {
                 }
                 
                 // Update Filter
+                /*
                 if (resample_counter < RESAMPLE_COUNT) {
                     rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs, false);
                 }
@@ -529,6 +530,7 @@ void startMclBenchmark() {
                     resample_counter = 0;
                 }
                 resample_counter++;
+                */
                 
                 // Convert MCL Result back to VEX Degrees for the LCD
                 // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
