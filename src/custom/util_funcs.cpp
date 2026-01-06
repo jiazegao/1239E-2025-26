@@ -501,7 +501,6 @@ void startMclBenchmark() {
 
             int count111 = 0;
             while (true) {
-                /*
                 // Get Sensors
                 std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
                 std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
@@ -523,7 +522,6 @@ void startMclBenchmark() {
                 }
                 
                 // Update Filter
-                
                 if (resample_counter < RESAMPLE_COUNT) {
                     rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs, false);
                 }
@@ -555,12 +553,6 @@ void startMclBenchmark() {
                 pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
                 t.reset();
             
-                pros::delay(minPause);
-                */
-
-                pros::lcd::print(0, "%d", count111);
-                count111++;
-
                 pros::delay(50);
             }
         });

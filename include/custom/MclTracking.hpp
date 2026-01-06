@@ -17,7 +17,7 @@ const double HEADING_SIGMA = 0.04;
 const double PASS_THROUGH_CHANCE = 0.40; 
 const int CONFIDENCE_THRESHOLD = 40; 
 const int PARTICLE_COUNT = 300;
-const int RESAMPLE_COUNT = 9999;
+const int RESAMPLE_COUNT = 5;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
