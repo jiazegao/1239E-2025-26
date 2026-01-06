@@ -545,7 +545,7 @@ void startMclBenchmark() {
 
                 // Display Stats
                 pros::lcd::print(0, "MCL Rate: %.1f Hz", 1000.0 / t.elapsed(TimeUnit::MILLISECOND));
-                pros::lcd::print(1, "Compute Time: %d ms", t.elapsed(TimeUnit::MILLISECOND));
+                pros::lcd::print(1, "Compute Time: %.1f ms", t.elapsed(TimeUnit::MILLISECOND));
                 pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclVexTheta);
                 pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
                 pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
