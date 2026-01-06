@@ -500,8 +500,6 @@ void startMclBenchmark() {
             Pose rawMcl;
 
             while (true) {
-                t.reset();
-
                 // Get Sensors
                 std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
                 std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
@@ -551,9 +549,9 @@ void startMclBenchmark() {
                 pros::lcd::print(2, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclVexTheta);
                 pros::lcd::print(3, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
                 pros::lcd::print(4, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
+                t.reset();
             
-                if (t.timeLeft() < minPause) pros::delay(minPause);
-                else pros::delay(t.timeLeft());
+                pros::delay(minPause);
             }
         }, TASK_PRIORITY_DEFAULT);
         brainScreenTask = controllerScreenTask;
