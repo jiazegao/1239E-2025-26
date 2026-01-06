@@ -499,7 +499,9 @@ void startMclBenchmark() {
             int resample_counter = 1;
             Pose rawMcl = {0, 0, 0};
 
+            int count111 = 0;
             while (true) {
+                /*
                 // Get Sensors
                 std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
                 std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
@@ -521,7 +523,7 @@ void startMclBenchmark() {
                 }
                 
                 // Update Filter
-                /*
+                
                 if (resample_counter < RESAMPLE_COUNT) {
                     rawMcl = MclMain.step(move_dist, chassis.getPose().theta, dists, confs, false);
                 }
@@ -530,7 +532,7 @@ void startMclBenchmark() {
                     resample_counter = 0;
                 }
                 resample_counter++;
-                */
+                
                 
                 // Convert MCL Result back to VEX Degrees for the LCD
                 // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
@@ -554,8 +556,14 @@ void startMclBenchmark() {
                 t.reset();
             
                 pros::delay(minPause);
+                */
+
+                pros::lcd::print(0, "%d", count111);
+                count111++;
+
+                pros::delay(50);
             }
-        }, TASK_PRIORITY_DEFAULT);
+        });
         brainScreenTask = controllerScreenTask;
     }
 }
