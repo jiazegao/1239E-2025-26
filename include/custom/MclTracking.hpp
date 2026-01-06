@@ -40,6 +40,13 @@ private:
     lemlib::Chassis* chassis;
     pros::Task* MclTrackingTask;
     std::vector<pros::Distance*> distance_collection;
+    bool autoSync = false;
+
+    lemlib::Pose odomLast = {0, 0, 0};
+    Timer t = Timer(30);
+    int minPause = 15;
+    Pose rawMcl = {0, 0, 0};
+    int resample_counter = 1;
 
     double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin) {
         double x1 = wall.p1.x; double y1 = wall.p1.y;
@@ -82,9 +89,10 @@ private:
     }
 
 public:
-    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, double start_x, double start_y, double start_vex_theta) {
+    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, double start_x, double start_y, double start_vex_theta, bool autoSync_ = false) {
         this->chassis = chassis;
         this->distance_collection = dist_collection;
+        this->autoSync = autoSync_;
         std::random_device rd;
         gen = std::mt19937(rd());
         
@@ -270,60 +278,66 @@ public:
             p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
             p.weight = 1.0;
         }
+
+        odomLast = chassis->getPose();
+    }
+
+    Pose updateMcl() {
+        // Get Sensors
+        std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
+        std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
+
+        // Calculate displacement
+        double dx = chassis->getPose().x - odomLast.x;
+        double dy = chassis->getPose().y - odomLast.y;
+        double move_dist = std::sqrt(dx * dx + dy * dy);
+
+        // --- Corrected Direction Logic ---
+        // Convert current VEX heading to Standard Math Radians
+        double std_theta = vexToStd(this->chassis->getPose().theta); 
+        
+        // If moving against the heading, flip move_dist sign
+        double headX = std::cos(std_theta);
+        double headY = std::sin(std_theta);
+        if ((dx * headX + dy * headY) < 0) {
+            move_dist *= -1.0;
+        }
+        
+        // Update Filter
+        if (resample_counter < RESAMPLE_COUNT) {
+            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, false);
+        }
+        else {
+            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, true);
+            resample_counter = 0;
+        }
+        resample_counter++;
+        
+        // Convert MCL Result back to VEX Degrees for the LCD
+        // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
+        double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
+        while (mclVexTheta < 0) mclVexTheta += 360;
+        while (mclVexTheta >= 360) mclVexTheta -= 360;
+
+        // Sync
+        if (autoSync) updateBotPose();
+        odomLast = chassis->getPose();
+
+        return rawMcl;
+    }
+
+    void updateBotPose() {
+        chassis->setPose(rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
     }
 
     void startTracking() {
         if (MclTrackingTask == nullptr) {
             MclTrackingTask = new pros::Task([this](){
-
-                lemlib::Pose odomLast = this->chassis->getPose();
-                Timer t(30);   // 33 Hz update
-                int minPause = 15;
-                Pose rawMcl;
-                int resample_counter = 1;
                 
                 while (true) {
-                    t.reset();
+                    this->t.reset();
 
-                    // Get Sensors
-                    std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
-                    std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
-
-                    // Calculate displacement
-                    double dx = this->chassis->getPose().x - odomLast.x;
-                    double dy = this->chassis->getPose().y - odomLast.y;
-                    double move_dist = std::sqrt(dx * dx + dy * dy);
-
-                    // --- Corrected Direction Logic ---
-                    // Convert current VEX heading to Standard Math Radians
-                    double std_theta = vexToStd(this->chassis->getPose().theta); 
-                    
-                    // If moving against the heading, flip move_dist sign
-                    double headX = std::cos(std_theta);
-                    double headY = std::sin(std_theta);
-                    if ((dx * headX + dy * headY) < 0) {
-                        move_dist *= -1.0;
-                    }
-                    
-                    // Update Filter
-                    if (resample_counter < RESAMPLE_COUNT) {
-                        rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs, false);
-                    }
-                    else {
-                        rawMcl = this->step(move_dist, this->chassis->getPose().theta, dists, confs, true);
-                        resample_counter = 0;
-                    }
-                    resample_counter++;
-                    
-                    // Convert MCL Result back to VEX Degrees for the LCD
-                    // Standard Radians to VEX Degrees: degrees = 90 - (rads * 180 / PI)
-                    double mclVexTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
-                    while (mclVexTheta < 0) mclVexTheta += 360;
-                    while (mclVexTheta >= 360) mclVexTheta -= 360;
-
-                    // Sync
-                    this->chassis->setPose(rawMcl.x, rawMcl.y, mclVexTheta);
-                    odomLast = this->chassis->getPose();
+                    this->updateMcl();
                 
                     if (t.timeLeft() < minPause) pros::delay(minPause);
                     else pros::delay(t.timeLeft());
