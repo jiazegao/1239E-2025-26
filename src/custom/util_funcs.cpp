@@ -84,8 +84,8 @@ void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, boo
 }
 void jiggle(int repeats, int time) {
     for (int i = 0; i < repeats; i++) {
-        moveForward(3, time/repeats*2/3, 41, 40, false);
-        moveForward(-0.1, time/repeats/3, 41, 40, false);
+        moveForward(8, time/repeats*2/3, 80, 50, false);
+        moveForward(-1.5, time/repeats/3, 31, 30, false);
     }
 }
 void shake(int repeats, int time) {
