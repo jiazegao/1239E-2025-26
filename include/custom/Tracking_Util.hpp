@@ -50,7 +50,12 @@ constexpr double FIELD_HALF_LENGTH = 70.5;         // inches
 constexpr double FIELD_NEG_HALF_LENGTH = -70.5;
 
 // Util funcs
-inline double botToTrig (double ang) { return (std::fmod(360.0-std::abs(90.0-ang), 360.0)); }
+inline double botToTrig(double ang) {
+    double result = 90.0 - ang;
+    while (result > 360.0) result -= 360.0;
+    while (result < 0) result += 360.0;
+    return result;
+}
 inline double vexToStd(double vexDegrees) {
     double rads = (90.0 - vexDegrees) * (M_PI / 180.0);
     while (rads > M_PI) rads -= 2 * M_PI;
