@@ -701,6 +701,9 @@ void skills_v2() {
     chassis.moveToPose(-25, 61, 270, 1200, {.forwards=false, .lead=0.5, .minSpeed=50}, false);
     chassis.moveToPoint(38, 61, 1500, {.forwards=false}, false);
     chassis.turnToHeading(180, 400, {}, false);
+    pros::delay(400);
+    RclMain.updateBotPose(&left_rcl);
+    RclMain.updateBotPose(&back_rcl);
     chassis.moveToPoint(38 , 47.5, 1200, {}, false);
     chassis.turnToPoint(28, 47.5, 600, {.forwards=false}, false);
     chassis.moveToPoint(28, 47.5, 1000, {.forwards=false, .maxSpeed=70}, false);
@@ -738,13 +741,10 @@ void skills_v2() {
     chassis.moveToPoint(chassis.getPose().x, chassis.getPose().y+3, 600, {.forwards=false}, false);
     chassis.turnToHeading(270, 900, {}, false);
     chassis.moveToPoint(chassis.getPose().x-7, chassis.getPose().y, 1200, {}, false);
-    chassis.turnToHeading(270, 900, {}, false);
-    pros::delay(700);
-    float back_dist_val = 70.5 - back_dist.get()*0.03937008;
-    float left_dist_val = -70.5 + left_dist.get()*0.03937008;
-    lemlib::Pose newPose = {back_dist_val, left_dist_val, chassis.getPose().theta};
-    chassis.setPose(newPose);
-    RclMain.setRclPose(newPose);
+    chassis.turnToHeading(270, 600, {}, false);
+    pros::delay(400);
+    RclMain.updateBotPose(&left_rcl);
+    RclMain.updateBotPose(&back_rcl);
 
     // Get one more red ball then score everything in top mid
     startIntake();
@@ -799,6 +799,7 @@ void skills_v2() {
     startIntake();
     chassis.moveToPoint(-66, -46, 1300, {.maxSpeed=50}, false);
     pros::delay(1300);
+    RclMain.updateBotPose(&left_rcl);
     jiggle(4, 2000);
     chassis.moveToPoint(-28, -47.5, 2000, {.forwards=false, .maxSpeed=80}, false);
     startTopScore();

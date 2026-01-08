@@ -73,16 +73,6 @@ void opcontrol() {
 		updateIntake();
 		updatePneumatics();
 
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
-			RclMain.updateBotPose(&left_rcl);
-		}
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-			RclMain.updateBotPose(&right_rcl);
-		}
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
-			RclMain.updateBotPose(&back_rcl);
-		}
-
 		pros::delay(20);
 	}
 

@@ -24,6 +24,19 @@ public:
         head->next = tail;
     }
 
+    ~Singly_Linked_List() {
+        Node* curr = head;
+        while (curr != nullptr) {
+            Node* nextNode = curr->next;
+            if (curr->ptr != nullptr) delete curr->ptr;
+            delete curr; // This deletes the Node container
+            curr = nextNode;
+        }
+    }
+
+    Singly_Linked_List(const Singly_Linked_List&) = delete;
+    Singly_Linked_List& operator=(const Singly_Linked_List&) = delete;
+
     class Node {
         public:
             explicit Node(AnyType* obj_ptr) {
@@ -169,12 +182,10 @@ public:
     }
 
     AnyType* get(int index){
-        Node* currNode = head;
-        if (index >= 0 && index < length) {
-            while (index >= 0){
-                currNode = currNode->next;
-                index--;
-            }
+        if (index < 0 || index >= length) return nullptr;
+        Node* currNode = head->next; // Start at the first REAL node
+        for (int i = 0; i < index; i++) {
+            currNode = currNode->next;
         }
         return currNode->ptr;
     }
@@ -201,10 +212,6 @@ public:
 
     [[nodiscard]] int size() const {
         return length;
-    }
-
-    void setSize(int size) {
-        length = size;
     }
 
     Node* getHead() {
@@ -328,6 +335,7 @@ public:
     void syncUpdate();
     void lifeTimeUpdate();
 
+private:
     lemlib::Chassis* chassis;
     int goalMSPT;
     int minPause;
@@ -344,4 +352,3 @@ public:
     void mainLoop();
     void miscLoop();
 };
-
