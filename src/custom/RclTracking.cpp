@@ -102,7 +102,9 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
     sp.y = botPose.y + std::sin(theta) * offsetDist;
     // sensor ray's heading
     sp.heading = std::fmod(botPose.theta + mainAngle, 360.0);
-    if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
+    while (sp.heading < 0) sp.heading += 360.0;
+    while (sp.heading >= 360.0) sp.heading -= 360.0;
+    if (sp.heading == 0) sp.heading += 0.00001;    // avoid 0
     if (sp.heading == 180) sp.heading += 0.00001;  // avoid 180
     // slope and y-intercept
     sp.slope = std::tan(degToRad(botToTrig(sp.heading)));
@@ -233,6 +235,7 @@ void RclTracking::updateBotPose(RclSensor* sens) {
         // Update pose based on sensor reading
         if (data.first == CoordType::X) pose.x = data.second;
         else if (data.first == CoordType::Y) pose.y = data.second;
+        else return; // Invalid data
 
         // Sync to Lemlib
         chassis->setPose({pose.x, pose.y, chassis->getPose().theta});

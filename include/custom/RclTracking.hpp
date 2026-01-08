@@ -328,7 +328,6 @@ public:
     void syncUpdate();
     void lifeTimeUpdate();
 
-private:
     lemlib::Chassis* chassis;
     int goalMSPT;
     int minPause;
