@@ -44,8 +44,6 @@ void autonomous() {
 	extendLeftArm();
 
 	//Change this back later
-	//skills_v2();
-	
 	skills_v2();
 }
 
