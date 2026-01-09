@@ -67,7 +67,7 @@ void opcontrol() {
 
 	while (true) {
 		// Update Controls
-		updateCurvatureDrive();
+		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
 
