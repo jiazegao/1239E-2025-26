@@ -82,10 +82,10 @@ void retractLeftArm() {
 void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
     chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta)), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
-void jiggle(int repeats, int time) {
+void jiggle(int repeats, int time, float forward, float backward) {
     for (int i = 0; i < repeats; i++) {
-        moveForward(8, time/repeats*2/3, 80, 50, false);
-        moveForward(-1.5, time/repeats/3, 31, 30, false);
+        moveForward(forward, time/repeats*3/4, 80, 50, false);
+        moveForward(-backward, time/repeats/4, 31, 30, false);
     }
 }
 void shake(int repeats, int time) {
@@ -390,7 +390,7 @@ void startControllerAutonSelectorDisplay() {
                 pros::delay(50);
                 controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
                 pros::delay(50);
-                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
+                controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::LEFT_FAST ? "LEFT_FAST" : autonType == autonTypes::LEFT_V2 ? "LEFT_V2" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::RIGHT_FAST ? "RIGHT_FAST" : autonType == autonTypes::RIGHT_V2 ? "RIGHT_V2" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
                 pros::delay(50);
                 controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
                 pros::delay(100);
@@ -409,7 +409,7 @@ void startControllerRclDisplay() {
                 pros::delay(50);
                 controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
                 pros::delay(50);
-                controller.print(2, 0, "(%.1f, %.1f, %.1f)", left_rcl.getBotCoord(chassis.getPose()).second, back_rcl.getBotCoord(chassis.getPose()).second, right_rcl.getBotCoord(chassis.getPose()).second);
+                controller.print(2, 0, "%d, %d, %d", left_rcl.rawReading(), back_rcl.rawReading(), right_rcl.rawReading());
                 pros::delay(100);
             }
         });

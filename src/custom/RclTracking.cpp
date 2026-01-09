@@ -32,20 +32,33 @@ bool Line_Obstacle::expired() {
 
 // Check if sensor ray intersects this obstacle line
 bool Line_Obstacle::isIntersecting(const SensorPose& sp) const {
-    // Calculate intersection point
-    double xi = (sp.yIntercept - line.yIntercept) / (line.slope - sp.slope);
-    double yi = line.slope * xi + line.yIntercept;
+    // Ray direction vector
+    double angRad = degToRad(botToTrig(sp.heading));
+    double vAx = std::cos(angRad);
+    double vAy = std::sin(angRad);
 
-    // Check if intersection is within the line segment
-    if ((xi < std::min(line.pt1[0], line.pt2[0]) || xi > std::max(line.pt1[0], line.pt2[0])) ||
-        (yi < std::min(line.pt1[1], line.pt2[1]) || yi > std::max(line.pt1[1], line.pt2[1])))
-        return false;
+    // Obstacle segment vector
+    double vBx = line.pt2[0] - line.pt1[0];
+    double vBy = line.pt2[1] - line.pt1[1];
 
-    // Check if the intersection point is in the direction of the sensor ray
-    double dx = xi - sp.x;
-    double dy = yi - sp.y;
-    double ang = degToRad(sp.heading);
-    return (dx * std::cos(ang) > 0) || (dy * std::sin(ang) > 0);
+    // Determinant (Cross product of direction vectors)
+    double det = (vAx * vBy) - (vAy * vBx);
+
+    // If det is 0, the ray and the obstacle are parallel
+    if (std::abs(det) < 1e-6) return false;
+
+    // Solve for t (distance along sensor ray) and u (position along obstacle segment)
+    // Formula: P_sensor + t*vA = P_obstacle_start + u*vB
+    double dx = line.pt1[0] - sp.x;
+    double dy = line.pt1[1] - sp.y;
+
+    double t = (dx * vBy - dy * vBx) / det;
+    double u = (dx * vAy - dy * vAx) / det;
+
+    // Valid intersection if:
+    // 1. t > 0 (Intersection is in front of the sensor)
+    // 2. 0 <= u <= 1 (Intersection lies on the actual segment, not just the infinite line)
+    return (t > 0 && u >= 0 && u <= 1);
 }
 
 // Polygon obstacles
@@ -73,16 +86,29 @@ bool Circle_Obstacle::expired() {
 
 // Check if sensor ray intersects this obstacle circle
 bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
-    double mPerp = -1.0 / sp.slope;
-    double bPerp = y - mPerp * x;
-    double xi = (bPerp - sp.yIntercept) / (sp.slope - mPerp);
-    double yi = sp.slope * xi + sp.yIntercept;
-    double d = std::hypot(xi - x, yi - y);
-    if (d > radius) return false;
-    double dx = xi - sp.x;
-    double dy = yi - sp.y;
-    double ang = degToRad( botToTrig(sp.heading) );
-    return (dx * std::cos(ang) > 0) || (dy * std::sin(ang) > 0);
+    double angRad = degToRad(botToTrig(sp.heading));
+    double vx = std::cos(angRad);
+    double vy = std::sin(angRad);
+
+    // Vector from sensor to circle center
+    double dx = x - sp.x;
+    double dy = y - sp.y;
+
+    // Calculate 't' (the distance along the ray to the point closest to the circle center)
+    // t = dot product of (vector to center) and (ray direction)
+    double t = dx * vx + dy * vy;
+
+    // If t is negative, the circle is behind the sensor
+    if (t < 0) return false;
+
+    // Find the point on the ray at distance t
+    double closestX = sp.x + t * vx;
+    double closestY = sp.y + t * vy;
+
+    // Check distance from that point to circle center
+    double distSq = std::pow(closestX - x, 2) + std::pow(closestY - y, 2);
+    
+    return distSq <= (radius * radius);
 }
 
 // RCL sensor class
@@ -103,7 +129,6 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
     // sensor ray's heading
     sp.heading = std::fmod(botPose.theta + mainAngle, 360.0);
     if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
-    if (sp.heading == 180) sp.heading += 0.00001;  // avoid 180
     // slope and y-intercept
     sp.slope = std::tan(degToRad(botToTrig(sp.heading)));
     sp.yIntercept = sp.y - sp.slope * sp.x;
@@ -133,31 +158,41 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
 
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
-
     val *= mmToInch;
 
-    // Determine which wall
-    int wall;
-    double heading = sp.heading;
-    if (heading == 90.0) wall = 2;
-    else if (heading == 270.0) wall = 4;
-    else if (heading < 90.0 || heading > 270.0) {
-        double tx = (FIELD_HALF_LENGTH - sp.yIntercept) / sp.slope;
-        wall = (tx <= FIELD_NEG_HALF_LENGTH ? 4 : (tx < FIELD_HALF_LENGTH ? 1 : 2));
+    //
+    double angRad = degToRad(botToTrig(this->sp.heading));
+    double cosA = std::cos(angRad);
+    double sinA = std::sin(angRad);
+
+    double minDist = 1e9; // Start with a huge number
+    int wall = -1;
+
+    // Check X-walls (Vertical lines)
+    if (std::abs(cosA) > 1e-6) {
+        double dEast = (FIELD_HALF_LENGTH - sp.x) / cosA;
+        if (dEast > 0 && dEast < minDist) { minDist = dEast; wall = 2; }
+        
+        double dWest = (FIELD_NEG_HALF_LENGTH - sp.x) / cosA;
+        if (dWest > 0 && dWest < minDist) { minDist = dWest; wall = 4; }
     }
-    else {
-        double tx = (FIELD_NEG_HALF_LENGTH - sp.yIntercept) / sp.slope;
-        wall = (tx <= FIELD_NEG_HALF_LENGTH ? 4 : (tx < FIELD_HALF_LENGTH ? 3 : 2));
+
+    // Check Y-walls (Horizontal lines)
+    if (std::abs(sinA) > 1e-6) {
+        double dNorth = (FIELD_HALF_LENGTH - sp.y) / sinA;
+        if (dNorth > 0 && dNorth < minDist) { minDist = dNorth; wall = 1; }
+        
+        double dSouth = (FIELD_NEG_HALF_LENGTH - sp.y) / sinA;
+        if (dSouth > 0 && dSouth < minDist) { minDist = dSouth; wall = 3; }
     }
 
     // Compute coordinate
     double res;
     CoordType type;
-    double angRad = degToRad(sp.heading);
-    if (wall == 1) { type = CoordType::Y; res = FIELD_HALF_LENGTH - std::cos(angRad) * val; }
-    else if (wall == 2) { type = CoordType::X; res = FIELD_HALF_LENGTH - std::sin(angRad) * val; }
-    else if (wall == 3) { type = CoordType::Y; res = FIELD_NEG_HALF_LENGTH - std::cos(angRad) * val; }
-    else if (wall == 4) { type = CoordType::X; res = FIELD_NEG_HALF_LENGTH - std::sin(angRad) * val; }
+    if (wall == 1) { type = CoordType::Y; res = FIELD_HALF_LENGTH - sinA * val; }
+    else if (wall == 2) { type = CoordType::X; res = FIELD_HALF_LENGTH - cosA * val; }
+    else if (wall == 3) { type = CoordType::Y; res = FIELD_NEG_HALF_LENGTH - sinA * val; }
+    else if (wall == 4) { type = CoordType::X; res = FIELD_NEG_HALF_LENGTH - cosA * val; }
     else return {CoordType::INVALID, 0.0};  // Error case
 
     // Adjust by offset
@@ -233,6 +268,7 @@ void RclTracking::updateBotPose(RclSensor* sens) {
         // Update pose based on sensor reading
         if (data.first == CoordType::X) pose.x = data.second;
         else if (data.first == CoordType::Y) pose.y = data.second;
+        else return;
 
         // Sync to Lemlib
         chassis->setPose({pose.x, pose.y, chassis->getPose().theta});
@@ -350,8 +386,8 @@ void RclTracking::syncUpdate() {
     // Otherwise, only sync part of the discrepency
     else {
         // Calculate the updating amount
-        x_update = x_diff / real_diff * std::sqrt(maxSyncPT);
-        y_update = y_diff / real_diff * std::sqrt(maxSyncPT);
+        x_update = x_diff / real_diff * maxSyncPT;
+        y_update = y_diff / real_diff * maxSyncPT;
 
         // Update (Sync)
         chassis->setPose(chassis->getPose().x+x_update, chassis->getPose().y+y_update, chassis->getPose().theta);
@@ -403,7 +439,7 @@ void RclTracking::miscLoop() {
 
         // main update functions
         if (autoSync) { syncUpdate(); }
-        // lifeTimeUpdate();
+        lifeTimeUpdate();
 
         // Pause for the remaining time
         if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause
