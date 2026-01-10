@@ -5,6 +5,7 @@
 
 // Autons
 void left();
+void NAAuto();
 void right();
 void soloAWP();
 void leftControlRush();

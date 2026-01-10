@@ -3,7 +3,7 @@
 #include "main.h" // IWYU pragma: keep
 
 // Autonomous selection variables
-enum class autonTypes { TYPE_NONE, LEFT, RIGHT, LEFT_RUSH, RIGHT_RUSH, LEFT_FAST, RIGHT_FAST, LEFT_V2, RIGHT_V2, SOLO_AWP };
+enum class autonTypes { TYPE_NONE, NAAUTO, LEFT, RIGHT, LEFT_RUSH, RIGHT_RUSH, LEFT_FAST, RIGHT_FAST, LEFT_V2, RIGHT_V2, SOLO_AWP };
 inline autonTypes autonType = autonTypes::SOLO_AWP;
 inline bool runningSkills = false;
 inline bool autonMoveToPose = false;

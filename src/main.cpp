@@ -43,8 +43,7 @@ void autonomous() {
 	extendLeftArm();
 	extendLeftArm();
 
-	//Change this back later
-	skills_v2();
+	runAuton();
 }
 
 void opcontrol() {
@@ -58,6 +57,7 @@ void opcontrol() {
 	extendLeftArm();
 	extendLeftArm();
 	stopTopScore();
+	stopIntake();
 
 	// Display FB Logo
 	// pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
