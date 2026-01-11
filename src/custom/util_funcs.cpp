@@ -109,6 +109,7 @@ void stopTopScore() {
     if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
         outtakeTaskRunning = false;
         colorOuttakeTask->remove();
+        colorOuttakeTask = nullptr;
     }
     stopIntake();
 };
