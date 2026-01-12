@@ -42,8 +42,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-
-	runAuton();
+rightControlRush();
+	//runAuton();
 }
 
 void opcontrol() {
