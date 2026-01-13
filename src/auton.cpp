@@ -7,6 +7,27 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
+void leftPush() {
+    //chassis.moveToPoint(-53, 47, 600, {}, false);
+    //chassis.turnToHeading(130, 500, {}, false);
+    //chassis.moveToPoint(-37, 35, 550, {}, false);
+    chassis.moveToPoint(-35, 36, 700, {}, false);
+    chassis.turnToPoint(0, 35, 400, {}, false);
+    retractLeftArm();
+    chassis.moveToPoint(-20, 37, 1200, {.minSpeed=127}, false);
+    chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
+}
+
+void rightPush() {
+    //chassis.moveToPoint(-50, -47, 300, {}, false);
+    //chassis.turnToHeading(240, 250, {}, false);
+    //chassis.moveToPoint(-39, -37, 450, {.forwards=false}, false);
+    chassis.moveToPoint(-35, -36, 700, {}, false);
+    chassis.turnToPoint(0, -39, 300, {.forwards=false}, false);
+    retractLeftArm();
+    chassis.moveToPoint(-22, -37, 1200, {.forwards=false, .minSpeed=127}, false);
+}
+
 void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, 0, 0);
@@ -205,14 +226,7 @@ void left() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-53, 47, 600, {}, false);
-    chassis.turnToHeading(130, 500, {}, false);
-    chassis.moveToPoint(-37, 35, 550, {}, false);
-    //chassis.moveToPoint(-40, 37, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(0, 35, 300, {}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-20, 37, 1200, {.minSpeed=127}, false);
-    chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
+    leftPush();
 }
 // Three balls -> Match loader -> Long goal -> Push
 void leftControlRush() {
@@ -248,14 +262,7 @@ void leftControlRush() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-53, 47, 600, {}, false);
-    chassis.turnToHeading(130, 500, {}, false);
-    chassis.moveToPoint(-37, 35, 550, {}, false);
-    //chassis.moveToPoint(-40, 37, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(0, 35, 300, {}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-18, 37, 1200, {.minSpeed=127}, false);
-    chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
+    leftPush();
 }
 // Match loader -> Long goal -> Push
 void leftFastRush() {
@@ -285,14 +292,7 @@ void leftFastRush() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-53, 47, 600, {}, false);
-    chassis.turnToHeading(130, 500, {}, false);
-    chassis.moveToPoint(-37, 35, 550, {}, false);
-    //chassis.moveToPoint(-40, 37, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(0, 35, 300, {}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-20, 37, 1200, {.minSpeed=127}, false);
-    chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
+    leftPush();
 }
 void NAAuto() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -364,13 +364,7 @@ void rightControlRush() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-50, -47, 300, {}, false);
-    chassis.turnToHeading(240, 250, {}, false);
-    chassis.moveToPoint(-39, -37, 450, {.forwards=false}, false);
-    //chassis.moveToPoint(-40, -37, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(0, -39, 300, {.forwards=false}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-22, -37, 1200, {.forwards=false, .minSpeed=127}, false);
+    rightPush();
 }
 // Match loader -> Long goal -> Push
 // WORKS
@@ -401,13 +395,7 @@ void rightFastRush() {
 
     // Push
     closeGate();
-    chassis.moveToPoint(-50, -47, 300, {}, false);
-    chassis.turnToHeading(240, 250, {}, false);
-    chassis.moveToPoint(-39, -37, 450, {.forwards=false}, false);
-    //chassis.moveToPoint(-40, -37, 1200, {.minSpeed = 60, .earlyExitRange = 1}, false);
-    chassis.turnToPoint(0, -39, 300, {.forwards=false}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-22, -37, 1200, {.forwards=false, .minSpeed=127}, false);
+    rightPush();
 }
 // Three balls -> Two balls -> Long goal -> Match loader -> Top mid -> Push
 void leftv2() {
