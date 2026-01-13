@@ -42,7 +42,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-rightControlRush();
+//rightFastRush();
+	 leftControlRush();
 	//runAuton();
 }
 
