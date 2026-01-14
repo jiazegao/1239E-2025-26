@@ -34,7 +34,8 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-
+	
+	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
 	startControllerRclDisplay();
@@ -42,9 +43,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-//rightFastRush();
-	 leftControlRush();
-	//runAuton();
+ //rightControlRush();
+	runAuton();
 }
 
 void opcontrol() {
@@ -52,7 +52,7 @@ void opcontrol() {
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.retract();
+	odomLift.extend();
 
 	// Retract both descore arms
 	extendLeftArm();
