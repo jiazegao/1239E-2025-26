@@ -27,17 +27,8 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-
-	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-
-	startControllerRCLUpdate();
-
-	// Ensure descore arms are retracted
-	extendLeftArm();
-	extendRightArm();
-	
-	//skills();
-	runAuton();
+	chassis.setPose(0, 0, 0);
+	//chassis.moveToPoint(0, 10, 1000, {}); // Brief delay to ensure everything is initialized
 }
 
 void opcontrol() {

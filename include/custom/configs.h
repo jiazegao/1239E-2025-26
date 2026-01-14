@@ -22,17 +22,18 @@ inline alliance_color allianceColor = alliance_color::BLUE;
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-inline pros::MotorGroup leftMotors({-11, 12, 10}, pros::MotorGearset::blue);
-inline pros::MotorGroup rightMotors({19, -17, -18}, pros::MotorGearset::blue);
+inline pros::Motor motor20(20, pros::MotorGearset::blue);
+inline pros::MotorGroup leftMotors({11, 20}, pros::MotorGearset::blue);
+inline pros::MotorGroup rightMotors({-1, -10, }, pros::MotorGearset::blue);
 inline pros::Motor frontMotor(20, pros::MotorGearset::blue);
 inline pros::Motor topMotor(9, pros::MotorGearset::blue);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
-                              11.375,
-                              3.25,
-                              450,
-                              2
+                              6,
+                              4.0,
+                              200,
+                              8
 );
 
 // Odometry
@@ -40,7 +41,7 @@ inline pros::Rotation vertSensor(-7);
 inline pros::Rotation horiSensor(-16);
 
 // IMU
-inline pros::Imu imu(5);
+inline pros::Imu imu(9);
 
 // Optical
 inline pros::Optical topOptic(6);
