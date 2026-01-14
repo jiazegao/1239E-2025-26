@@ -674,7 +674,7 @@ void skills_v2() {
     stopIntake();
     startIntake();
     chassis.moveToPoint(-22, 23, 1000, {.maxSpeed=80}, true);
-    pros::delay(1000);
+    pros::delay(500);
     openGate();
 
     // Score two red
@@ -711,11 +711,12 @@ void skills_v2() {
     chassis.moveToPose(-25, 61, 270, 1200, {.forwards=false, .lead=0.5, .minSpeed=50}, false);
     chassis.moveToPoint(38, 61, 1500, {.forwards=false}, false);
     chassis.turnToHeading(180, 700, {}, false);
+    pros::delay(300);
     RclMain.updateBotPose(&left_rcl);
     RclMain.updateBotPose(&back_rcl);
-    chassis.moveToPoint(38 , 47, 700, {}, false);
-    chassis.turnToPoint(28, 47, 500, {.forwards=false}, false);
-    chassis.moveToPoint(28, 47, 1000, {.forwards=false, .maxSpeed=80}, true);
+    chassis.moveToPoint(38 , 47.5, 700, {}, false);
+    chassis.turnToPoint(28, 47.5, 500, {.forwards=false}, false);
+    chassis.moveToPoint(28, 47.5, 1000, {.forwards=false, .maxSpeed=80}, true);
     pros::delay(500);
     startTopScore(alliance_color::NONE);
     pros::delay(3000);
@@ -725,9 +726,9 @@ void skills_v2() {
     // Refill at top-right loader then score again
     openGate();
     startIntake();
-    chassis.moveToPoint(63, 46, 1200, {.maxSpeed=55}, false);
+    chassis.moveToPoint(70, 47, 1200, {.maxSpeed=70}, false);
     jiggle(3, 2400);
-    chassis.moveToPoint(28, 48, 1400, {.forwards=false, .maxSpeed=90}, true);
+    chassis.moveToPoint(28, 47.5, 1400, {.forwards=false, .maxSpeed=90}, true);
     pros::delay(400);
     startTopScore(alliance_color::NONE);
     pros::delay(2700);
