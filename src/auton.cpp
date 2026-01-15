@@ -116,6 +116,9 @@ void right(){
     chassis.setPose(-48.75, -16.125, 90);
     RclMain.setRclPose(chassis.getPose());
 
+    RclMain.updateBotPose(&right_rcl);
+    RclMain.updateBotPose(&back_rcl);
+
     // Intake three balls
     stopIntake();
     startIntake();
@@ -268,15 +271,16 @@ void leftControlRush() {
 // WORKS
 void leftFastRush() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-47, 13.25, 0);
+    chassis.setPose(-47, 13.25, 180);
     RclMain.setRclPose(chassis.getPose());
 
     RclMain.updateBotPose();
-    RclMain.updateBotPose(&left_rcl);
+    RclMain.updateBotPose(&right_rcl);
+    RclMain.updateBotPose(&back_rcl);
 
     // Head towards the matchloader and intake
     openGate();
-    chassis.moveToPoint(-47, 49, 1200, {}, false);
+    chassis.moveToPoint(-47, 45, 1200, {}, false);
     chassis.turnToHeading(270, 300, {});
     startIntake();
     chassis.moveToPoint(-68, 47, 1300, {.maxSpeed=70}, false);
@@ -371,15 +375,16 @@ void rightControlRush() {
 // WORKS
 void rightFastRush() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-47, -13.25, 180);
+    chassis.setPose(-47, -13.25, 0);
     RclMain.setRclPose(chassis.getPose());
 
     RclMain.updateBotPose();
-    RclMain.updateBotPose(&right_rcl);
+    RclMain.updateBotPose(&left_rcl);
+    RclMain.updateBotPose(&back_rcl);
 
     // Head towards the matchloader and intake
     openGate();
-    chassis.moveToPoint(-47, -49, 1200, {}, false);
+    chassis.moveToPoint(-47, -45, 1200, {}, false);
     chassis.turnToHeading(270, 300, {});
     startIntake();
     chassis.moveToPoint(-68, -47, 1300, {.maxSpeed=70}, false);
@@ -465,6 +470,8 @@ void rightv2() {
     RclMain.setRclPose(chassis.getPose());
 
     RclMain.updateBotPose();
+    RclMain.updateBotPose(&right_rcl);
+    RclMain.updateBotPose(&back_rcl);
 
     // Intake three balls
     stopIntake();
