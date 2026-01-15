@@ -675,13 +675,6 @@ void skills() {
 // 90+ points
 void skills_v2() {
 
-    // Declare IME chassis
-    lemlib::Chassis IMEchassis( drivetrain, // drivetrain settings
-                        lateral_controller, // lateral PID settings
-                        angular_controller, // angular PID settings
-                        sensorsNoTrackingWheels // odometry sensors
-    );
-
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-48.75, 16.125, 90);
     RclMain.setRclPose(chassis.getPose());
@@ -765,16 +758,14 @@ void skills_v2() {
     pros::delay(200);
     chassis.waitUntilDone();
 
-    IMEchassis.setPose(chassis.getPose().x,  chassis.getPose().y, chassis.getPose().theta);
     startIntake();
-    IMEchassis.moveToPoint(68, -20, 2200, {.minSpeed=90, .earlyExitRange=4}, true);
+    chassis.moveToPoint(68, -20, 2200, {.minSpeed=90, .earlyExitRange=4}, true);
     pros::delay(1700);
     openGate();
     odomLift.retract();
     pros::delay(500);
     closeGate();
-    IMEchassis.turnToHeading(180, 400, {}, false);
-    IMEchassis.waitUntilDone();
+    chassis.turnToHeading(180, 400, {}, false);
 
     // Reset location
     chassis.turnToHeading(270, 700, {}, false);
@@ -856,8 +847,6 @@ void skills_v2() {
     pros::delay(200);
     chassis.waitUntilDone();
 
-    IMEchassis.setPose(chassis.getPose().x,  chassis.getPose().y, chassis.getPose().theta);
     startIntake();
-    IMEchassis.moveToPoint(-68, 0, 1600, {.minSpeed=80, .earlyExitRange=3}, true);
-    IMEchassis.waitUntilDone();
+    chassis.moveToPoint(-68, 0, 1600, {.minSpeed=80, .earlyExitRange=3}, true);
 }

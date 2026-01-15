@@ -109,6 +109,7 @@ void stopTopScore() {
     if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
         outtakeTaskRunning = false;
         colorOuttakeTask->remove();
+        colorOuttakeTask = nullptr;
     }
     stopIntake();
 };
@@ -132,7 +133,7 @@ void startTopScore(int velocity) {
 void startTopScore(alliance_color color) {
     stopTopScore();
     if (color == alliance_color::RED) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
@@ -157,7 +158,7 @@ void startTopScore(alliance_color color) {
         });
     }
     else if (color == alliance_color::BLUE) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
@@ -182,7 +183,7 @@ void startTopScore(alliance_color color) {
         });
     }
     else if (color == alliance_color::NONE) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
