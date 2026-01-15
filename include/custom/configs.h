@@ -25,7 +25,7 @@ inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 inline pros::Motor motor20(20, pros::MotorGearset::blue);
 inline pros::MotorGroup leftMotors({11, 20}, pros::MotorGearset::blue);
 inline pros::MotorGroup rightMotors({-1, -10, }, pros::MotorGearset::blue);
-inline pros::Motor frontMotor(20, pros::MotorGearset::blue);
+inline pros::Motor frontMotor(5, pros::MotorGearset::blue);
 inline pros::Motor topMotor(9, pros::MotorGearset::blue);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
@@ -41,10 +41,10 @@ inline pros::Rotation vertSensor(-7);
 inline pros::Rotation horiSensor(-16);
 
 // IMU
-inline pros::Imu imu(9);
+inline pros::Imu imu(6);
 
 // Optical
-inline pros::Optical topOptic(6);
+inline pros::Optical topOptic(9);
 
 // Pneumatics
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
@@ -55,12 +55,10 @@ inline pros::adi::Pneumatics rightDescoreArm('H', false, false);
 inline pros::adi::Pneumatics odomLift('G', false, false);
 
 // Odometry
-inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
-inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
-inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
+inline lemlib::OdomSensors sensors( nullptr,
                                     nullptr,
-                                    &horizontal_tracking_wheel,
+                                    nullptr,
                                     nullptr,
                                     &imu
 );

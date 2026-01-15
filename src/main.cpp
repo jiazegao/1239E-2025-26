@@ -11,15 +11,6 @@ void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
 
-	//Ensure odom pod is down
-	odomLift.retract();
-
-	// Auton Selection
-	startControllerAutonSelectorDisplay();
-	init_auton_selector();
-
-    RclMain.startTracking();
-	topOptic.set_led_pwm(100);
 }
 
 void disabled() {}
@@ -27,8 +18,9 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
+	chassis.calibrate();
 	chassis.setPose(0, 0, 0);
-	//chassis.moveToPoint(0, 10, 1000, {}); // Brief delay to ensure everything is initialized
+	chassis.moveToPoint(32, 0, 9999, {}); // Brief delay to ensure everything is initialized
 }
 
 void opcontrol() {
