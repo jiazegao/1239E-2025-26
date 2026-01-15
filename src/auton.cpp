@@ -737,7 +737,6 @@ void skills_v2() {
     chassis.turnToPoint(27, 47.5, 500, {.forwards=false}, false);
     chassis.moveToPoint(27, 47.5, 800, {.forwards=false, .maxSpeed=110}, true);
     pros::delay(500);
-    startTopScore();
     startTopScore(alliance_color::NONE);
     pros::delay(3000);
     RclMain.updateBotPose(&left_rcl);
@@ -750,7 +749,6 @@ void skills_v2() {
     jiggle(4, 2000);
     chassis.moveToPoint(27, 47, 1400, {.forwards=false, .maxSpeed=110}, true);
     pros::delay(400);
-    startTopScore();
     startTopScore(alliance_color::NONE);
     pros::delay(2700);
     RclMain.updateBotPose(&left_rcl);
@@ -826,7 +824,6 @@ void skills_v2() {
     chassis.turnToPoint(-28, -47.5, 500, {.forwards=false}, false);
     chassis.moveToPoint(-28, -47.5, 800, {.forwards=false, .maxSpeed=110}, true);
     pros::delay(500);
-    startTopScore();
     startTopScore(alliance_color::NONE);
     pros::delay(3000);
     RclMain.updateBotPose(&left_rcl);
@@ -839,7 +836,6 @@ void skills_v2() {
     jiggle(4, 2000);
     chassis.moveToPoint(-28, -47.5, 1400, {.forwards=false, .maxSpeed=90}, true);
     pros::delay(400);
-    startTopScore();
     startTopScore(alliance_color::NONE);
     pros::delay(2700);
     RclMain.updateBotPose(&left_rcl);

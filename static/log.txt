@@ -77,5 +77,7 @@
     1) Skills Tuning
     2) Match auto tuning
     3) Implemented Monte-Carlo Localization; ready for testing
-1/12/26
+1/12/2026
     1) The Great Reset
+1/15/2026
+    1) Rewrote topScoreTask algorithm to prevent frequent reset
