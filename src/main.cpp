@@ -18,15 +18,25 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-	chassis.calibrate();
+	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	chassis.setPose(0, 0, 0);
-	chassis.moveToPoint(32, 0, 9999, {}); // Brief delay to ensure everything is initialized
+	chassis.moveToPoint(0, 	170, 99999, {}); // Brief delay to ensure everything is initialized
+	//chassis.turnToPoint(114, 114, 9999);
+	chassis.waitUntilDone();
+	chassis.turnToHeading(90, 600);
+	chassis.moveToPoint(170, 170, 90999);
+	chassis.waitUntilDone();
+	chassis.turnToHeading(180, 400);
+	chassis.moveToPoint(170, -170, 90999);
+	chassis.waitUntilDone();
+	chassis.turnToHeading(270, 400);
+	chassis.moveToPoint(-170, -170, 99999);
 }
 
 void opcontrol() {
 	
-	//startControllerDisplay();
-	startControllerRclDisplay();
+	startControllerDisplay();
+	//startControllerRclDisplay();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
 	odomLift.extend();
