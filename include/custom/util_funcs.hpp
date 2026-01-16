@@ -9,7 +9,8 @@ void updatePneumatics();
 void updateTankDrive();
 
 // Auton functions
-inline bool topScoreTaskRunning = false;
+inline pros::Task* colorOuttakeTask = nullptr;
+inline bool outtakeTaskRunning = false;
 void startIntake();
 void stopIntake();
 void startOuttake();

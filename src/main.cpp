@@ -22,7 +22,7 @@ void initialize() {
 	init_auton_selector();
 	//pros::lcd::initialize();
 
-    RclMain.startTracking();
+	RclMain.startTracking();
 	//startControllerRCLUpdate();
 
 	// Set Optical LED

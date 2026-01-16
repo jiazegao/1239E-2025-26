@@ -106,7 +106,11 @@ void stopIntake() {
     stopFront();
 };
 void stopTopScore() {
-    topScoreTaskRunning = false;
+    if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
+        outtakeTaskRunning = false;
+        colorOuttakeTask->remove();
+        colorOuttakeTask = nullptr;
+    }
     stopIntake();
 };
 void stopMidScore() {
@@ -126,52 +130,77 @@ void startTopScore(int velocity) {
     frontIn();
     topOut(velocity);
 };
-inline bool (*colorFunc)();
-inline pros::Task* colorTopScoreTask = new pros::Task ([](){
-    Timer timer(800);
-    while (true) {
-        if (topScoreTaskRunning) {
-            while (topScoreTaskRunning) {
-                // Scoring target blocks
-                if (!colorFunc() || topOptic.get_proximity() > 160) {
+void startTopScore(alliance_color color) {
+    stopTopScore();
+    if (color == alliance_color::RED) {
+        colorOuttakeTask = new pros::Task ([&](){
+            Timer timer(800);
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                // General Control
+                if (!topOpticIsBlue() || topOptic.get_proximity() < 200) {
                     frontIn();
                     topOut(127);
-
-                    // Anti stuck
-                    if (topOptic.get_proximity() > 160) timer.reset();
-                    if (timer.timeIsUp()) {
-                        startOuttake();
-                        pros::delay(100);
-                        frontIn();
-                        topOut(127);
-                        pros::delay(200);
-                        timer.reset();
-                    }
                 }
-                // Otherwise, just pause chain
-                else {
+                else startOuttake();
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
                     startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
                     timer.reset();
                 }
-                pros::delay(30);
+                pros::delay(40);
             }
-            stopIntake();
-        }
-        pros::delay(20);
-    }
-});
-void startTopScore(alliance_color color) {
-    if (!topScoreTaskRunning) stopTopScore();
-    if (color == alliance_color::RED) {
-        colorFunc = topOpticIsBlue;
+        });
     }
     else if (color == alliance_color::BLUE) {
-        colorFunc = topOpticIsRed;
+        colorOuttakeTask = new pros::Task ([&](){
+            Timer timer(800);
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                // General Control
+                if (!topOpticIsRed() || topOptic.get_proximity() < 200) {
+                    frontIn();
+                    topOut(127);
+                }
+                else startOuttake();
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
+                    startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
+                    timer.reset();
+                }
+                pros::delay(40);
+            }
+        });
     }
     else if (color == alliance_color::NONE) {
-        colorFunc = [](){return false;};
+        colorOuttakeTask = new pros::Task ([&](){
+            Timer timer(800);
+            outtakeTaskRunning = true;
+            while (outtakeTaskRunning) {
+                // Anti stuck
+                if (topOptic.get_proximity() > 200) timer.reset();
+                if (timer.timeIsUp()) {
+                    startOuttake();
+                    pros::delay(100);
+                    frontIn();
+                    topOut(127);
+                    pros::delay(200);
+                    timer.reset();
+                }
+                pros::delay(40);
+            }
+        });
     }
-    topScoreTaskRunning = true;
 }
 void startMidScore() {
     stopIntake();
