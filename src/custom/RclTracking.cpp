@@ -439,7 +439,7 @@ void RclTracking::miscLoop() {
 
         // main update functions
         if (autoSync) { syncUpdate(); }
-        lifeTimeUpdate();
+        // lifeTimeUpdate();
 
         // Pause for the remaining time
         if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause

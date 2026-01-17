@@ -138,11 +138,13 @@ void startTopScore(alliance_color color) {
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
                 // General Control
-                if (!topOpticIsBlue() || topOptic.get_proximity() < 200) {
+                if (topOpticIsBlue()) {
+                    startOuttake();
+                }
+                else {
                     frontIn();
                     topOut(127);
                 }
-                else startOuttake();
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -163,11 +165,13 @@ void startTopScore(alliance_color color) {
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
                 // General Control
-                if (!topOpticIsRed() || topOptic.get_proximity() < 200) {
+                if (topOpticIsRed()) {
+                    startOuttake();
+                }
+                else {
                     frontIn();
                     topOut(127);
                 }
-                else startOuttake();
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -187,6 +191,8 @@ void startTopScore(alliance_color color) {
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
+                frontIn();
+                topOut(127);
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -478,7 +484,7 @@ void startControllerRCLUpdate() {
         });
     }
 }
-
+/*
 // Mcl Benchmark with Heading Conversion for LCD
 inline Pose rawMcl = {0,0,0};
 inline Timer MclT(15);
@@ -531,3 +537,4 @@ void startMclBenchmark() {
 
     }
 }
+*/

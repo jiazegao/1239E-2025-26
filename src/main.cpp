@@ -38,12 +38,12 @@ void autonomous() {
 	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
-	startControllerRclDisplay();
+	// startControllerRclDisplay();
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
- //rightControlRush();
+
 	runAuton();
 }
 
@@ -61,10 +61,7 @@ void opcontrol() {
 	stopIntake();
 
 	// Display FB Logo
-	// pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
-	// Mcl testing
-	// startMclBenchmark();
-	startControllerRCLUpdate();
+	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
 
 	while (true) {
 		// Update Controls
