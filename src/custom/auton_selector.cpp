@@ -73,7 +73,7 @@ void init_auton_selector() {
 void runAuton() {
     // Auton Selection
 	if (runningSkills) {
-		skills_v2();
+		skills();
 		return;
 	}
 

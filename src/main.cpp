@@ -52,10 +52,9 @@ void opcontrol() {
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.retract();
+	odomLift.extend();
 
 	// Retract both descore arms
-	extendLeftArm();
 	extendLeftArm();
 	stopTopScore();
 	stopIntake();
