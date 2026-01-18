@@ -34,7 +34,6 @@ void soloAWP(){
     RclMain.setRclPose(chassis.getPose());
 
     // Circle_Obstacle allianceBot(-52, 19, 6, 15000);
-    RclMain.updateBotPose();
     RclMain.updateBotPose(&left_rcl);
     RclMain.updateBotPose(&back_rcl);
 
@@ -43,22 +42,22 @@ void soloAWP(){
     chassis.moveToPoint(-47, 5, 350, {}, false);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-47, -45.5, 1300, {.forwards=false}, true);
+    chassis.moveToPoint(-47, -45, 1400, {.forwards=false}, true);
     pros::delay(400);
     openGate();
-    chassis.turnToPoint(-66, -47, 350, {}, false);
+    chassis.turnToPoint(-70, -47, 400, {}, false);
     startIntake();
-    chassis.moveToPoint(-66, -47, 1100, {.maxSpeed=80}, false);
+    chassis.moveToPoint(-70, -47, 1100, {.maxSpeed=127}, false);
     RclMain.updateBotPose(&left_rcl);
 
     // Score the long goal
-    chassis.moveToPoint(-24, -47.5, 2000, {.forwards=false, .maxSpeed=100}, true);
+    chassis.moveToPoint(-24, -47.5, 2300, {.forwards=false, .maxSpeed=127}, true);
     pros::delay(200);
     startOuttake();
     pros::delay(100);
     startTopScore(alliance_color::NONE);
     closeGate();
-    pros::delay(1600);
+    pros::delay(2000);
     RclMain.updateBotPose(&left_rcl);
     stopTopScore();
 
@@ -79,20 +78,20 @@ void soloAWP(){
     // Intake 3 other balls
     chassis.turnToHeading(0, 200, {}, false);
     RclMain.updateBotPose(&left_rcl);
-    chassis.moveToPoint(-24, 25, 1200, {.maxSpeed=110}, true);
+    chassis.moveToPoint(-24, 25, 1200, {.maxSpeed=127}, true);
     pros::delay(700);
     openGate();
 
     // Score the mid goal
-    chassis.turnToPoint(-8, 12, 400, {.forwards=false}, true);
+    chassis.turnToPoint(-10, 10, 400, {.forwards=false}, true);
     stopIntake();
     startOuttake();
     frontMotor.move(-50);    
-    chassis.moveToPoint(-8, 12, 1000, {.forwards=false, .maxSpeed=100}, true);
-    pros::delay(250);
+    chassis.moveToPoint(-10, 10, 1200, {.forwards=false, .maxSpeed=127}, true);
+    pros::delay(350);
     startMidScore();
     chassis.waitUntilDone();
-    pros::delay(800); // middle goal score time
+    pros::delay(900); // middle goal score time
     middleMech.extend();
     stopMidScore();
     startIntake();
@@ -132,19 +131,21 @@ void soloAWP(){
     */
 
     closeGate();
-    chassis.turnToHeading(315, 200, {}, false);
+    chassis.turnToHeading(315, 150, {}, false);
+    RclMain.setMaxSyncPerSec(0.01);
     moveForward(51, 1150, 127, 1, true);
     //pros::delay(700);
     pros::delay(400);
     openGate();
-    chassis.turnToPoint(-70, 47, 500, {}, false);
+    chassis.turnToPoint(-70, 47, 550, {}, false);
+    RclMain.setMaxSyncPerSec(6.0);
     RclMain.updateBotPose(&right_rcl);
     startIntake();
-    chassis.moveToPoint(-70, 47, 1100, {.maxSpeed=70}, false);
+    chassis.moveToPoint(-70, 47.5, 1000, {.maxSpeed=127}, false);
     RclMain.updateBotPose(&right_rcl);
 
     // Score again
-    chassis.moveToPoint(-24, 47.5, 1800, {.forwards = false, .maxSpeed=100}, true);
+    chassis.moveToPoint(-24, 48, 1800, {.forwards = false, .maxSpeed=127}, true);
     pros::delay(200);
     startOuttake();
     pros::delay(100);

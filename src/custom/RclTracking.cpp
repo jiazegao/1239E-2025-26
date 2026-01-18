@@ -292,6 +292,10 @@ void RclTracking::discardData () {
     poseAtLatest = chassis->getPose();
 }
 
+void RclTracking::setMaxSyncPerSec(double maxSyncPerSec_) {
+    maxSyncPT = maxSyncPerSec_ / (1000.0 / goalMSPT);
+};
+
 // Single updates
 void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor

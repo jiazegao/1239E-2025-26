@@ -43,7 +43,7 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-soloAWP();
+	soloAWP();
 	//runAuton();
 }
 
@@ -52,13 +52,16 @@ void opcontrol() {
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.extend();
+	odomLift.retract();
 
 	// Retract both descore arms
 	extendLeftArm();
 	extendLeftArm();
 	stopTopScore();
 	stopIntake();
+
+	RclMain.setMaxSyncPerSec(0.001);
+	startControllerDisplay();
 
 	// Display FB Logo
 	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
