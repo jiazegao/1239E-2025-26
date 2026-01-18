@@ -600,9 +600,9 @@ void skills() {
     chassis.moveToPoint(20, -61, 2000, {.minSpeed=30, .earlyExitRange=12}, false);
      
     chassis.moveToPoint(40, -61, 1000, {.maxSpeed=60}, false);
-    chassis.turnToHeading(0, 600, {});
+    chassis.turnToHeading(0, 800, {});
+    RclMain.updateBotPose(&right_rcl);
     chassis.moveToPoint(38, -48, 1200, {}, true);
-    pros::delay(150);
     chassis.turnToHeading(90, 600, {}, false);
 
     chassis.moveToPoint(24, -48, 1000, {.forwards=false, .maxSpeed=70}, false);
@@ -619,22 +619,21 @@ void skills() {
 
     // Score the long goal
     chassis.moveToPoint(24, -48, 1100, {.forwards=false, .maxSpeed=70}, false);
-    
     startTopScore(alliance_color::NONE);
     closeGate();
     RclMain.updateBotPose(&right_rcl);
     pros::delay(3000);
 
     // Back off (#2)
-    chassis.moveToPoint(47, -48, 1500, {}, false);
+    chassis.moveToPoint(48, -48, 1500, {}, false);
     chassis.turnToHeading(0, 600, {}, false);
     stopTopScore();
     pros::delay(200);
     RclMain.updateBotPose(&back_rcl);
 
     // Head towards top-right match loader
-    chassis.moveToPoint(45, 48, 1300, {.minSpeed=80}, false);
-    chassis.moveToPoint(45, 48, 1000, {.maxSpeed=60}, false);
+    chassis.moveToPoint(48, 48, 1300, {.minSpeed=80}, false);
+    chassis.moveToPoint(48, 48, 1000, {.maxSpeed=60}, false);
     RclMain.updateBotPose(&right_rcl);
     chassis.turnToHeading(90, 500, {}, false);
     pros::delay(200);
@@ -648,7 +647,7 @@ void skills() {
     // Back off (#3)
     stopIntake();
     closeGate();
-    chassis.moveToPoint(49, 49, 1000, {.forwards=false}, false);
+    chassis.moveToPoint(50, 49, 1000, {.forwards=false}, false);
     RclMain.updateBotPose(&left_rcl);
     chassis.turnToHeading(335, 700, {}, false);
 
