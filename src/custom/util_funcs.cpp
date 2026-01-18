@@ -241,7 +241,7 @@ void updateIntake() {
     }
     // Button A - Slow outtake
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        frontMotor.move(-25);
+        frontMotor.move(-30);
         topIn();
     }
     // Button R2 - Score top

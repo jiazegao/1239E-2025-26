@@ -43,8 +43,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-	soloAWP();
-	//runAuton();
+	//soloAWP();
+	runAuton();
 }
 
 void opcontrol() {
