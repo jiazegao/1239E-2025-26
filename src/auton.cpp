@@ -596,7 +596,7 @@ void skills() {
     chassis.turnToHeading(155, 800, {}, false);
 
     // Score bottom-right
-    chassis.moveToPose(-15, -62, 90, 1500, {.lead=0.4, .minSpeed=55}, false);
+    chassis.moveToPose(-16, -63, 90, 1500, {.lead=0.4, .minSpeed=55}, false);
     chassis.moveToPoint(20, -61, 2000, {.minSpeed=30, .earlyExitRange=12}, false);
      
     chassis.moveToPoint(40, -61, 1000, {.maxSpeed=60}, false);
