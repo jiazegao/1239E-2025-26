@@ -38,13 +38,13 @@ void autonomous() {
 	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
-	// startControllerRclDisplay();
+	startControllerRCLUpdate();
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-
-	runAuton();
+soloAWP();
+	//runAuton();
 }
 
 void opcontrol() {
