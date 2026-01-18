@@ -27,7 +27,7 @@ void rightPush(double x_offset = 0, double y_offset = 0) {
     chassis.moveToPoint(-24+x_offset, -37.5-y_offset, 2000, {.forwards=false, .minSpeed=127}, false);
 }
 
-// WORKS
+// 
 void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, 0, 0);
@@ -42,7 +42,7 @@ void soloAWP(){
     chassis.moveToPoint(-47, 5, 350, {}, false);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-47, -46, 1200, {.forwards=false}, true);
+    chassis.moveToPoint(-47, -45, 1200, {.forwards=false}, true);
     pros::delay(400);
     openGate();
     chassis.turnToPoint(-70, -47, 400, {}, false);
@@ -83,11 +83,13 @@ void soloAWP(){
     openGate();
 
     // Score the mid goal
-    chassis.turnToPoint(-9.5, 9.5, 400, {.forwards=false}, true);
+    chassis.turnToHeading(320, 400, {}, true);
+    // chassis.turnToPoint(-10, 10, 400, {.forwards=false}, true);
     stopIntake();
     startOuttake();
-    frontMotor.move(-60);    
-    chassis.moveToPoint(-9.5, 9.5, 1200, {.forwards=false, .maxSpeed=110}, true);
+    frontMotor.move(-60);
+    chassis.moveToPoint(chassis.getPose().x+15.5, chassis.getPose().y-15.5, 1200, {.forwards=false, .maxSpeed=110}, true);
+    // chassis.moveToPoint(-10, 10, 1200, {.forwards=false, .maxSpeed=110}, true);
     pros::delay(300);
     startMidScore();
     chassis.waitUntilDone();

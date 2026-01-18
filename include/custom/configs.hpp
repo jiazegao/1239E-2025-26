@@ -57,7 +57,7 @@ inline pros::adi::Pneumatics odomLift('G', false, false);
 inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
 inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
-inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
+inline lemlib::OdomSensors sensors( nullptr,
                                     nullptr,
                                     &horizontal_tracking_wheel,
                                     nullptr,

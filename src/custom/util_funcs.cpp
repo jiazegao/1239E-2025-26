@@ -82,6 +82,9 @@ void retractLeftArm() {
 void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
     chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta)), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
+void moveBackward(double inches, int timeout, float maxSpeed, float minSpeed,  bool async) {
+    chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta+180)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta+180)), timeout, {.forwards=false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
+}
 void jiggle(int repeats, int time, float forward, float backward) {
     for (int i = 0; i < repeats; i++) {
         moveForward(forward, time/repeats*3/4, 80, 50, false);

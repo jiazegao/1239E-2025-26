@@ -26,6 +26,7 @@ double pivot_y(double pivot_coord);
 
 // Pneumatics functions
 void moveForward(double inches, int timeout, float maxSpeed=127, float minSpeed=1, bool async=true);
+void moveBackward(double inches, int timeout, float maxSpeed, float minSpeed,  bool async);
 void jiggle(int repeats, int time, float forward=8.0, float backward=1.5);
 void shake(int repeats, int time);
 void openGate();
