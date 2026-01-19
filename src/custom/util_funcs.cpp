@@ -45,12 +45,14 @@ void lockFront() {
 void unlockFront() {
     frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
 }
+
 bool topOpticIsRed() {
     return (335 < topOptic.get_hue() || topOptic.get_hue() < 25);
 }
 bool topOpticIsBlue() {
     return (185 < topOptic.get_hue() && topOptic.get_hue() < 235);
 }
+
 
 // Pneumatics functions
 void openGate() {
