@@ -333,8 +333,10 @@ void updatePneumatics() {
 
 // Tank drive
 void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
-
+void updateArcadeDrive() { chassis.arcade(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)); }
+void updateCurvatureDrive() { chassis.curvature(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X), controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)); }
 // Display
+
 void stopBrainDisplay() {
     if (brainScreenTask != nullptr) {
         brainScreenTask->remove();

@@ -7,7 +7,8 @@
 void updateIntake();
 void updatePneumatics();
 void updateTankDrive();
-
+void updateArcadeDrive();
+void updateCurvatureDrive();
 // Auton functions
 inline pros::Task* colorOuttakeTask = nullptr;
 inline bool outtakeTaskRunning = false;
@@ -44,6 +45,7 @@ void stopControllerDisplay();
 void startControllerDisplay();
 void startControllerAutonSelectorDisplay();
 void startControllerRclDisplay();
+void startControllerMatchDisplay();
 
 LV_IMAGE_DECLARE(FB_Logo);
 inline pros::Task* brainScreenTask = nullptr;
