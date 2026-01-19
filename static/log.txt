@@ -77,3 +77,8 @@
     1) Skills Tuning
     2) Match auto tuning
     3) Implemented Monte-Carlo Localization; ready for testing
+1/12/2026
+    1) The Great Reset
+1/19/2026
+    1) Merged Meow Branch to Main Branch after Robot Rodeo
+    2) Rewrote brain and controller display functions to prevent frequent deletions of pros::Task objects

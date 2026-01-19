@@ -335,158 +335,107 @@ void updatePneumatics() {
 void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
 
 // Display
-void stopBrainDisplay() {
-    if (brainScreenTask != nullptr) {
-        brainScreenTask->remove();
-        delete brainScreenTask;
-        brainScreenTask = nullptr;
-    }
-}
-void stopControllerDisplay() {
-    if (controllerScreenTask != nullptr) {
-        controllerScreenTask->remove();
-        delete controllerScreenTask;
-        controllerScreenTask = nullptr;
-    }
-}
-void startBrainDisplay() {
-    stopBrainDisplay();
-    if (brainScreenTask == nullptr) {
-        brainScreenTask = new pros::Task ([&]() {
+void initBrainDisplay() {
+    if (brainDisplayTask == nullptr) {
+        brainDisplayTask = new pros::Task ([]() {
             while (true) {
-                pros::lcd::print(0, "X: %f", chassis.getPose().x);
-                pros::lcd::print(1, "Y: %f", chassis.getPose().y);
-                pros::lcd::print(2, "Theta: %f", chassis.getPose().theta);
-                pros::delay(50);
+                if (brainDisplayFunc != nullptr) brainDisplayFunc();
+                pros::delay(brainDisplayDelay);
             }
         });
     }
-}
-void startBrainFBDisplay() {
-    stopBrainDisplay();
-    if (brainScreenTask == nullptr) {
-        brainScreenTask = new pros::Task ([&]() {
-            static lv_obj_t* image = lv_image_create(lv_screen_active());
-            lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
-            lv_image_set_src(image, &FB_Logo);
-        });
-    }
-}
-void startControllerDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
+};
+void initControllerDisplay() {
+    if (controllerDisplayTask == nullptr) {
+        controllerDisplayTask = new pros::Task ([]() {
             while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "X: %f", chassis.getPose().x);
-                pros::delay(50);
-                controller.print(1, 0, "Y: %f", chassis.getPose().y);
-                pros::delay(50);
-                controller.print(2, 0, "Heading: %f", chassis.getPose().theta);
-                pros::delay(100);
+                if (controllerDisplayFunc != nullptr) controllerDisplayFunc();
+                pros::delay(controllerDisplayDelay);
             }
         });
     }
-}
+};
+
+void startControllerCoordDisplay() {
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "X: %f", chassis.getPose().x);
+        pros::delay(50);
+        controller.print(1, 0, "Y: %f", chassis.getPose().y);
+        pros::delay(50);
+        controller.print(2, 0, "Heading: %f", chassis.getPose().theta);
+    };
+};
 void startControllerAutonSelectorDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
-                pros::delay(50);
-                controller.print(1, 0, "Type: %s", autonType == autonTypes::NAAUTO ? "NA_AUTO" : autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::LEFT_FAST ? "LEFT_FAST" : autonType == autonTypes::LEFT_V2 ? "LEFT_V2" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::RIGHT_FAST ? "RIGHT_FAST" : autonType == autonTypes::RIGHT_V2 ? "RIGHT_V2" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
-                pros::delay(50);
-                controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
-                pros::delay(100);
-            }
-        });
-    }
-}
-void startControllerRclDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "RCL (%.1f, %.1f, %.1f)", RclMain.getRclPose().x, RclMain.getRclPose().y, RclMain.getRclPose().theta);
-                pros::delay(50);
-                controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
-                pros::delay(50);
-                controller.print(2, 0, "%d, %d, %d", left_rcl.rawReading(), back_rcl.rawReading(), right_rcl.rawReading());
-                pros::delay(100);
-            }
-        });
-    }
-}
-void startControllerMatchDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "DESC_MAC: %s", descoreMacroActivated ? "TRUE" : "false");
-                pros::delay(150);
-            }
-        });
-    }
-}
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
+        pros::delay(50);
+        controller.print(1, 0, "Type: %s", autonType == autonTypes::NAAUTO ? "NA_AUTO" : autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::LEFT_FAST ? "LEFT_FAST" : autonType == autonTypes::LEFT_V2 ? "LEFT_V2" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::RIGHT_FAST ? "RIGHT_FAST" : autonType == autonTypes::RIGHT_V2 ? "RIGHT_V2" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
+        pros::delay(50);
+        controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
+    };
+};
+void startControllerRclCoordDisplay() {
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "RCL (%.1f, %.1f, %.1f)", RclMain.getRclPose().x, RclMain.getRclPose().y, RclMain.getRclPose().theta);
+        pros::delay(50);
+        controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
+        pros::delay(50);
+        controller.print(2, 0, "%d, %d, %d", left_rcl.rawReading(), back_rcl.rawReading(), right_rcl.rawReading());
+    };
+};
+
+void startBrainCoordDisplay() {
+    brainDisplayFunc = [](){
+        pros::lcd::print(0, 0, "X: %f", chassis.getPose().x);
+        pros::lcd::print(1, 0, "Y: %f", chassis.getPose().y);
+        pros::lcd::print(2, 0, "Heading: %f", chassis.getPose().theta);
+    };
+};
+void startBrainFBDisplay() {
+    static lv_obj_t* image = lv_image_create(lv_screen_active());
+    lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
+    lv_image_set_src(image, &FB_Logo);
+};
 
 // Test Functions
 void startControllerDistDataDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
-                pros::delay(50);
-                controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
-                pros::delay(50);
-                controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
-                pros::delay(100);
-            }
-        });
-    }
-}
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
+        pros::delay(50);
+        controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
+        pros::delay(50);
+        controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
+    };
+};
 void startControllerOpticDisplay() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "Hue: %f", topOptic.get_hue());
-                pros::delay(50);
-                controller.print(1, 0, "Prox: %d", topOptic.get_proximity());
-                pros::delay(100);
-            }
-        });
-    }
-}
-void startControllerRCLUpdate() {
-    stopControllerDisplay();
-    if (controllerScreenTask == nullptr) {
-        controllerScreenTask = new pros::Task ([&](){
-            while (true) {
-                controller.clear();
-                pros::delay(50);
-                controller.print(0, 0, "X: %.1f, %.1f", chassis.getPose().x, RclMain.getRclPose().x);
-                pros::delay(50);
-                controller.print(1, 0, "Y: %.1f, %.1f", chassis.getPose().y, RclMain.getRclPose().y);
-                pros::delay(50);
-                controller.print(2, 0, "Heading: %.1f, %.1f", chassis.getPose().theta, RclMain.getRclPose().theta);
-                pros::delay(100);
-            }
-        });
-    }
-}
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "Hue: %f", topOptic.get_hue());
+        pros::delay(50);
+        controller.print(1, 0, "Prox: %d", topOptic.get_proximity());
+    };
+};
+void startControllerRCLInfoDisplay() {
+    controllerDisplayFunc = [](){
+        controller.clear();
+        pros::delay(50);
+        controller.print(0, 0, "X: %.1f, %.1f", chassis.getPose().x, RclMain.getRclPose().x);
+        pros::delay(50);
+        controller.print(1, 0, "Y: %.1f, %.1f", chassis.getPose().y, RclMain.getRclPose().y);
+        pros::delay(50);
+        controller.print(2, 0, "Heading: %.1f, %.1f", chassis.getPose().theta, RclMain.getRclPose().theta);
+    };
+};
+
 /*
 // Mcl Benchmark with Heading Conversion for LCD
 inline Pose rawMcl = {0,0,0};

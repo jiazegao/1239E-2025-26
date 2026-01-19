@@ -13,17 +13,19 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
+	initControllerDisplay();
 
-	//Ensure odom pod is down
+	// Brain display (disabled)
+	// initBrainDisplay();
+
+	// Ensure odom pod is down
 	odomLift.retract();
 
 	// Auton Selection
 	startControllerAutonSelectorDisplay();
 	init_auton_selector();
-	//pros::lcd::initialize();
 
 	RclMain.startTracking();
-	//startControllerRCLUpdate();
 
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
@@ -38,7 +40,7 @@ void autonomous() {
 	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 
-	startControllerRCLUpdate();
+	startControllerRclCoordDisplay();
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
@@ -61,10 +63,10 @@ void opcontrol() {
 	stopIntake();
 
 	RclMain.setMaxSyncPerSec(0.001);
-	startControllerDisplay();
+	startControllerCoordDisplay();
 
 	// Display FB Logo
-	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
+	startBrainFBDisplay();
 
 	while (true) {
 		// Update Controls
@@ -74,6 +76,4 @@ void opcontrol() {
 
 		pros::delay(20);
 	}
-
-	
 }

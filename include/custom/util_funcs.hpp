@@ -39,21 +39,28 @@ void extendLeftArm();
 void retractLeftArm();
 
 // Display
-inline pros::Task* controllerScreenTask = nullptr;
-void stopControllerDisplay();
-void startControllerDisplay();
-void startControllerAutonSelectorDisplay();
-void startControllerRclDisplay();
-
 LV_IMAGE_DECLARE(FB_Logo);
-inline pros::Task* brainScreenTask = nullptr;
-void stopBrainDisplay();
-void startBrainDisplay();
+
+inline pros::Task* brainDisplayTask = nullptr;
+inline pros::Task* controllerDisplayTask = nullptr;
+inline void (*brainDisplayFunc)() = [](){};
+inline void (*controllerDisplayFunc)() = [](){};
+inline int brainDisplayDelay = 50;
+inline int controllerDisplayDelay = 100;
+
+void initControllerDisplay();
+void initBrainDisplay();
+
+void startControllerCoordDisplay();
+void startControllerAutonSelectorDisplay();
+void startControllerRclCoordDisplay();
+
+void startBrainCoordDisplay();
 void startBrainFBDisplay();
 
 // Test Functions
 void startControllerDistDataDisplay();
 void startControllerOpticDisplay();
-void startControllerRCLUpdate();
+void startControllerRCLInfoDisplay();
 
 // void startMclBenchmark();
