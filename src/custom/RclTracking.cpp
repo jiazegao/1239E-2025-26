@@ -292,6 +292,10 @@ void RclTracking::discardData () {
     poseAtLatest = chassis->getPose();
 }
 
+void RclTracking::setMaxSyncPerSec(double maxSyncPerSec_) {
+    maxSyncPT = maxSyncPerSec_ / (1000.0 / goalMSPT);
+};
+
 // Single updates
 void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
@@ -439,7 +443,7 @@ void RclTracking::miscLoop() {
 
         // main update functions
         if (autoSync) { syncUpdate(); }
-        lifeTimeUpdate();
+        // lifeTimeUpdate();
 
         // Pause for the remaining time
         if (frequencyTimer.timeLeft() < minPause) pros::delay(minPause); // Ensure that the loop pauses at least for minPause

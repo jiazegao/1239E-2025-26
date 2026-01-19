@@ -322,6 +322,8 @@ public:
     void updateBotPose();
     void updateBotPose(RclSensor* sens);
 
+    void setMaxSyncPerSec(double _maxSyncPerSec); 
+
     // Accumulation control
     void startAccumulating(bool autoUpdateAfterAccum = true);
     void stopAccumulating();

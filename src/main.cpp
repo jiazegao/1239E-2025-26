@@ -22,7 +22,7 @@ void initialize() {
 	init_auton_selector();
 	//pros::lcd::initialize();
 
-    RclMain.startTracking();
+	RclMain.startTracking();
 	//startControllerRCLUpdate();
 
 	// Set Optical LED
@@ -34,13 +34,17 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-
+	
+	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+
+	startControllerRCLUpdate();
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
 
+	//soloAWP();
 	runAuton();
 }
 
@@ -54,10 +58,13 @@ void opcontrol() {
 	// Retract both descore arms
 	extendLeftArm();
 	stopTopScore();
+	stopIntake();
+
+	RclMain.setMaxSyncPerSec(0.001);
+	startControllerDisplay();
 
 	// Display FB Logo
 	pros::Task ([](){pros::delay(100); startBrainFBDisplay();});
-	startControllerMatchDisplay();
 
 	while (true) {
 		// Update Controls

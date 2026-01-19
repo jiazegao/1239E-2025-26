@@ -7,10 +7,9 @@
 void updateIntake();
 void updatePneumatics();
 void updateTankDrive();
-void updateArcadeDrive();
-void updateCurvatureDrive();
+
 // Auton functions
-inline pros::Task* colorOuttakeTask;
+inline pros::Task* colorOuttakeTask = nullptr;
 inline bool outtakeTaskRunning = false;
 void startIntake();
 void stopIntake();
@@ -27,6 +26,7 @@ double pivot_y(double pivot_coord);
 
 // Pneumatics functions
 void moveForward(double inches, int timeout, float maxSpeed=127, float minSpeed=1, bool async=true);
+void moveBackward(double inches, int timeout, float maxSpeed, float minSpeed,  bool async);
 void jiggle(int repeats, int time, float forward=8.0, float backward=1.5);
 void shake(int repeats, int time);
 void openGate();
@@ -44,7 +44,6 @@ void stopControllerDisplay();
 void startControllerDisplay();
 void startControllerAutonSelectorDisplay();
 void startControllerRclDisplay();
-void startControllerMatchDisplay();
 
 LV_IMAGE_DECLARE(FB_Logo);
 inline pros::Task* brainScreenTask = nullptr;
@@ -57,4 +56,4 @@ void startControllerDistDataDisplay();
 void startControllerOpticDisplay();
 void startControllerRCLUpdate();
 
-void startMclBenchmark();
+// void startMclBenchmark();

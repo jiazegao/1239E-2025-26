@@ -1,6 +1,5 @@
 
 #include "custom/auton_selector.hpp"
-#include "configs.hpp"
 #include "liblvgl/widgets/image/lv_image.h"
 #include "custom/auton.hpp"
 
@@ -35,7 +34,6 @@ void toggle_skills (lv_event_t* e) {
 
 void recalibrate(lv_event_t* e) {
     chassis.calibrate();
-    controller.rumble("-");
 }
 
 // Initialize autonomous selector GUI
@@ -75,7 +73,7 @@ void init_auton_selector() {
 void runAuton() {
     // Auton Selection
 	if (runningSkills) {
-		skills_v3();
+		skills();
 		return;
 	}
 
@@ -116,4 +114,3 @@ void runAuton() {
 			
     }
 }
-

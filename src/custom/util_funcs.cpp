@@ -82,6 +82,9 @@ void retractLeftArm() {
 void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
     chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta)), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
+void moveBackward(double inches, int timeout, float maxSpeed, float minSpeed,  bool async) {
+    chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta+180)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta+180)), timeout, {.forwards=false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
+}
 void jiggle(int repeats, int time, float forward, float backward) {
     for (int i = 0; i < repeats; i++) {
         moveForward(forward, time/repeats*3/4, 80, 50, false);
@@ -133,16 +136,18 @@ void startTopScore(int velocity) {
 void startTopScore(alliance_color color) {
     stopTopScore();
     if (color == alliance_color::RED) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
                 // General Control
-                if (!topOpticIsBlue() || topOptic.get_proximity() < 200) {
+                if (topOpticIsBlue()) {
+                    startOuttake();
+                }
+                else {
                     frontIn();
                     topOut(127);
                 }
-                else startOuttake();
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -158,16 +163,18 @@ void startTopScore(alliance_color color) {
         });
     }
     else if (color == alliance_color::BLUE) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
                 // General Control
-                if (!topOpticIsRed() || topOptic.get_proximity() < 200) {
+                if (topOpticIsRed()) {
+                    startOuttake();
+                }
+                else {
                     frontIn();
                     topOut(127);
                 }
-                else startOuttake();
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -183,10 +190,12 @@ void startTopScore(alliance_color color) {
         });
     }
     else if (color == alliance_color::NONE) {
-        colorOuttakeTask = new pros::Task ([](){
+        colorOuttakeTask = new pros::Task ([&](){
             Timer timer(800);
             outtakeTaskRunning = true;
             while (outtakeTaskRunning) {
+                frontIn();
+                topOut(127);
                 // Anti stuck
                 if (topOptic.get_proximity() > 200) timer.reset();
                 if (timer.timeIsUp()) {
@@ -235,7 +244,7 @@ void updateIntake() {
     }
     // Button A - Slow outtake
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        frontMotor.move(-25);
+        frontMotor.move(-30);
         topIn();
     }
     // Button R2 - Score top
@@ -324,10 +333,8 @@ void updatePneumatics() {
 
 // Tank drive
 void updateTankDrive() { chassis.tank(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)); }
-void updateArcadeDrive() { chassis.arcade(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)); }
-void updateCurvatureDrive() { chassis.curvature(controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X), controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)); }
-// Display
 
+// Display
 void stopBrainDisplay() {
     if (brainScreenTask != nullptr) {
         brainScreenTask->remove();
@@ -480,7 +487,7 @@ void startControllerRCLUpdate() {
         });
     }
 }
-
+/*
 // Mcl Benchmark with Heading Conversion for LCD
 inline Pose rawMcl = {0,0,0};
 inline Timer MclT(15);
@@ -533,3 +540,4 @@ void startMclBenchmark() {
 
     }
 }
+*/
