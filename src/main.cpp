@@ -58,7 +58,6 @@ void opcontrol() {
 	// Retract both descore arms
 	extendLeftArm();
 	stopTopScore();
-	stopIntake();
 
 	RclMain.setMaxSyncPerSec(0.001);
 	startControllerDisplay();
