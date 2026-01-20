@@ -82,3 +82,5 @@
 1/19/2026
     1) Merged Meow Branch to Main Branch after Robot Rodeo
     2) Rewrote brain and controller display functions to prevent frequent deletions of pros::Task objects
+1/20/2026
+    1) Finished lever logic draft

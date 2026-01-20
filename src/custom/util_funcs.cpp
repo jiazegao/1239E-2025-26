@@ -21,24 +21,6 @@ void frontOut() {
 void stopFront() {
     frontMotor.move(0);
 }
-void topIn() {
-    topMotor.move(-127);
-}
-void topOut(int velocity = 127) {
-    topMotor.move(1 * std::abs(velocity));
-}
-void slowTopOut() {
-    topMotor.move(35);
-}
-void stopTop() {
-    topMotor.move(0);
-}
-void lockTop() {
-    topMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-}
-void unlockTop() {
-    topMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-}
 void lockFront() {
     frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 }
@@ -46,26 +28,12 @@ void unlockFront() {
     frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
 }
 
-bool topOpticIsRed() {
-    return (335 < topOptic.get_hue() || topOptic.get_hue() < 25);
-}
-bool topOpticIsBlue() {
-    return (185 < topOptic.get_hue() && topOptic.get_hue() < 235);
-}
-
-
 // Pneumatics functions
 void openGate() {
     matchLoadGate.extend();
 };
 void closeGate() {
     matchLoadGate.retract();
-};
-void openMid() {
-    middleMech.retract();
-};
-void closeMid() {
-    middleMech.extend();
 };
 void extendMidDescore() {
     middleDescore.extend();
@@ -103,201 +71,6 @@ void shake(int repeats, int time) {
     }
 }
 
-void stopIntake() {
-    middleMech.extend();
-    lockTop();
-    lockFront();
-    stopTop();
-    stopFront();
-};
-void stopTopScore() {
-    if (outtakeTaskRunning && colorOuttakeTask != nullptr) {
-        outtakeTaskRunning = false;
-        colorOuttakeTask->remove();
-        colorOuttakeTask = nullptr;
-    }
-    stopIntake();
-};
-void stopMidScore() {
-    stopIntake();
-}
-void stopOuttake() {
-    stopIntake();
-}
-void startIntake() {
-    stopIntake();
-    lockTop();
-    stopTop();
-    frontIn();
-};
-void startTopScore(int velocity) {
-    stopIntake();
-    frontIn();
-    topOut(velocity);
-};
-void startTopScore(alliance_color color) {
-    stopTopScore();
-    if (color == alliance_color::RED) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                // General Control
-                if (topOpticIsBlue()) {
-                    startOuttake();
-                }
-                else {
-                    frontIn();
-                    topOut(127);
-                }
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-    else if (color == alliance_color::BLUE) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                // General Control
-                if (topOpticIsRed()) {
-                    startOuttake();
-                }
-                else {
-                    frontIn();
-                    topOut(127);
-                }
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-    else if (color == alliance_color::NONE) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                frontIn();
-                topOut(127);
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-}
-void startMidScore() {
-    stopIntake();
-    middleMech.retract();
-    frontIn();
-    slowTopOut();
-}
-void startOuttake() {
-    frontOut();
-    topIn();
-}
-double pivot(double curr_corrd, double pivot_coord) {
-    return curr_corrd+std::abs(curr_corrd-pivot_coord)*std::abs(curr_corrd-pivot_coord)/(curr_corrd-pivot_coord);
-}
-double pivot_x(double pivot_coord) {
-    return pivot(chassis.getPose().x, pivot_coord);
-}
-double pivot_y(double pivot_coord) {
-    return pivot(chassis.getPose().y, pivot_coord);
-}
-
-
-// Function for managing intake controls
-void updateIntake() {
-
-    // Motor Controls ----------------------------------------------------
-
-    // Button B - Outtake
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-        frontOut();
-        topIn();
-    }
-    // Button A - Slow outtake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        frontMotor.move(-30);
-        topIn();
-    }
-    // Button R2 - Score top
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-        frontIn();
-        topOut();
-    }
-    // Button R1 - Score mid
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-        frontIn();
-        slowTopOut();
-    }
-    // Button L2 - Normal intake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-        lockTop();
-        stopTop();
-        frontIn();
-    }
-    // Button L1 - Macro intake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-        // If matches alliance color, lock top motor
-        if ( (topOpticIsRed() && allianceColor == alliance_color::RED) || (topOpticIsBlue() && allianceColor == alliance_color::BLUE) ) {
-            lockTop();
-            stopTop();
-            frontIn();
-        }
-        // Otherwise, keep intaking
-        else {
-            topOut();
-            frontIn();
-        }
-    }
-    // If no button is pressed, stop everything
-    else {
-        lockTop();
-        lockFront();
-        stopTop();
-        stopFront();
-    }
-
-    // Miscellaneous Controls ---------------------------------------------
-
-    // Button R1 - Pneumatics control
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-        middleMech.retract();
-    }
-    else {
-        middleMech.extend();
-    }
-}
-
 // Fucntion for managing pneumatics controls
 bool descoreMacroActivated = false;
 void updatePneumatics() {
@@ -306,7 +79,7 @@ void updatePneumatics() {
         matchLoadGate.toggle();
         retractMidDescore();
     }
-    // Button Down - Right descore arm (Toggle)
+    // Button Down - Left descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         leftDescoreArm.toggle();
         descoreMacroActivated = false; // Shutdown macro
@@ -328,7 +101,7 @@ void updatePneumatics() {
         // Release descore arm if distance less than 15 cm
         if (descoreDist.get() < 140) {
             retractLeftArm();
-            //controller.rumble("-");
+            controller.rumble("-");
         }
     }
 }
@@ -421,9 +194,9 @@ void startControllerOpticDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
         pros::delay(50);
-        controller.print(0, 0, "Hue: %f", topOptic.get_hue());
+        controller.print(0, 0, "Hue: %f", frontOptic.get_hue());
         pros::delay(50);
-        controller.print(1, 0, "Prox: %d", topOptic.get_proximity());
+        controller.print(1, 0, "Prox: %d", frontOptic.get_proximity());
     };
 };
 void startControllerRCLInfoDisplay() {

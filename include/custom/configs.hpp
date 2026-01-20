@@ -26,7 +26,7 @@ inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 inline pros::MotorGroup leftMotors({-11, -12, -10}, pros::MotorGearset::blue);
 inline pros::MotorGroup rightMotors({19, 17, 18}, pros::MotorGearset::blue);
 inline pros::Motor frontMotor(20, pros::MotorGearset::blue);
-inline pros::Motor topMotor(9, pros::MotorGearset::blue);
+inline pros::Motor leverMotor(9, pros::MotorGearset::blue);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
@@ -39,19 +39,21 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 // Odometry
 inline pros::Rotation vertSensor(-7);
 inline pros::Rotation horiSensor(-16);
+inline pros::Rotation leverSensor(22);
 
 // IMU
 inline pros::Imu imu(5);
 
 // Optical
-inline pros::Optical topOptic(6);
+inline pros::Optical frontOptic(6);
 
 // Pneumatics
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
-inline pros::adi::Pneumatics middleMech('B', true, true);
+inline pros::adi::Pneumatics lift('B', true, true);
 inline pros::adi::Pneumatics middleDescore('H', false, false);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
 inline pros::adi::Pneumatics odomLift('G', false, false);
+inline pros::adi::Pneumatics trapDoor('E', false, false);
 
 // Odometry
 inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
@@ -110,6 +112,9 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 
 // Distance
 inline pros::Distance descoreDist(2);
+
+inline pros::Distance midDist(3);
+inline pros::Distance topDist(5);
 
 inline pros::Distance back_dist(15);
 inline pros::Distance right_dist(3);

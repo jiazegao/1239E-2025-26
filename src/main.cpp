@@ -10,10 +10,14 @@
 #include "pros/motors.h"
 #include "pros/motors.h"
 
+#include "custom/lever_control.hpp"
+
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
 	initControllerDisplay();
+
+	initLeverControl();
 
 	// Brain display (disabled)
 	// initBrainDisplay();
@@ -28,7 +32,7 @@ void initialize() {
 	RclMain.startTracking();
 
 	// Set Optical LED
-	topOptic.set_led_pwm(100);
+	frontOptic.set_led_pwm(100);
 }
 
 void disabled() {}
@@ -59,7 +63,6 @@ void opcontrol() {
 
 	// Retract both descore arms
 	extendLeftArm();
-	stopTopScore();
 	stopIntake();
 
 	RclMain.setMaxSyncPerSec(0.001);
@@ -71,7 +74,6 @@ void opcontrol() {
 	while (true) {
 		// Update Controls
 		updateTankDrive();
-		updateIntake();
 		updatePneumatics();
 
 		pros::delay(20);
