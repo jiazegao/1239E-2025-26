@@ -2,10 +2,12 @@
 
 #include "custom/configs.hpp"
 
+enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, SCORING};
+
 class Lever_PID {
     public:
-        Lever_PID(pros::Motor* motor, pros::Rotation* sensor, double kP, double kI, double kD, double errorRange, double errorTimeout, double minOutput, double maxOutput, bool autoReset = true, bool* ballTrackingActivated = nullptr)
-            : motor(motor), sensor(sensor), kP(kP), kI(kI), kD(kD), errorRange(errorRange), errorTimeout(errorTimeout), minOutput(minOutput), maxOutput(maxOutput), prevError(0), integral(0), target(0), autoReset(autoReset), ballTrackingActivated(ballTrackingActivated) { timer.hardReset(errorTimeout); motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); } // Constructor
+        Lever_PID(pros::Motor* motor, pros::Rotation* sensor, double kP, double kI, double kD, double errorRange, double errorTimeout, double minOutput, double maxOutput, bool autoReset = true, LEVER_STAGE* leverStage = nullptr)
+            : motor(motor), sensor(sensor), kP(kP), kI(kI), kD(kD), errorRange(errorRange), errorTimeout(errorTimeout), minOutput(minOutput), maxOutput(maxOutput), prevError(0), integral(0), target(0), autoReset(autoReset), leverStage(leverStage) { timer.hardReset(errorTimeout); motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); } // Constructor
     
         double calculate(double target, double measuredValue) {
             double error = target - measuredValue;
@@ -27,26 +29,26 @@ class Lever_PID {
             // Main loop for PID control
             while (true) {
 
-                if (!mainLoopLocked) {
+                if (!mainLoopLocked && *leverStage == SCORING) {
 
                     // Get current measured value (e.g., from a sensor)
                     double measuredValue = sensor->get_position()/100.0;
-                    double output = 0;
+                    double output = 0.0;
 
                     // If not within error range, reset timer
                     if (std::abs(target - measuredValue) > errorRange){
                         timer.reset();
                     }
                     else {
-                        trapDoor.extend();
+                        trapDoor.retract(); // close trapdoor immediately if within errorRange
                     }
 
                     // If timer is up, stop motor
                     if (timer.timeIsUp()) {
-                        output = 0;
+                        output = 0.0;
                         if (autoReset) {
                             hardReset();
-                            *ballTrackingActivated = true;
+                            *leverStage = INACTIVE;
                         }
                     }
                     // Otherwise, calculate output
@@ -115,7 +117,7 @@ class Lever_PID {
         double target;
         Timer timer;
         bool autoReset;
-        bool* ballTrackingActivated;
+        LEVER_STAGE* leverStage;
 
         bool mainLoopLocked = false; // Flag to control main loop execution
 };

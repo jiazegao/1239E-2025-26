@@ -1,9 +1,6 @@
 #include "configs.hpp"
 #include "custom/PID.hpp"
-#include <queue>
 #include <tuple>
-
-enum LEVER_STAGE {INACTIVE, INTAKING, SCORING};
 
 pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
@@ -73,12 +70,11 @@ std::pair<alliance_color, int> frontContColor() {
 }
 
 // Distance Readings
-std::array<int, 3> midDistReading = {100, 50, 20};
-std::array<int, 4> topDistReading = {150, 100, 50, 20};
+std::array<int, 3> midDistReadings = {100, 50, 20};
+std::array<int, 4> topDistReadings = {150, 100, 50, 20};
 const int INCREMENT_THRESHOLD = 20;
-const int DECREMENT_THRESHOLD = 20;
+const int DECREMENT_THRESHOLD = 30;
 
-bool ballTrackingActivated = true;
 bool removedFromTop = true;
 
 // Lever PID
@@ -88,14 +84,13 @@ Lever_PID leverPID(
     2.0, // kP
     0.0, // kI
     1.5, // kD
-    1.0, // error range
-    200, // error range timeout
+    2.0, // error range
+    150, // error range timeout
     -127, // min speed
     127, // max speed
     true,
-    &ballTrackingActivated
+    &currentStage
 );
-std::queue<std::function<void()>> leverTaskQueue;
 
 // Color Detection
 alliance_color getOpticColor() {
@@ -105,30 +100,40 @@ alliance_color getOpticColor() {
 }
 
 // Scoring Presets
-inline std::array<std::tuple<int, int, int>, INTAKE_CAPACITY> scoringPresets = {
+inline std::array<std::tuple<int, int, int>, INTAKE_CAPACITY> scoringPresetsFast = {
     std::make_tuple(10, -127, 127),
     std::make_tuple(20, -127, 127),
     std::make_tuple(30, -127, 127),
     std::make_tuple(40, -127, 127),
     std::make_tuple(50, -127, 127),
     std::make_tuple(60, -127, 127),
-    std::make_tuple(70, -127, 127),
+    std::make_tuple(70, -127, 127)
+};
+
+inline std::array<std::tuple<int, int, int>, INTAKE_CAPACITY> scoringPresetsSlow = {
+    std::make_tuple(10, -127, 60),
+    std::make_tuple(20, -127, 60),
+    std::make_tuple(30, -127, 60),
+    std::make_tuple(40, -127, 60),
+    std::make_tuple(50, -127, 60),
+    std::make_tuple(60, -127, 60),
+    std::make_tuple(70, -127, 60)
 };
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
     ballTrackingTask = new pros::Task([](){
         while (true) {
-            if (ballTrackingActivated) {
+            if (currentStage != SCORING) {
                 bool decremented = false;
                 do {
                     decremented = false;
                     // Domain of the middle distance sensor
-                    if (currSize < midDistReading.size()) {
-                        if (midDist.get() < midDistReading[currSize]-INCREMENT_THRESHOLD) {
+                    if (currSize < midDistReadings.size()) {
+                        if (midDist.get() < midDistReadings[currSize]-INCREMENT_THRESHOLD) {
                             intake(getOpticColor());
                         }
-                        else if (midDist.get() > midDistReading[currSize]+DECREMENT_THRESHOLD) {
+                        else if (midDist.get() > midDistReadings[currSize]+DECREMENT_THRESHOLD) {
                             if (removedFromTop) removeTop(1);
                             else removeFront(1);
                             decremented = true;
@@ -136,10 +141,10 @@ void initLeverControl() {
                     }
                     // Domain of the top distance sensor
                     else {
-                        if (topDist.get() < topDistReading[currSize-midDistReading.size()]-INCREMENT_THRESHOLD) {
+                        if (topDist.get() < topDistReadings[currSize-midDistReadings.size()]-INCREMENT_THRESHOLD) {
                             intake(getOpticColor());
                         }
-                        else if (topDist.get() > topDistReading[currSize-midDistReading.size()]+DECREMENT_THRESHOLD) {
+                        else if (topDist.get() > topDistReadings[currSize-midDistReadings.size()]+DECREMENT_THRESHOLD) {
                             if (removedFromTop) removeTop(1);
                             else removeFront(1);
                             decremented = true;
@@ -156,44 +161,55 @@ void initLeverControl() {
     });
 }
 
-void score(int count) {
-    int level = std::min(count, currSize) + (INTAKE_CAPACITY-currSize) - 1;
-    trapDoor.retract();
-    ballTrackingActivated = false;
-    removedFromTop = true;
-    leverPID.setTarget(std::get<0>(scoringPresets[level]), std::get<1>(scoringPresets[level]), std::get<2>(scoringPresets[level]));
-}
-
-void scoreColor(alliance_color color) {
-    auto info = topContColor();
-    if (info.first == color) {
-        score(info.second);
-    }
-}
-
-void scoreAll() {
-    score(INTAKE_CAPACITY);
-}
-
 void stopIntake() {
     frontMotor.move(0);
+    if (currentStage != SCORING) currentStage = INACTIVE;
     removedFromTop = true;
 }
 
 void startIntake() {
-    frontMotor.move(127);
-    removedFromTop = true;
+    if (currentStage != SCORING) {
+        frontMotor.move(127);
+        currentStage = INTAKING;
+        removedFromTop = true;
+    }
 }
 
 void startOuttake() {
-    frontMotor.move(-127);
-    removedFromTop = false;
+    if (currentStage != SCORING) {
+        frontMotor.move(-127);
+        currentStage = OUTTAKING;
+        removedFromTop = false;
+    }
 }
 
 void extendLift() {
-    lift.extend();
+    if (currentStage != SCORING) lift.extend();
 }
 
 void retractLift() {
-    lift.retract();
+    if (currentStage != SCORING) lift.retract();
+}
+
+void score(int count, bool slowScore) {
+    int level = std::min(count, currSize) + (INTAKE_CAPACITY-currSize) - 1;
+    stopIntake();
+    trapDoor.extend();  // open trapdoor
+
+    if (slowScore) leverPID.setTarget(std::get<0>(scoringPresetsSlow[level]), std::get<1>(scoringPresetsSlow[level]), std::get<2>(scoringPresetsSlow[level]));
+    else leverPID.setTarget(std::get<0>(scoringPresetsFast[level]), std::get<1>(scoringPresetsFast[level]), std::get<2>(scoringPresetsFast[level]));
+
+    removedFromTop = true;
+    currentStage = SCORING;
+}
+
+void scoreColor(alliance_color color, bool slowScore) {
+    auto info = topContColor();
+    if (info.first == color) {
+        score(info.second, slowScore);
+    }
+}
+
+void scoreAll(bool slowScore) {
+    score(INTAKE_CAPACITY, slowScore);
 }
