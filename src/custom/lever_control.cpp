@@ -130,7 +130,7 @@ void initLeverControl() {
                     decremented = false;
                     // Domain of the middle distance sensor
                     if (currSize < midDistReadings.size()) {
-                        if (midDist.get() < midDistReadings[currSize]-INCREMENT_THRESHOLD) {
+                        if (midDist.get() < midDistReadings[currSize]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
                             intake(getOpticColor());
                         }
                         else if (midDist.get() > midDistReadings[currSize]+DECREMENT_THRESHOLD) {
@@ -141,7 +141,7 @@ void initLeverControl() {
                     }
                     // Domain of the top distance sensor
                     else {
-                        if (topDist.get() < topDistReadings[currSize-midDistReadings.size()]-INCREMENT_THRESHOLD) {
+                        if (topDist.get() < topDistReadings[currSize-midDistReadings.size()]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
                             intake(getOpticColor());
                         }
                         else if (topDist.get() > topDistReadings[currSize-midDistReadings.size()]+DECREMENT_THRESHOLD) {
@@ -212,4 +212,20 @@ void scoreColor(alliance_color color, bool slowScore) {
 
 void scoreAll(bool slowScore) {
     score(INTAKE_CAPACITY, slowScore);
+}
+
+void intakeFromMatchLoader(alliance_color color) {
+    pros::Task ([&](){
+        // Get balls with wrong color
+        startIntake();
+        Timer t(2000);
+        while (frontColor() != color && !t.timeIsUp()) {pros::delay(20);}
+        // Discard balls with the wrong color and get balls with the right color
+        stopIntake();
+        score(std::max(0, currSize-1), false);
+        while (currentStage == SCORING) {pros::delay(20);}
+        startIntake();
+        pros::delay(500);
+        stopIntake();
+    });
 }

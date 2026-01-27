@@ -22,6 +22,11 @@ void scoreAll(bool slowScore = false);
 /*
     - Scores all balls in the intake
 */
+void intakeFromMatchLoader(alliance_color color = allianceColor);
+/*
+    - Attempts to intake from matchload
+    - Automatically spits out the wrong color balls
+*/
 
 
 // -------------------- Intake Control --------------------
@@ -37,7 +42,7 @@ void startIntake();
 void startOuttake();
 /*
     - Activates front intake outward
-s*/
+*/
 
 
 // ----------------- SCORING LEVEL CONTROl -----------------
