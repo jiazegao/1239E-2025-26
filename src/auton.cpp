@@ -658,8 +658,8 @@ void skills() {
 
     // Score the top-left goal
     chassis.moveToPose(10, 64, 270, 1500, {.lead=0.5, .minSpeed=55}, false);
-    chassis.moveToPoint(-20, 62.5, 2000, {.minSpeed=40, .earlyExitRange=12}, false);
-    chassis.moveToPoint(-38, 62.5, 1000, {.maxSpeed=60}, false);
+    chassis.moveToPoint(-20, 64.5, 2000, {.minSpeed=40, .earlyExitRange=12}, false);
+    chassis.moveToPoint(-38, 64.5, 1000, {.maxSpeed=60}, false);
     chassis.turnToHeading(180, 800, {});
     RclMain.updateBotPose(&back_rcl);
     RclMain.updateBotPose(&right_rcl);
@@ -689,15 +689,16 @@ void skills() {
     // Back off (#4)
     chassis.moveToPoint(-42, 48, 1000, {});
     stopTopScore();
-    // Park
+        // Park
     chassis.moveToPoint(-55, 48, 1000);
     chassis.moveToPose(-70, 18, 200, 3500, {.lead = .25}, false);
+    //chassis.moveToPose(-64, 18, 180, 2500, {.maxSpeed = 100}, false);
     odomLift.extend();
     startOuttake();
     pros::delay(50);
     leftMotors.move(127);
     rightMotors.move(127);
-    pros::delay(700);
+    pros::delay(800);
     leftMotors.move(0);
     rightMotors.move(0);
 }

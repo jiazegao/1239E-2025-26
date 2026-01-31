@@ -57,7 +57,7 @@ inline pros::adi::Pneumatics odomLift('G', false, false);
 inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
 inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
-inline lemlib::OdomSensors sensors( nullptr,
+inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
                                     nullptr,
                                     &horizontal_tracking_wheel,
                                     nullptr,
@@ -89,17 +89,20 @@ inline lemlib::ControllerSettings angular_controller(3.5, // proportional gain (
                                               0 // maximum acceleration (slew)
 );
 
-// Throttle curve
-inline lemlib::ExpoDriveCurve throttle_curve(3, // joystick deadband out of 127
-                                            10, // minimum output where drivetrain will move out of 127
-                                                1.019 // expo curve gain
+// Throttle curve   
+inline lemlib::ExpoDriveCurve throttle_curve(
+    15,    // deadband
+    20,    // minOutput
+    1.05   // curve
 );
 
 // Steer curve
-inline lemlib::ExpoDriveCurve steer_curve(3, // joystick deadband out of 127
-                                         10, // minimum output where drivetrain will move out of 127
-                                             1.019 // expo curve gain
+inline lemlib::ExpoDriveCurve steer_curve(
+    10,    // deadband
+    30,    // minOutput
+    1.3    // curve
 );
+
 
 // Chassis
 inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
