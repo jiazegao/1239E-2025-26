@@ -47,7 +47,7 @@ void soloAWP(){
     openGate();
     chassis.turnToPoint(-65, -47, 400, {}, false);
     startIntake();
-    chassis.moveToPoint(-65, -47, 1100, {.maxSpeed=100}, false);
+    chassis.moveToPoint(-65, -47, 1100, {.maxSpeed=60}, false);
     RclMain.updateBotPose(&left_rcl);
 
     // Score the long goal
@@ -93,7 +93,7 @@ void soloAWP(){
     pros::delay(300);
     startMidScore();
     chassis.waitUntilDone();
-    pros::delay(900); // middle goal score time
+    pros::delay(580); // middle goal score time
     middleMech.extend();
     stopMidScore();
     startIntake();
@@ -487,7 +487,7 @@ void leftv2() {
 
     // Refill at match loader
     openGate();
-    chassis.moveToPoint(-72, 47, 1600, {.maxSpeed=50}, true);
+    chassis.moveToPoint(-72, 47, 2500, {.maxSpeed=40}, true);
     startOuttake();
     pros::delay(350);
     startIntake();
