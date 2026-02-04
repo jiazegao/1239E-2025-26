@@ -99,26 +99,8 @@ alliance_color getOpticColor() {
     return alliance_color::NONE;
 }
 
-// Scoring Presets
-inline std::array<std::tuple<int, int, int>, INTAKE_CAPACITY> scoringPresetsFast = {
-    std::make_tuple(10, -127, 127),
-    std::make_tuple(20, -127, 127),
-    std::make_tuple(30, -127, 127),
-    std::make_tuple(40, -127, 127),
-    std::make_tuple(50, -127, 127),
-    std::make_tuple(60, -127, 127),
-    std::make_tuple(70, -127, 127)
-};
-
-inline std::array<std::tuple<int, int, int>, INTAKE_CAPACITY> scoringPresetsSlow = {
-    std::make_tuple(10, -127, 60),
-    std::make_tuple(20, -127, 60),
-    std::make_tuple(30, -127, 60),
-    std::make_tuple(40, -127, 60),
-    std::make_tuple(50, -127, 60),
-    std::make_tuple(60, -127, 60),
-    std::make_tuple(70, -127, 60)
-};
+// Scoring Preset
+inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60, 70};
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -191,27 +173,26 @@ void retractLift() {
     if (currentStage != SCORING) lift.retract();
 }
 
-void score(int count, bool slowScore) {
+void score(int count, int maxScoringSpeed) {
     int level = std::min(count, currSize) + (INTAKE_CAPACITY-currSize) - 1;
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
-    if (slowScore) leverPID.setTarget(std::get<0>(scoringPresetsSlow[level]), std::get<1>(scoringPresetsSlow[level]), std::get<2>(scoringPresetsSlow[level]));
-    else leverPID.setTarget(std::get<0>(scoringPresetsFast[level]), std::get<1>(scoringPresetsFast[level]), std::get<2>(scoringPresetsFast[level]));
+    leverPID.setTarget(scoringPresets[level], -400, maxScoringSpeed);
 
     removedFromTop = true;
     currentStage = SCORING;
 }
 
-void scoreColor(alliance_color color, bool slowScore) {
+void scoreColor(alliance_color color, int maxScoringSpeed) {
     auto info = topContColor();
     if (info.first == color) {
-        score(info.second, slowScore);
+        score(info.second, maxScoringSpeed);
     }
 }
 
-void scoreAll(bool slowScore) {
-    score(INTAKE_CAPACITY, slowScore);
+void scoreAll(int maxScoringSpeed) {
+    score(INTAKE_CAPACITY, maxScoringSpeed);
 }
 
 void intakeFromMatchLoader(alliance_color color) {

@@ -4,21 +4,29 @@
 
 // ----------------- LEVER MOTOR CONTROL -----------------
 
+// Scoring Presets (deg/s)
+const int FAST_TOP_SCORE = 999;
+const int FAST_MID_SCORE = 60;
+const int MODERATE_TOP_SCORE = 80;
+const int MODERATE_MID_SCORE = 40;
+const int SLOW_TOP_SCORE = 50;
+const int SLOW_MID_SCORE = 20;
+
 void initLeverControl();
 /*
     - Must be called within void initialize()
     - Starts the pros::Task that manages lever motor control
 */
-void score(int count = 1, bool slowScore = false);
+void score(int count = 1, int maxScoringSpeed = FAST_TOP_SCORE);
 /*
     - Scores a certain number of blocks in the intake
     - If count > balls in the intake, score what's in the intake
 */
-void scoreColor(alliance_color color = allianceColor, bool slowScore = false);
+void scoreColor(alliance_color color = allianceColor, int maxScoringSpeed = FAST_TOP_SCORE);
 /*
     - Scores all balls with the target color at the top of the intake
 */
-void scoreAll(bool slowScore = false);
+void scoreAll(int maxScoringSpeed = FAST_TOP_SCORE);
 /*
     - Scores all balls in the intake
 */
