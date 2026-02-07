@@ -813,8 +813,8 @@ void skills_v2() {
     startIntake();
     chassis.turnToPoint(30, -21, 700, {}, false);
     chassis.moveToPoint(30, -21, 1000, {.maxSpeed=80}, false);
-    chassis.turnToPoint(10.5, -10.5, 800, {.forwards=false}, false);
-    chassis.moveToPose(10, -10, 135, 2400, {.forwards=false}, true);
+    chassis.turnToPoint(11.5, -11.5, 800, {.forwards=false}, false);
+    chassis.moveToPose(11, -11, 135, 2400, {.forwards=false}, true);
     pros::delay(400);
     openGate();
     startOuttake();
