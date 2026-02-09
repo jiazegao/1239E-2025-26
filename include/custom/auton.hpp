@@ -18,3 +18,4 @@ void rightv2();
 void skills();
 void skills_v2();
 void skills_v3();
+void skills_119();
