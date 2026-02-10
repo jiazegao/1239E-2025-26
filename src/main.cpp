@@ -52,11 +52,12 @@ void autonomous() {
 void opcontrol() {
 	
 
-	 //Actual OPcontrol
+	//Actual OPcontrol
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
-	odomLift.extend();
+	// odomLift.extend();
+	odomLift.retract();
 
 	// Retract both descore arms
 	extendLeftArm();
@@ -64,10 +65,12 @@ void opcontrol() {
 	stopIntake();
 
 	RclMain.setMaxSyncPerSec(0.001);
-	startControllerCoordDisplay();
+	// startControllerCoordDisplay();
 
 	// Display FB Logo
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
+
+	startMclBenchmark();
 
 	while (true) {
 		// Update Controls

@@ -84,3 +84,5 @@
     2) Rewrote brain and controller display functions to prevent frequent deletions of pros::Task objects
 2/9/2026
     1) Finished 119 prog skills draft
+2/10/2026
+    1) Revised MCL logic
