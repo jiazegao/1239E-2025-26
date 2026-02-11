@@ -371,7 +371,7 @@ public:
             weight_sqr_sum += p.weight * p.weight;
 
             // Log
-            logFile << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
+            // logFile << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
         }
 
         // Log - Store overall position

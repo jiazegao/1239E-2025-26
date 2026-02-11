@@ -7,8 +7,14 @@
 
 #include "custom/RclTracking.hpp"
 #include <cstdint>
+#include <fstream>
 
+static std::ofstream logFile("/usd/rcl_log.csv");
+inline int logCount = 1;
 
+inline double roundTwoPlaces(int x) {
+    return std::round(x*100)/100;
+}
 
 // Line obstacle class
 Singly_Linked_List<Line_Obstacle> Line_Obstacle::obstacleCollection = Singly_Linked_List<Line_Obstacle>();
@@ -160,7 +166,9 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
 
-    //
+    // Log
+    logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
+
     double angRad = degToRad(botToTrig(this->sp.heading));
     double cosA = std::cos(angRad);
     double sinA = std::sin(angRad);
@@ -300,6 +308,11 @@ void RclTracking::setMaxSyncPerSec(double maxSyncPerSec_) {
 void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
+
+        // Log - Initialize new iteration
+        logFile << logCount << "\n";
+        logCount++;
+
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
@@ -356,6 +369,9 @@ void RclTracking::mainUpdate() {
                 poseAtLatest.y = chassis->getPose().y;
             }
         }
+
+        auto pos = getRclPose();
+        logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
