@@ -84,3 +84,5 @@
     2) Rewrote brain and controller display functions to prevent frequent deletions of pros::Task objects
 1/20/2026
     1) Finished lever logic draft
+2/11/2026
+    1) Refined lever control logic

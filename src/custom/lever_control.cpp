@@ -1,6 +1,6 @@
 #include "configs.hpp"
 #include "custom/PID.hpp"
-#include <tuple>
+#include <atomic>
 
 pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
@@ -8,11 +8,29 @@ pros::Task* leverControlTask = nullptr;
 LEVER_STAGE currentStage = INACTIVE;
 
 // Circular Array
-const int INTAKE_CAPACITY = 7;
+const int INTAKE_CAPACITY = 6;
 std::array<alliance_color, INTAKE_CAPACITY> intake_array;
-int currSize = 0;
+std::atomic<int> currSize(0);
 int head = 0;
 int tail = -1;
+
+// Distance Readings
+std::array<int, 3> midDistPresets = {200, 120, 50}; // bottom, top1, top2
+std::array<int, 5> topDistPresets = {250, 170, 90, 20, 0}; // top2/bottom, top3, top4, top5, top6
+const int INCREMENT_THRESHOLD = 20;
+const int DECREMENT_THRESHOLD = 30;
+
+std::array<double, 10> midDistCumulative = {200,200,200,200,200,200,200,200,200,200};
+int midDistCumulativeIndex = 0;
+double midDistReading = 200.0;
+std::array<double, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
+int topDistCumulativeIndex = 0;
+double topDistReading = 250.0;
+
+bool removedFromTop = true;
+
+// Scoring Preset
+inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60};
 
 alliance_color topColor() { return currSize > 0 ? intake_array[head] : alliance_color::NONE; }
 alliance_color frontColor() { return currSize > 0 ? intake_array[tail] : alliance_color::NONE; }
@@ -27,13 +45,13 @@ bool intake(alliance_color ballColor) {
     return false;
 }
 void removeTop(int count) {
-    count = std::min(count, currSize);
+    count = std::min(count, currSize.load());
     head += count;
     head %= INTAKE_CAPACITY;
     currSize -= count;
 }
 void removeFront(int count) {
-    count = std::min(count, currSize);
+    count = std::min(count, currSize.load());
     tail -= count;
     tail += INTAKE_CAPACITY;
     tail %= INTAKE_CAPACITY;
@@ -69,14 +87,6 @@ std::pair<alliance_color, int> frontContColor() {
     return std::make_pair(alliance_color::NONE, 0);
 }
 
-// Distance Readings
-std::array<int, 3> midDistReadings = {100, 50, 20};
-std::array<int, 4> topDistReadings = {150, 100, 50, 20};
-const int INCREMENT_THRESHOLD = 20;
-const int DECREMENT_THRESHOLD = 30;
-
-bool removedFromTop = true;
-
 // Lever PID
 Lever_PID leverPID(
     &leverMotor,
@@ -94,45 +104,69 @@ Lever_PID leverPID(
 
 // Color Detection
 alliance_color getOpticColor() {
-    if (335 < frontOptic.get_hue() || frontOptic.get_hue() < 25) return alliance_color::RED;
-    else if (185 < frontOptic.get_hue() && frontOptic.get_hue() < 235) return alliance_color::BLUE;
+    if (330 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
+    else if (170 < frontOptic.get_hue() && frontOptic.get_hue() < 250) return alliance_color::BLUE;
     return alliance_color::NONE;
 }
-
-// Scoring Preset
-inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60, 70};
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
     ballTrackingTask = new pros::Task([](){
+
+        Timer incrementCoolDown(100);
+        Timer decrementCoolDown(100);
+
         while (true) {
             if (currentStage != SCORING) {
-                bool decremented = false;
-                do {
-                    decremented = false;
-                    // Domain of the middle distance sensor
-                    if (currSize < midDistReadings.size()) {
-                        if (midDist.get() < midDistReadings[currSize]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
-                            intake(getOpticColor());
-                        }
-                        else if (midDist.get() > midDistReadings[currSize]+DECREMENT_THRESHOLD) {
-                            if (removedFromTop) removeTop(1);
-                            else removeFront(1);
-                            decremented = true;
-                        }
+
+                // Update cumulative values
+                double currMid = midDist.get();
+                midDistReading += (currMid-midDistCumulative[midDistCumulativeIndex])/midDistCumulative.size();
+                midDistCumulative[midDistCumulativeIndex] = currMid;
+                midDistCumulativeIndex = (midDistCumulativeIndex+1)%midDistCumulative.size();
+                    
+                double currTop = topDist.get();
+                topDistReading += (currTop-topDistCumulative[topDistCumulativeIndex])/topDistCumulative.size();
+                topDistCumulative[topDistCumulativeIndex] = currTop;
+                topDistCumulativeIndex = (topDistCumulativeIndex+1)%topDistCumulative.size();
+
+                // Full middle sensor control
+                if (currSize < midDistPresets.size()-1) {
+                    if (incrementCoolDown.timeIsUp() && midDistReading < midDistPresets[currSize]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
+                        intake(getOpticColor());
+                        decrementCoolDown.reset();
                     }
-                    // Domain of the top distance sensor
-                    else {
-                        if (topDist.get() < topDistReadings[currSize-midDistReadings.size()]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
-                            intake(getOpticColor());
-                        }
-                        else if (topDist.get() > topDistReadings[currSize-midDistReadings.size()]+DECREMENT_THRESHOLD) {
-                            if (removedFromTop) removeTop(1);
-                            else removeFront(1);
-                            decremented = true;
-                        }
+                    else if (decrementCoolDown.timeIsUp() && currSize > 0 && midDistReading > midDistPresets[currSize]+DECREMENT_THRESHOLD) {
+                        if (removedFromTop) removeTop(1);
+                        else removeFront(1);
+                        incrementCoolDown.reset();
                     }
-                } while (decremented);
+                }
+                // Half / Half
+                else if (currSize == midDistPresets.size()-1) {
+                    if (incrementCoolDown.timeIsUp() && topDistReading < topDistPresets[0]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
+                        intake(getOpticColor());
+                        decrementCoolDown.reset();
+                    }
+                    else if (decrementCoolDown.timeIsUp() && midDistReading > midDistPresets[currSize]+DECREMENT_THRESHOLD) {
+                        if (removedFromTop) removeTop(1);
+                        else removeFront(1);
+                        incrementCoolDown.reset();
+                    }
+                }
+                // Full top sensor control
+                else {
+                    int index = currSize-midDistPresets.size()+1;
+                    if (incrementCoolDown.timeIsUp() && currSize < INTAKE_CAPACITY && topDistReading < topDistPresets[index]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
+                        intake(getOpticColor());
+                        decrementCoolDown.reset();
+                    }
+                    else if (decrementCoolDown.timeIsUp() && topDistReading > topDistPresets[index]+DECREMENT_THRESHOLD) {
+                        if (removedFromTop) removeTop(1);
+                        else removeFront(1);
+                        incrementCoolDown.reset();
+                    }
+                }
             }
             pros::delay(20);
         }
@@ -174,7 +208,7 @@ void retractLift() {
 }
 
 void score(int count, int maxScoringSpeed) {
-    int level = std::min(count, currSize) + (INTAKE_CAPACITY-currSize) - 1;
+    int level = std::min(count, currSize.load()) + (INTAKE_CAPACITY-currSize) - 1;
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
@@ -196,7 +230,7 @@ void scoreAll(int maxScoringSpeed) {
 }
 
 void intakeFromMatchLoader(alliance_color color) {
-    pros::Task ([&](){
+    pros::Task ([color](){
         // Get balls with wrong color
         startIntake();
         Timer t(2000);
