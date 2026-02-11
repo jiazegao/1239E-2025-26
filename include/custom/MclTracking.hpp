@@ -10,6 +10,7 @@
 #include <random>
 #include "Tracking_Util.hpp"
 #include "pros/rotation.hpp"
+#include <fstream>
 
 // --- Configuration Constants ---
 const double MAX_RANGE = 78.0;
@@ -24,6 +25,9 @@ const int RESAMPLE_THRESHOLD = 50;
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
 struct Line_ { Pose p1, p2; };
+
+// static std::ofstream logFile("/usd/mcl_log.csv");
+// inline int logCount = 1;
 
 class MclTracking {
 private:
@@ -345,6 +349,10 @@ public:
         double total_weight = 0;
         double weight_sqr_sum = 0;
 
+        // Log - Indicate new iteration
+        // logFile << "NEW" << logCount << "\n";
+        // logCount++;
+
         auto& particles = *particles_ptr;
         for (int count = 0; count < PARTICLE_COUNT; count++) {
             const auto& p = particles[count];
@@ -357,7 +365,13 @@ public:
             
             total_weight += p.weight;
             weight_sqr_sum += p.weight * p.weight;
+
+            // Log
+            // logFile << p.pose.x << "," << p.pose.y << "," << p.pose.theta << "\n";
         }
+
+        // Log - Store overall position
+        // logFile << "SUM" << x / total_weight << "," << y / total_weight << "," << std::atan2(sin_sum, cos_sum) << "\n";
 
         // Handle the case where all weights are zero (safety)
         if (total_weight < 1e-9) return {rawMcl, 0.0}; 
