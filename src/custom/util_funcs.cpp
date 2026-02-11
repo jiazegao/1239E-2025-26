@@ -357,7 +357,12 @@ void initControllerDisplay() {
         });
     }
 };
-
+void stopBrainDisplay() {
+    brainDisplayFunc = nullptr;
+}
+void stopControllerDisplay() {
+    controllerDisplayFunc = nullptr;
+}
 void startControllerCoordDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
@@ -444,7 +449,12 @@ inline Timer MclT(15);
 inline double MclRate = 0.0;
 inline double MclComputeTime = 0.0;
 
+static pros::Task* mclTask = nullptr;
+static pros::Task* displayTask = nullptr;
+
 void startMclBenchmark() {
+
+    if (mclTask != nullptr) return;
 
     // Initial Sync
     chassis.setPose(0, 0, 270);
@@ -454,7 +464,10 @@ void startMclBenchmark() {
     lemlib::Pose odomLast = chassis.getPose();
     MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
 
-    controllerDisplayFunc = [](){
+    stopBrainDisplay();
+    stopControllerDisplay();
+
+    mclTask = new pros::Task([](){
         while (true) {
             MclT.reset();
             rawMcl = MclMain.updateMcl();
@@ -463,23 +476,24 @@ void startMclBenchmark() {
                 MclMain.updateBotPose();
             }
             MclComputeTime = MclT.elapsed();
-            pros::delay(7);
-            MclRate = 1000.0 / (7+MclComputeTime);
+            pros::delay(10);
+            MclRate = 1000.0 / (MclT.elapsed() + 1e-10);
         }
-    };
+    });
 
-    brainDisplayFunc = [](){
+    displayTask = new pros::Task([](){
         while (true) {
             lemlib::Pose odomLast = chassis.getPose();
             lemlib::Pose RclPose = RclMain.getRclPose();
             // Display Stats
+            float mclTheta = 90.0 - (rawMcl.theta * 180.0 / M_PI);
             pros::lcd::print(0, "Mcl Rate: %.1f Hz, %.4f ms", MclRate, MclComputeTime);
-            pros::lcd::print(1, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
+            pros::lcd::print(1, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclTheta);
             pros::lcd::print(2, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
             pros::lcd::print(3, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
             pros::lcd::print(4, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
             pros::lcd::print(5, "Confs: B:%d L:%d R:%d", back_dist.get_confidence(), left_dist.get_confidence(), right_dist.get_confidence());
             pros::delay(60);
         }
-    };
+    });
 }

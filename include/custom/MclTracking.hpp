@@ -90,9 +90,11 @@ private:
     double lastTheta = 0.0;
     pros::Rotation* vertical_tracking_wheel = nullptr;
     double vert_c = 0.0;
+    double vert_offset = 0.0;
     double last_vertical_reading = 0.0;
     pros::Rotation* horizontal_tracking_wheel = nullptr;
     double horiz_c = 0.0;
+    double horiz_offset = 0.0;
     double last_horizontal_reading = 0.0;
 
     lemlib::Pose odomLast = {0, 0, 0};
@@ -153,17 +155,19 @@ private:
     }
 
 public:
-    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, std::pair<pros::Rotation*, double> vertical_tracking_wheel, std::pair<pros::Rotation*, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = false) {
+    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = false) {
         this->chassis = chassis;
         this->distance_collection = dist_collection;
         this->autoSync = autoSync_;
 
-        this->vertical_tracking_wheel = vertical_tracking_wheel.first;
-        this->vert_c = vertical_tracking_wheel.second*std::numbers::pi;
+        this->vertical_tracking_wheel = get<0>(vertical_tracking_wheel);
+        this->vert_c = get<1>(vertical_tracking_wheel)*std::numbers::pi;
+        this->vert_offset = get<2>(vertical_tracking_wheel);
         this->last_vertical_reading = this->vertical_tracking_wheel->get_angle();
 
-        this->horizontal_tracking_wheel = horizontal_tracking_wheel.first;
-        this->horiz_c = horizontal_tracking_wheel.second*std::numbers::pi;
+        this->horizontal_tracking_wheel = get<0>(horizontal_tracking_wheel);
+        this->horiz_c = get<1>(horizontal_tracking_wheel)*std::numbers::pi;
+        this->horiz_offset = get<2>(horizontal_tracking_wheel);
         this->last_horizontal_reading = this->horizontal_tracking_wheel->get_angle();
 
         std::random_device rd;
@@ -198,18 +202,23 @@ public:
         lastTheta = current_std_theta;
 
         // Noise (Avg 0.002 rad / 6%)
+        // Less certain if turning
         std::normal_distribution<double> theta_noise(0, 0.002);
-        std::normal_distribution<double> tracking_wheel_noise(1, 0.06);
+        std::normal_distribution<double> tracking_wheel_noise(1, 0.06+std::abs(d_theta));
 
         // Calculate vertical tracking wheel vector
-        double vert_reading = vertical_tracking_wheel->get_angle();
-        double d_vert = (vert_reading-last_vertical_reading)/360.0 * vert_c;
+        double vert_reading = vertical_tracking_wheel->get_position()/100.0;
+        double d_vert_raw = (vert_reading-last_vertical_reading)/360.0 * vert_c;
         last_vertical_reading = vert_reading;
 
         // Calculate horizontal tracking wheel vector
-        double horiz_reading = horizontal_tracking_wheel->get_angle();
-        double d_horiz = (horiz_reading-last_horizontal_reading)/360.0 * horiz_c;
+        double horiz_reading = horizontal_tracking_wheel->get_position()/100.0;
+        double d_horiz_raw = (horiz_reading-last_horizontal_reading)/360.0 * horiz_c;
         last_horizontal_reading = horiz_reading;
+
+        // Get raw reading
+        double d_vert_pure = d_vert_raw - (vert_offset * d_theta);
+        double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta);
 
         auto& particles = *particles_ptr;
         for (int i = 0; i < PARTICLE_COUNT; i++) {
@@ -221,12 +230,13 @@ public:
             double vert_noise = tracking_wheel_noise(gen);
             double horiz_noise = tracking_wheel_noise(gen);
 
-            // Calculate movement vectors with noise
-            std::pair<double, double> vert_vector = std::make_pair(d_vert*pCos*vert_noise, d_vert*pSin*vert_noise);
-            std::pair<double, double> horiz_vector = std::make_pair(d_horiz*pSin*horiz_noise, (-1)*d_horiz*pCos*horiz_noise);   // cos(x-90) = sin(x); sin(x-90) = -cos(x)
+            // Forward / Backward motion with noise
+            double forward_dist = d_vert_pure * vert_noise;
+            double strafe_dist = d_horiz_pure * horiz_noise;
 
-            p.pose.x += vert_vector.first + horiz_vector.first;
-            p.pose.y += vert_vector.second + horiz_vector.second;
+            // Update position
+            p.pose.x += forward_dist*pCos + strafe_dist*pSin;
+            p.pose.y += forward_dist*pSin - strafe_dist*pCos;
             p.pose.theta += d_theta + theta_noise(gen);
 
             while (p.pose.theta > M_PI) p.pose.theta -= 2 * M_PI;

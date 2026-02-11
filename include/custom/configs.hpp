@@ -124,7 +124,7 @@ inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
 inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclTracking RclMain(&chassis, 40, true, 0.5, 4.0, 12.0, 6.0, 15);
-inline MclTracking MclMain(&chassis, distance_collection, {&vertSensor, 2.75}, {&horiSensor, 2.75}, 0, 0, 0, false);
+inline MclTracking MclMain(&chassis, distance_collection, {&vertSensor, 2.75, -0.5}, {&horiSensor, 2.75, -3.06}, 0, 0, 0, false);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);
