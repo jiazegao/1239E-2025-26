@@ -26,8 +26,12 @@ struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
 struct Line_ { Pose p1, p2; };
 
-// static std::ofstream logFile("/usd/mcl_log.csv");
-// inline int logCount = 1;
+static std::ofstream logFile("/usd/mcl_log.csv");
+inline int logCount = 1;
+
+inline double roundTwoPlaces(int x) {
+    return std::round(x*100)/100;
+}
 
 class MclTracking {
 private:
@@ -367,11 +371,11 @@ public:
             weight_sqr_sum += p.weight * p.weight;
 
             // Log
-            // logFile << p.pose.x << "," << p.pose.y << "," << p.pose.theta << "\n";
+            logFile << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
         }
 
         // Log - Store overall position
-        // logFile << "SUM" << x / total_weight << "," << y / total_weight << "," << std::atan2(sin_sum, cos_sum) << "\n";
+        // logFile << "SUM" << roundTwoPlaces(x / total_weight) << "," << roundTwoPlaces(y / total_weight) << "," << roundTwoPlaces(std::atan2(sin_sum, cos_sum)) << "\n";
 
         // Handle the case where all weights are zero (safety)
         if (total_weight < 1e-9) return {rawMcl, 0.0}; 
