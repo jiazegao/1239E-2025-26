@@ -1,6 +1,8 @@
+#include "lever_control.hpp"
 #include "configs.hpp"
 #include "custom/PID.hpp"
 #include <atomic>
+#include <queue>
 
 pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
@@ -20,17 +22,20 @@ std::array<int, 5> topDistPresets = {250, 170, 90, 20, 0}; // top2/bottom, top3,
 const int INCREMENT_THRESHOLD = 20;
 const int DECREMENT_THRESHOLD = 30;
 
+// Scoring presets
 std::array<double, 10> midDistCumulative = {200,200,200,200,200,200,200,200,200,200};
 int midDistCumulativeIndex = 0;
 double midDistReading = 200.0;
 std::array<double, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 double topDistReading = 250.0;
-
-bool removedFromTop = true;
-
-// Scoring Preset
 inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60};
+
+// Color / Ball management
+bool ballInGate = false;
+const int ENGAGE_DIST = 40;  // Ball is present (mm)
+const int RELEASE_DIST = 60; // Gap/No ball present (mm)
+bool removedFromTop = true;
 
 alliance_color topColor() { return currSize > 0 ? intake_array[head] : alliance_color::NONE; }
 alliance_color frontColor() { return currSize > 0 ? intake_array[tail] : alliance_color::NONE; }
@@ -103,6 +108,7 @@ Lever_PID leverPID(
 );
 
 // Color Detection
+std::queue<alliance_color> colorSequence;
 alliance_color getOpticColor() {
     if (330 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
     else if (170 < frontOptic.get_hue() && frontOptic.get_hue() < 250) return alliance_color::BLUE;
@@ -116,8 +122,42 @@ void initLeverControl() {
         Timer incrementCoolDown(100);
         Timer decrementCoolDown(100);
 
+        Timer firstIntakeTimeout(1000);
+
+        auto handleIntake = [&]() {
+            // Intake the previous / latest color
+            if (!colorSequence.empty()) {
+                intake(colorSequence.front());
+                colorSequence.pop();
+            }
+            else intake(allianceColor);
+            // Cooldown
+            decrementCoolDown.reset();
+        };
+        auto handleOuttake = [&]() {
+            // Determine output direction based on latest actions
+            removedFromTop ? removeTop(1) : removeFront(1);
+            // Cooldown
+            incrementCoolDown.reset();
+        };
+
         while (true) {
             if (currentStage != SCORING) {
+
+                int currentDist = lowDist.get_distance();
+                alliance_color opticColor = getOpticColor();
+
+                // Add balls to the queue
+                if (currentDist < ENGAGE_DIST && !ballInGate && colorSequence.size() < 2) {
+                    // A ball just entered the gate
+                    ballInGate = true;
+                    // Record the color
+                    colorSequence.push(opticColor);
+                } 
+                else if (currentDist > RELEASE_DIST && ballInGate) {
+                    // The ball has cleared the gate, ready for the next one
+                    ballInGate = false;
+                }
 
                 // Update cumulative values
                 double currMid = midDist.get();
@@ -132,39 +172,30 @@ void initLeverControl() {
 
                 // Full middle sensor control
                 if (currSize < midDistPresets.size()-1) {
-                    if (incrementCoolDown.timeIsUp() && midDistReading < midDistPresets[currSize]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
-                        intake(getOpticColor());
-                        decrementCoolDown.reset();
+                    if (incrementCoolDown.timeIsUp() && midDistReading < midDistPresets[currSize]-INCREMENT_THRESHOLD) {
+                        handleIntake();
                     }
                     else if (decrementCoolDown.timeIsUp() && currSize > 0 && midDistReading > midDistPresets[currSize]+DECREMENT_THRESHOLD) {
-                        if (removedFromTop) removeTop(1);
-                        else removeFront(1);
-                        incrementCoolDown.reset();
+                        handleOuttake();
                     }
                 }
                 // Half / Half
                 else if (currSize == midDistPresets.size()-1) {
-                    if (incrementCoolDown.timeIsUp() && topDistReading < topDistPresets[0]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
-                        intake(getOpticColor());
-                        decrementCoolDown.reset();
+                    if (incrementCoolDown.timeIsUp() && topDistReading < topDistPresets[0]-INCREMENT_THRESHOLD) {
+                        handleIntake();
                     }
                     else if (decrementCoolDown.timeIsUp() && midDistReading > midDistPresets[currSize]+DECREMENT_THRESHOLD) {
-                        if (removedFromTop) removeTop(1);
-                        else removeFront(1);
-                        incrementCoolDown.reset();
+                        handleOuttake();
                     }
                 }
                 // Full top sensor control
                 else {
                     int index = currSize-midDistPresets.size()+1;
-                    if (incrementCoolDown.timeIsUp() && currSize < INTAKE_CAPACITY && topDistReading < topDistPresets[index]-INCREMENT_THRESHOLD && getOpticColor() != alliance_color::NONE) {
-                        intake(getOpticColor());
-                        decrementCoolDown.reset();
+                    if (incrementCoolDown.timeIsUp() && currSize < INTAKE_CAPACITY && topDistReading < topDistPresets[index]-INCREMENT_THRESHOLD) {
+                        handleIntake();
                     }
                     else if (decrementCoolDown.timeIsUp() && topDistReading > topDistPresets[index]+DECREMENT_THRESHOLD) {
-                        if (removedFromTop) removeTop(1);
-                        else removeFront(1);
-                        incrementCoolDown.reset();
+                        handleOuttake();
                     }
                 }
             }
@@ -207,7 +238,7 @@ void retractLift() {
     if (currentStage != SCORING) lift.retract();
 }
 
-void score(int count, int maxScoringSpeed) {
+void score(int timeOut, int count, int maxScoringSpeed) {
     int level = std::min(count, currSize.load()) + (INTAKE_CAPACITY-currSize) - 1;
     stopIntake();
     trapDoor.extend();  // open trapdoor
@@ -216,17 +247,18 @@ void score(int count, int maxScoringSpeed) {
 
     removedFromTop = true;
     currentStage = SCORING;
+    pros::delay(timeOut);
 }
 
-void scoreColor(alliance_color color, int maxScoringSpeed) {
+void scoreColor(int timeOut, int maxScoringSpeed, alliance_color color) {
     auto info = topContColor();
     if (info.first == color) {
-        score(info.second, maxScoringSpeed);
+        score(timeOut, info.second, maxScoringSpeed);
     }
 }
 
-void scoreAll(int maxScoringSpeed) {
-    score(INTAKE_CAPACITY, maxScoringSpeed);
+void scoreAll(int timeOut, int maxScoringSpeed) {
+    score(timeOut, INTAKE_CAPACITY, maxScoringSpeed);
 }
 
 void intakeFromMatchLoader(alliance_color color) {
@@ -237,7 +269,7 @@ void intakeFromMatchLoader(alliance_color color) {
         while (frontColor() != color && !t.timeIsUp()) {pros::delay(20);}
         // Discard balls with the wrong color and get balls with the right color
         stopIntake();
-        score(std::max(0, currSize-1), false);
+        score(5, std::max(0, currSize-1), FAST_TOP_SCORE);
         while (currentStage == SCORING) {pros::delay(20);}
         startIntake();
         pros::delay(500);

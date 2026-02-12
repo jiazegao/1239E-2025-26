@@ -56,12 +56,11 @@ inline pros::adi::Pneumatics odomLift('G', false, false);
 inline pros::adi::Pneumatics trapDoor('E', false, false);
 
 // Odometry
-inline lemlib::TrackingWheel horizontal_tracking_wheel(&horiSensor, lemlib::Omniwheel::NEW_275, -3.06, 1.0);
 inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
 inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
                                     nullptr,
-                                    &horizontal_tracking_wheel,
+                                    nullptr,
                                     nullptr,
                                     &imu
 );
@@ -115,16 +114,21 @@ inline pros::Distance descoreDist(2);
 
 inline pros::Distance midDist(3);
 inline pros::Distance topDist(5);
+inline pros::Distance lowDist(4);
 
 inline pros::Distance back_dist(15);
 inline pros::Distance right_dist(3);
 inline pros::Distance left_dist(4);
-inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_dist, &left_dist};
+inline pros::Distance fl_dist(1);
+inline pros::Distance fr_dist(2);
+inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_dist, &left_dist, &fl_dist, &fr_dist};
 
 // Rcl setup
 inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
 inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor fl_rcl(&fl_dist, 0.0, 0.0, 0.0, 15.0);
+inline RclSensor fr_rcl(&fr_dist, 0.0, 0.0, 0.0, 15.0);
 inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 6.0, 20);
 // inline MclTracking MclMain(&chassis, distance_collection, 0, 0, 0, false);
 
