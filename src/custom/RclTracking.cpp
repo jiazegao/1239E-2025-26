@@ -9,8 +9,8 @@
 #include <cstdint>
 #include <fstream>
 
-static std::ofstream logFile("/usd/rcl_log.csv");
-inline int logCount = 1;
+//static std::ofstream logFile("/usd/rcl_log.csv");
+//inline int logCount = 1;
 
 inline double roundTwoPlaces(int x) {
     return std::round(x*100)/100;
@@ -167,7 +167,7 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     val *= mmToInch;
 
     // Log
-    logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
+    // logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
 
     double angRad = degToRad(botToTrig(this->sp.heading));
     double cosA = std::cos(angRad);
@@ -310,8 +310,8 @@ void RclTracking::mainUpdate() {
     if (RclSensor::sensorCollection.size() > 0) {
 
         // Log - Initialize new iteration
-        logFile << logCount << "\n";
-        logCount++;
+        //logFile << logCount << "\n";
+        //logCount++;
 
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
@@ -371,7 +371,7 @@ void RclTracking::mainUpdate() {
         }
 
         auto pos = getRclPose();
-        logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
+        //logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))

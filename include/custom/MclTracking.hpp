@@ -26,8 +26,8 @@ struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
 struct Line_ { Pose p1, p2; };
 
-static std::ofstream logFile("/usd/mcl_log.csv");
-inline int logCount = 1;
+//static std::ofstream logFile("/usd/mcl_log.csv");
+//inline int logCount = 1;
 
 inline double roundTwoPlaces(int x) {
     return std::round(x*100)/100;
