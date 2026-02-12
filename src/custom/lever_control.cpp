@@ -30,11 +30,6 @@ std::array<double, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,
 int topDistCumulativeIndex = 0;
 double topDistReading = 250.0;
 inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60};
-
-// Color / Ball management
-bool ballInGate = false;
-const int ENGAGE_DIST = 40;  // Ball is present (mm)
-const int RELEASE_DIST = 60; // Gap/No ball present (mm)
 bool removedFromTop = true;
 
 alliance_color topColor() { return currSize > 0 ? intake_array[head] : alliance_color::NONE; }
@@ -108,7 +103,6 @@ Lever_PID leverPID(
 );
 
 // Color Detection
-std::queue<alliance_color> colorSequence;
 alliance_color getOpticColor() {
     if (330 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
     else if (170 < frontOptic.get_hue() && frontOptic.get_hue() < 250) return alliance_color::BLUE;
@@ -124,40 +118,22 @@ void initLeverControl() {
 
         Timer firstIntakeTimeout(1000);
 
+        alliance_color opticColor = getOpticColor();
+
         auto handleIntake = [&]() {
-            // Intake the previous / latest color
-            if (!colorSequence.empty()) {
-                intake(colorSequence.front());
-                colorSequence.pop();
-            }
-            else intake(allianceColor);
-            // Cooldown
+            intake(opticColor != alliance_color::NONE ? opticColor : allianceColor);
             decrementCoolDown.reset();
         };
         auto handleOuttake = [&]() {
-            // Determine output direction based on latest actions
             removedFromTop ? removeTop(1) : removeFront(1);
-            // Cooldown
             incrementCoolDown.reset();
         };
 
         while (true) {
             if (currentStage != SCORING) {
 
-                int currentDist = lowDist.get_distance();
-                alliance_color opticColor = getOpticColor();
-
-                // Add balls to the queue
-                if (currentDist < ENGAGE_DIST && !ballInGate && colorSequence.size() < 2) {
-                    // A ball just entered the gate
-                    ballInGate = true;
-                    // Record the color
-                    colorSequence.push(opticColor);
-                } 
-                else if (currentDist > RELEASE_DIST && ballInGate) {
-                    // The ball has cleared the gate, ready for the next one
-                    ballInGate = false;
-                }
+                // Update readings
+                opticColor = getOpticColor();
 
                 // Update cumulative values
                 double currMid = midDist.get();
@@ -199,7 +175,7 @@ void initLeverControl() {
                     }
                 }
             }
-            pros::delay(20);
+            pros::delay(30);
         }
     });
 
