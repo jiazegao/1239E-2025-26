@@ -22,13 +22,31 @@ void initialize() {
 	odomLift.retract();
 
 	// Auton Selection
-	startControllerAutonSelectorDisplay();
-	init_auton_selector();
+	// startControllerAutonSelectorDisplay();
+	// init_auton_selector();
 
-	RclMain.startTracking();
+	// RclMain.startTracking();
 
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
+
+	// Retrive file count
+	int fileCount = 0;
+	std::ifstream dataFileR("/usd/DATA.1239e");
+	// If file exist, read from it
+	if (dataFileR.is_open()) {
+		dataFileR >> fileCount;
+		dataFileR.close();
+	}
+	// (Default is 1)
+	fileCount++;
+	
+	std::string fileName = "/usd/log" + std::to_string(fileCount) + ".1239e";
+	logFile = std::ofstream(fileName);
+
+	std::ofstream dataFileW("/usd/DATA.1239e");
+	dataFileW << fileCount;
+	dataFileW.close();
 }
 
 void disabled() {}
@@ -64,17 +82,13 @@ void opcontrol() {
 	stopTopScore();
 	stopIntake();
 
-	//RclMain.setMaxSyncPerSec(0.001);
-	// startControllerCoordDisplay();
+	// RclMain.setMaxSyncPerSec(0.001);
+	startControllerCoordDisplay();
 
 	// Display FB Logo
 	// startBrainFBDisplay();
 
-	//startMclBenchmark();
-
-	chassis.setPose(0, 0, 270);
-	RclMain.updateBotPose(&back_rcl);
-	RclMain.updateBotPose(&right_rcl);
+	startMclBenchmark();
 
 	while (true) {
 		// Update Controls

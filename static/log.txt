@@ -88,3 +88,8 @@
     1) Revised MCL logic
 2/11/2026
     1) Added theta correction for tracking wheel offsets for MCL
+2/12/2026
+    1) Seperated class function declaration into "MclTracking.hpp" and "MclTracking.cpp"
+    2) Experimented logging RCL Data; works
+    3) Finished automatic log file generation draft
+    4) Adjusted logging logic to record MCL data; ready for testing

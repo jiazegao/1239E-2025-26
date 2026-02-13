@@ -7,8 +7,7 @@
 
 #include "custom/RclTracking.hpp"
 #include "Tracking_Util.hpp"
-#include <cstdint>
-#include <fstream>
+#include "configs.hpp"
 
 inline double roundTwoPlaces(double x) {
     return std::round(x*100)/100;
@@ -160,9 +159,6 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     // accumulative?
     double val = std::isnan(accum) ? sensor->get() : accum;
 
-    // Log
-    logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
-
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
@@ -207,6 +203,11 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     else if (type == CoordType::Y) res -= std::sin(offRad) * offsetDist;
 
     return {type, res};
+}
+
+void RclSensor::logPos(const lemlib::Pose& botPose) {
+    this->updatePose(botPose);
+    logFile << this->sensor->get() << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
 }
 
 int RclSensor::rawReading() const { return sensor->get(); }
@@ -307,10 +308,6 @@ void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
 
-        // Log - Initialize new iteration
-        logFile << logCount << "\n";
-        logCount++;
-
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
@@ -367,9 +364,6 @@ void RclTracking::mainUpdate() {
                 poseAtLatest.y = chassis->getPose().y;
             }
         }
-
-        auto pos = getRclPose();
-        logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
