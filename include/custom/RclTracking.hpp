@@ -8,9 +8,14 @@
 #include <numeric> // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
 #include "Tracking_Util.hpp"
+#include <fstream>
 
 // Enumerations
 enum class CoordType { X, Y, INVALID };
+
+static std::ofstream logFile("/usd/rcl_log.csv");
+inline int logCount = 1;
+inline Timer logTimer(0);
 
 // Singly linked list for quick removal / insertion
 template <typename AnyType>

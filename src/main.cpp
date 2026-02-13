@@ -64,13 +64,17 @@ void opcontrol() {
 	stopTopScore();
 	stopIntake();
 
-	RclMain.setMaxSyncPerSec(0.001);
+	//RclMain.setMaxSyncPerSec(0.001);
 	// startControllerCoordDisplay();
 
 	// Display FB Logo
 	// startBrainFBDisplay();
 
-	startMclBenchmark();
+	//startMclBenchmark();
+
+	chassis.setPose(0, 0, 270);
+	RclMain.updateBotPose(&back_rcl);
+	RclMain.updateBotPose(&right_rcl);
 
 	while (true) {
 		// Update Controls

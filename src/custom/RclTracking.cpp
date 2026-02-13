@@ -6,13 +6,11 @@
 //              intersection math.
 
 #include "custom/RclTracking.hpp"
+#include "Tracking_Util.hpp"
 #include <cstdint>
 #include <fstream>
 
-//static std::ofstream logFile("/usd/rcl_log.csv");
-//inline int logCount = 1;
-
-inline double roundTwoPlaces(int x) {
+inline double roundTwoPlaces(double x) {
     return std::round(x*100)/100;
 }
 
@@ -162,12 +160,12 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     // accumulative?
     double val = std::isnan(accum) ? sensor->get() : accum;
 
+    // Log
+    logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
+
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
-
-    // Log
-    // logFile << val << "," << roundTwoPlaces(sp.x) << "," << roundTwoPlaces(sp.y) << "," << roundTwoPlaces(sp.heading) << "\n";
 
     double angRad = degToRad(botToTrig(this->sp.heading));
     double cosA = std::cos(angRad);
@@ -310,8 +308,8 @@ void RclTracking::mainUpdate() {
     if (RclSensor::sensorCollection.size() > 0) {
 
         // Log - Initialize new iteration
-        //logFile << logCount << "\n";
-        //logCount++;
+        logFile << logCount << "\n";
+        logCount++;
 
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
@@ -371,7 +369,7 @@ void RclTracking::mainUpdate() {
         }
 
         auto pos = getRclPose();
-        //logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
+        logFile << pos.x << "," << pos.y << "," << pos.theta << "\n";
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
