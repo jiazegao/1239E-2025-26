@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <random>
 
 inline double roundTwoPlaces(double x) {
     return std::round(x*100)/100;
@@ -81,9 +82,9 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> 
     
     double start_std_theta = vexToStd(start_vex_theta);
     this->lastTheta = start_std_theta;
-    std::normal_distribution<double> x_init(start_x, 8.0);
-    std::normal_distribution<double> y_init(start_y, 8.0);
-    std::normal_distribution<double> t_init(start_std_theta, 0.05);
+    std::normal_distribution<double> x_init(start_x, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> y_init(start_y, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> t_init(start_std_theta, THETA_RESAMPLE_VARIANCE);
 
     particles_ptr = &particles_array;
     new_gen_ptr = &new_gen_array;
@@ -108,8 +109,8 @@ void MclTracking::predict(double current_std_theta) {
 
     // Noise (Avg 0.002 rad / 6%)
     // Less certain if turning
-    std::normal_distribution<double> theta_noise(0, 0.002);
-    std::normal_distribution<double> tracking_wheel_noise(1, 0.06+std::abs(d_theta));
+    std::normal_distribution<double> theta_noise(0, THETA_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> tracking_wheel_noise(1, TRACKING_WHEEL_VARIANCE);
 
     // Calculate vertical tracking wheel vector
     double vert_reading = vertical_tracking_wheel->get_position()/100.0;
@@ -158,7 +159,7 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
 
     std::vector<double> sigmas_sq_2;
     for(int i = 0; i < sensor_readings.size(); ++i) {
-        double s = BASE_DIST_SIGMA * (63.0 / (double)confidences[i]);
+        double s = BASE_DIST_SIGMA * (63.0 / (double)confidences[i]) * (78.0 / std::max(sensor_readings[i], 39.0));
         sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
     }
 
@@ -209,13 +210,13 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
             }
 
             if (hit_hollow) {
-                current_sigma_sq *= 3.0;
+                current_sigma_sq *= UNCERTAINTY_TOLERANCE;
             }
 
             double error = std::abs(sensor_readings[i] - p_dist);
             double prob_match = std::exp(-(error * error) / current_sigma_sq);
             
-            combined_prob *= (prob_match + 0.02);
+            combined_prob *= (prob_match + FAULT_TOLERANCE);
         }
         p.weight = combined_prob + 1e-300;
     }
@@ -227,8 +228,8 @@ void MclTracking::resample() {
     for (const auto& p : particles) weights.push_back(p.weight);
 
     std::discrete_distribution<int> sampler(weights.begin(), weights.end());
-    std::uniform_real_distribution<double> dist_jitter(-DIST_RESAMPLE_VARIANCE, DIST_RESAMPLE_VARIANCE);
-    std::uniform_real_distribution<double> theta_jitter(-THETA_RESAMPLE_VARIANCE, THETA_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> dist_jitter(0, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> theta_jitter(0, THETA_RESAMPLE_VARIANCE);
 
     for (int i = 0; i < PARTICLE_COUNT; ++i) {
         Particle selected = particles[sampler(gen)];
