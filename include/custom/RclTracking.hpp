@@ -291,7 +291,7 @@ public:
     std::pair<CoordType, double> getBotCoord(const lemlib::Pose& botPose, double accum = NAN);
     int rawReading() const;
     SensorPose getPose() const;
-    void logPos(const lemlib::Pose& botPose);
+    void logPos();
 
 private:
     pros::Distance* sensor;

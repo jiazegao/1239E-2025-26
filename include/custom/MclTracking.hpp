@@ -11,13 +11,13 @@
 
 // --- Configuration Constants ---
 const double MAX_RANGE = 300.0;
-const double BASE_DIST_SIGMA = 100.0;
-const double DIST_RESAMPLE_VARIANCE = 3.0;
+const double BASE_DIST_SIGMA = 3.0;
+const double DIST_RESAMPLE_VARIANCE = 7.0;
 const double THETA_RESAMPLE_VARIANCE = 0.01;
 const double HEADING_SIGMA = 0.03;
-const int CONFIDENCE_THRESHOLD = 60;
+const int CONFIDENCE_THRESHOLD = 55;
 const int PARTICLE_COUNT = 500;
-const int RESAMPLE_THRESHOLD = 100;
+const int RESAMPLE_THRESHOLD = 200;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };

@@ -63,4 +63,4 @@ void startControllerDistDataDisplay();
 void startControllerOpticDisplay();
 void startControllerRCLInfoDisplay();
 
-void startMclBenchmark(double x=0, double y=0, double theta=0, double autoReset = true);
+void startMclBenchmark(double x=0, double y=0, double theta=270, double autoReset = true);

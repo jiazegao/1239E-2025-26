@@ -81,8 +81,8 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> 
     
     double start_std_theta = vexToStd(start_vex_theta);
     this->lastTheta = start_std_theta;
-    std::normal_distribution<double> x_init(start_x, 2.0);
-    std::normal_distribution<double> y_init(start_y, 2.0);
+    std::normal_distribution<double> x_init(start_x, 8.0);
+    std::normal_distribution<double> y_init(start_y, 8.0);
     std::normal_distribution<double> t_init(start_std_theta, 0.05);
 
     particles_ptr = &particles_array;
@@ -123,7 +123,7 @@ void MclTracking::predict(double current_std_theta) {
 
     // Get raw reading
     double d_vert_pure = d_vert_raw - (vert_offset * d_theta);
-    double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta);
+    double d_horiz_pure = d_horiz_raw - (horiz_offset * d_theta);
 
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
@@ -303,9 +303,9 @@ Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const
 
 void MclTracking::set_pose(double x, double y, double vex_theta) {
     double std_theta = vexToStd(vex_theta);
-    std::normal_distribution<double> x_dist(x, 1.0);
-    std::normal_distribution<double> y_dist(y, 1.0);
-    std::normal_distribution<double> t_dist(std_theta, 0.02);
+    std::normal_distribution<double> x_dist(x, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> y_dist(y, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> t_dist(std_theta, THETA_RESAMPLE_VARIANCE);
     lastTheta = std_theta;
 
     auto& particles = *particles_ptr;

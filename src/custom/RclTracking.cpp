@@ -8,6 +8,7 @@
 #include "custom/RclTracking.hpp"
 #include "Tracking_Util.hpp"
 #include "configs.hpp"
+#include <cmath>
 
 inline double roundTwoPlaces(double x) {
     return std::round(x*100)/100;
@@ -150,6 +151,14 @@ bool RclSensor::isValid(double distVal) const {
     return true;
 }
 
+void RclSensor::logPos() {
+    // Log
+    while (logging == true) {pros::delay(1);}
+    logging = true;
+    *rclLog << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
+    logging = false;
+}
+
 // Return which coordinate (X or Y) and its value
 std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose, double accum) {
 
@@ -158,13 +167,7 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
 
     // accumulative?
     double val = std::isnan(accum) ? sensor->get() : accum;
-
-    // Log
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *rclLog << val << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
-    logging = false;
-
+    
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
@@ -312,7 +315,7 @@ void RclTracking::mainUpdate() {
         // Log
         while (logging == true) {pros::delay(1);}
         logging = true;
-        *rclLog << rclLogTimer.elapsed() << "\n";
+        *rclLog << rclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
         logging = false;
 
         // Accumulators
@@ -344,6 +347,7 @@ void RclTracking::mainUpdate() {
 
             double avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
+            sens->logPos();
 
             // Validate and collect
             if (type == CoordType::X) {

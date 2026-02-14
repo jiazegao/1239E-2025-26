@@ -53,8 +53,8 @@ void initialize() {
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
 
-	startMclBenchmark(-48.75, -16.125, 90);
-	RclMain.startTracking();
+	// startMclBenchmark(-48.75, -16.125, 90);
+	// RclMain.startTracking();
 }
 
 void disabled() {}
@@ -77,7 +77,6 @@ void autonomous() {
 
 void opcontrol() {
 	
-
 	//Actual OPcontrol
 	//startControllerMatchDisplay(); 
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
@@ -96,7 +95,8 @@ void opcontrol() {
 	// Display FB Logo
 	// startBrainFBDisplay();
 
-	startMclBenchmark();
+	RclMain.startTracking();
+	startMclBenchmark(0, 0, 270.0, true);
 
 	while (true) {
 		// Update Controls
