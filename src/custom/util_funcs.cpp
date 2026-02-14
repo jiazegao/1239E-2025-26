@@ -452,15 +452,17 @@ inline double MclComputeTime = 0.0;
 static pros::Task* mclTask = nullptr;
 static pros::Task* displayTask = nullptr;
 
-void startMclBenchmark() {
+void startMclBenchmark(double x, double y, double theta, double autoReset) {
 
     if (mclTask != nullptr) return;
 
     // Initial Sync
-    chassis.setPose(0, 0, 270);
-    RclMain.updateBotPose(&left_rcl);
-    RclMain.updateBotPose(&right_rcl);
-    RclMain.updateBotPose(&back_rcl);
+    chassis.setPose(x, y, theta);
+    if (autoReset) {
+        RclMain.updateBotPose(&left_rcl);
+        RclMain.updateBotPose(&right_rcl);
+        RclMain.updateBotPose(&back_rcl);
+    }
     lemlib::Pose odomLast = chassis.getPose();
     MclMain.set_pose(odomLast.x, odomLast.y, odomLast.theta);
 

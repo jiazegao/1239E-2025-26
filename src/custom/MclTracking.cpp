@@ -1,9 +1,11 @@
 #include "MclTracking.hpp"
+#include "Tracking_Util.hpp"
 #include "configs.hpp"
 #include <algorithm>
+#include <cmath>
 #include <numbers>
 
-inline double roundTwoPlaces(int x) {
+inline double roundTwoPlaces(double x) {
     return std::round(x*100)/100;
 }
 
@@ -206,10 +208,6 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
                 if (d < p_dist) { p_dist = d; hit_hollow = true; }
             }
 
-            if (sensor_readings[i] < (p_dist - 10.0)) {
-                continue; // Skip this sensor for this particle; don't update combined_prob
-            }
-
             if (hit_hollow) {
                 current_sigma_sq *= 3.0;
             }
@@ -262,11 +260,17 @@ std::pair<Pose, double> MclTracking::get_estimate() {
         weight_sqr_sum += p.weight * p.weight;
 
         // Log - Print every 10 particles (50 total)
-        if (count % 10 == 0) logFile << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
+        while (logging == true) {pros::delay(1);}
+        logging = true;
+        if (count % 10 == 0) *mclLog << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
+        logging = false;
     }
 
     // Log - Store overall position
-    logFile << roundTwoPlaces(x / total_weight) << "," << roundTwoPlaces(y / total_weight) << "," << roundTwoPlaces(std::atan2(sin_sum, cos_sum)) << "\n";
+    while (logging == true) {pros::delay(1);}
+    logging = true;
+    *mclLog << roundTwoPlaces(x / total_weight) << "," << roundTwoPlaces(y / total_weight) << "," << roundTwoPlaces(std::atan2(sin_sum, cos_sum)) << "\n";
+    logging = false;
 
     // Handle the case where all weights are zero (safety)
     if (total_weight < 1e-9) return {rawMcl, 0.0}; 
@@ -285,16 +289,12 @@ Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const
     update_weights(dists, confs, std_theta);
 
     // Log - Indicate cycle num
-    logFile << logCycleCount;
-    logCycleCount++;
+    while (logging == true) {pros::delay(1);}
+    logging = true;
+    *mclLog << mclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
+    logging = false;
 
     auto estimate = get_estimate();
-
-    // Log - Log distance sensor position & reading
-    lemlib::Pose p(estimate.first.x, estimate.first.y, stdToVex(estimate.first.theta));
-    for (auto x: RclSensor::sensorCollection) {
-        x->logPos(p);
-    }
 
     if (estimate.second < RESAMPLE_THRESHOLD) resample();
 
@@ -321,7 +321,7 @@ Pose MclTracking::updateMcl() {
     // Get Sensors
     std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
     std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
-    
+
     // Update Filter
     rawMcl = step(chassis->getPose().theta, dists, confs);
 

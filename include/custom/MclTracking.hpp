@@ -10,14 +10,14 @@
 #include "pros/rotation.hpp"
 
 // --- Configuration Constants ---
-const double MAX_RANGE = 78.0;
-const double BASE_DIST_SIGMA = 2.5;
-const double DIST_RESAMPLE_VARIANCE = 1.0;
-const double THETA_RESAMPLE_VARIANCE = 0.02;
+const double MAX_RANGE = 300.0;
+const double BASE_DIST_SIGMA = 100.0;
+const double DIST_RESAMPLE_VARIANCE = 3.0;
+const double THETA_RESAMPLE_VARIANCE = 0.01;
 const double HEADING_SIGMA = 0.03;
-const int CONFIDENCE_THRESHOLD = 45; 
+const int CONFIDENCE_THRESHOLD = 60;
 const int PARTICLE_COUNT = 500;
-const int RESAMPLE_THRESHOLD = 50;
+const int RESAMPLE_THRESHOLD = 100;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };

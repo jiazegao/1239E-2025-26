@@ -13,22 +13,10 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
+
+	pros::lcd::initialize();
 	initControllerDisplay();
-
-	// Brain display (disabled)
-	// initBrainDisplay();
-
-	// Ensure odom pod is down
-	odomLift.retract();
-
-	// Auton Selection
-	// startControllerAutonSelectorDisplay();
-	// init_auton_selector();
-
-	// RclMain.startTracking();
-
-	// Set Optical LED
-	topOptic.set_led_pwm(100);
+	initBrainDisplay();
 
 	// Retrive file count
 	int fileCount = 0;
@@ -41,12 +29,32 @@ void initialize() {
 	// (Default is 1)
 	fileCount++;
 	
-	std::string fileName = "/usd/log" + std::to_string(fileCount) + ".1239e";
-	logFile = std::ofstream(fileName);
+	std::string mclFileName = "/usd/mcl_log" + std::to_string(fileCount) + ".1239e";
+	std::string rclFileName = "/usd/rcl_log" + std::to_string(fileCount) + ".1239e";
+	mclLog = new std::ofstream(mclFileName);
+	rclLog = new std::ofstream(rclFileName);
 
 	std::ofstream dataFileW("/usd/DATA.1239e");
 	dataFileW << fileCount;
 	dataFileW.close();
+
+	rclLogTimer.hardReset(10000000000);
+	mclLogTimer.hardReset(10000000000);
+
+	// Brain display (disabled)
+
+	// Ensure odom pod is down
+	odomLift.retract();
+
+	// Auton Selection
+	// startControllerAutonSelectorDisplay();
+	// init_auton_selector();
+
+	// Set Optical LED
+	topOptic.set_led_pwm(100);
+
+	startMclBenchmark(-48.75, -16.125, 90);
+	RclMain.startTracking();
 }
 
 void disabled() {}
@@ -63,8 +71,8 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
-	//soloAWP();
-	runAuton();
+	
+	rightControlRush();
 }
 
 void opcontrol() {

@@ -123,12 +123,14 @@ inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_di
 inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
 inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 12.0, 6.0, 25);
-inline MclTracking MclMain(&chassis, distance_collection, {&vertSensor, 2.75, -0.5}, {&horiSensor, 2.75, -3.06}, 0, 0, 0, true);
+inline RclTracking RclMain(&chassis, 30, false, 0.5, 4.0, 200.0, 6.0, 15);
+inline MclTracking MclMain(&chassis, distance_collection, {&vertSensor, 2.75, -0.5}, {&horiSensor, 2.75, -3.06}, 0, 0, 0, false);
 
-static std::ofstream logFile("/usd/NULL.1239e");
-inline int logCycleCount = 1;
-inline Timer logTimer(10000000000000);
+inline bool logging = false;
+inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
+inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
+inline Timer mclLogTimer(10000000000000);
+inline Timer rclLogTimer(10000000000000);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);
