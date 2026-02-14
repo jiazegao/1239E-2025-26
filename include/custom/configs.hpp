@@ -15,6 +15,8 @@
 #include "custom/RclTracking.hpp"
 #include "custom/MclTracking.hpp"
 
+const int tempPort = 21;
+
 // Alliance Color
 enum class alliance_color { RED, BLUE, NONE };
 inline alliance_color allianceColor = alliance_color::BLUE;
@@ -25,8 +27,8 @@ inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 // Motors
 inline pros::MotorGroup leftMotors({-11, -12, -10}, pros::MotorGearset::blue);
 inline pros::MotorGroup rightMotors({19, 17, 18}, pros::MotorGearset::blue);
-inline pros::Motor frontMotor(20, pros::MotorGearset::blue);
-inline pros::Motor leverMotor(9, pros::MotorGearset::blue);
+inline pros::Motor frontMotor(tempPort, pros::MotorGearset::blue);
+inline pros::Motor leverMotor(tempPort, pros::MotorGearset::blue);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
@@ -37,15 +39,14 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 );
 
 // Odometry
-inline pros::Rotation vertSensor(-7);
-inline pros::Rotation horiSensor(-16);
-inline pros::Rotation leverSensor(22);
+inline pros::Rotation vertSensor(tempPort);
+inline pros::Rotation leverSensor(tempPort);
 
 // IMU
-inline pros::Imu imu(5);
+inline pros::Imu imu(tempPort);
 
 // Optical
-inline pros::Optical frontOptic(6);
+inline pros::Optical frontOptic(tempPort);
 
 // Pneumatics
 inline pros::adi::Pneumatics matchLoadGate('F', false, false);
@@ -58,7 +59,7 @@ inline pros::adi::Pneumatics trapDoor('E', false, false);
 // Odometry
 inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
 
-inline lemlib::OdomSensors sensors( &vertical_tracking_wheel,
+inline lemlib::OdomSensors sensors( nullptr,
                                     nullptr,
                                     nullptr,
                                     nullptr,
@@ -110,17 +111,17 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Distance
-inline pros::Distance descoreDist(2);
+inline pros::Distance descoreDist(tempPort);
 
-inline pros::Distance midDist(3);
-inline pros::Distance topDist(5);
-inline pros::Distance lowDist(4);
+inline pros::Distance midDist(tempPort);
+inline pros::Distance topDist(tempPort);
+inline pros::Distance lowDist(tempPort);
 
-inline pros::Distance back_dist(15);
-inline pros::Distance right_dist(3);
-inline pros::Distance left_dist(4);
-inline pros::Distance fl_dist(1);
-inline pros::Distance fr_dist(2);
+inline pros::Distance back_dist(tempPort);
+inline pros::Distance right_dist(tempPort);
+inline pros::Distance left_dist(tempPort);
+inline pros::Distance fl_dist(tempPort);
+inline pros::Distance fr_dist(tempPort);
 inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_dist, &left_dist, &fl_dist, &fr_dist};
 
 // Rcl setup
