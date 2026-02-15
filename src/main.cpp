@@ -53,8 +53,8 @@ void initialize() {
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
 
-	// startMclBenchmark(-48.75, -16.125, 90);
-	// RclMain.startTracking();
+	MclMain.startTracking();
+	RclMain.startTracking();
 }
 
 void disabled() {}
@@ -72,7 +72,7 @@ void autonomous() {
 	extendLeftArm();
 	extendLeftArm();
 	
-	rightControlRush();
+	soloAWP();
 }
 
 void opcontrol() {
@@ -95,8 +95,14 @@ void opcontrol() {
 	// Display FB Logo
 	// startBrainFBDisplay();
 
-	RclMain.startTracking();
-	startMclBenchmark(0, 0, 270.0, true);
+	//RclMain.startTracking();
+	//startMclBenchmark(0, 0, 270.0, true);
+
+	chassis.setPose(0, 0, 270);
+	RclMain.setRclPose({0, 0, 270});
+	RclMain.updateBotPose(&right_rcl);
+	RclMain.updateBotPose(&back_rcl);
+	MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
 
 	while (true) {
 		// Update Controls

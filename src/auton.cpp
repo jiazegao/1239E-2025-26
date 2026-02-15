@@ -32,10 +32,11 @@ void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, 0, 0);
     RclMain.setRclPose(chassis.getPose());
+    MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
 
     // Circle_Obstacle allianceBot(-52, 19, 6, 15000);
-    RclMain.updateBotPose(&left_rcl);
-    RclMain.updateBotPose(&back_rcl);
+    //RclMain.updateBotPose(&left_rcl);
+    //RclMain.updateBotPose(&back_rcl);
 
     // Push teammate and get their preload
     startIntake();
@@ -48,7 +49,7 @@ void soloAWP(){
     chassis.turnToPoint(-65, -47, 400, {}, false);
     startIntake();
     chassis.moveToPoint(-65, -47, 1100, {.maxSpeed=60}, false);
-    RclMain.updateBotPose(&left_rcl);
+    //RclMain.updateBotPose(&left_rcl);
 
     // Score the long goal
     chassis.moveToPoint(-24, -47.5, 2350, {.forwards=false, .maxSpeed=110}, true);
@@ -58,7 +59,7 @@ void soloAWP(){
     startTopScore(alliance_color::NONE);
     closeGate();
     pros::delay(2000);
-    RclMain.updateBotPose(&left_rcl);
+    //RclMain.updateBotPose(&left_rcl);
     stopTopScore();
 
     // Back off
@@ -77,7 +78,7 @@ void soloAWP(){
 
     // Intake 3 other balls
     chassis.turnToHeading(0, 200, {}, false);
-    RclMain.updateBotPose(&left_rcl);
+    //RclMain.updateBotPose(&left_rcl);
     chassis.moveToPoint(-22, 25, 1200, {.maxSpeed=110}, true);
     pros::delay(700);
     openGate();
@@ -134,18 +135,18 @@ void soloAWP(){
 
     closeGate();
     chassis.turnToHeading(325, 150, {}, false);
-    RclMain.setMaxSyncPerSec(0.001);
+    //RclMain.setMaxSyncPerSec(0.001);
     moveForward(50, 1200, 127, 1, true);
     //pros::delay(700);
     pros::delay(400);
     openGate();    
     chassis.turnToPoint(-65, 48, 550, {}, false);
-    RclMain.setMaxSyncPerSec(6.0);
+    //RclMain.setMaxSyncPerSec(6.0);
 
-    RclMain.updateBotPose(&right_rcl);
+    //RclMain.updateBotPose(&right_rcl);
     startIntake();
     chassis.moveToPoint(-65, 48, 900, {.maxSpeed=80}, false);
-    RclMain.updateBotPose(&right_rcl);
+    //RclMain.updateBotPose(&right_rcl);
 
     // Score again
     chassis.moveToPoint(-24, 47.5, 1800, {.forwards = false, .maxSpeed=110}, true);

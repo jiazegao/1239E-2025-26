@@ -70,12 +70,12 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> 
     this->vertical_tracking_wheel = get<0>(vertical_tracking_wheel);
     this->vert_c = get<1>(vertical_tracking_wheel)*std::numbers::pi;
     this->vert_offset = get<2>(vertical_tracking_wheel);
-    this->last_vertical_reading = this->vertical_tracking_wheel->get_angle();
+    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0;
 
     this->horizontal_tracking_wheel = get<0>(horizontal_tracking_wheel);
     this->horiz_c = get<1>(horizontal_tracking_wheel)*std::numbers::pi;
     this->horiz_offset = get<2>(horizontal_tracking_wheel);
-    this->last_horizontal_reading = this->horizontal_tracking_wheel->get_angle();
+    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0;
 
     std::random_device rd;
     gen = std::mt19937(rd());
@@ -118,13 +118,16 @@ void MclTracking::predict(double current_std_theta) {
     last_vertical_reading = vert_reading;
 
     // Calculate horizontal tracking wheel vector
-    double horiz_reading = horizontal_tracking_wheel->get_position()/100.0;
+    double horiz_reading = (-1)*horizontal_tracking_wheel->get_position()/100.0;
     double d_horiz_raw = (horiz_reading-last_horizontal_reading)/360.0 * horiz_c;
     last_horizontal_reading = horiz_reading;
 
     // Get raw reading
     double d_vert_pure = d_vert_raw - (vert_offset * d_theta);
-    double d_horiz_pure = d_horiz_raw - (horiz_offset * d_theta);
+    double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta);
+
+    // Sync right after tracking wheel calculations to minimize data loss
+    if (autoSync) updateBotPose();
 
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
@@ -159,7 +162,13 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
 
     std::vector<double> sigmas_sq_2;
     for(int i = 0; i < sensor_readings.size(); ++i) {
-        double s = BASE_DIST_SIGMA * (63.0 / (double)confidences[i]) * (78.0 / std::max(sensor_readings[i], 39.0));
+        double s = 0.0;
+        if (sensor_readings[i] < 7.87) {
+            s = BASE_DIST_SIGMA_L787;
+        }
+        else {
+            s = BASE_DIST_SIGMA_G787 * (63.0 / (double)confidences[i]) * (std::max(sensor_readings[i], 50.0) / 50.0);
+        }
         sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
     }
 
@@ -169,7 +178,7 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
         double combined_prob = 1.0;
 
         // Intant penalize if out of bounds
-        if (p.pose.x < -70.5 || p.pose.x > 70.5 || p.pose.y < -70.5 || p.pose.y > 70.5) {
+        if (p.pose.x < FIELD_NEG_HALF_LENGTH || p.pose.x > FIELD_HALF_LENGTH || p.pose.y < FIELD_NEG_HALF_LENGTH || p.pose.y > FIELD_HALF_LENGTH) {
             p.weight = 1e-300;
             continue;
         }
@@ -260,18 +269,14 @@ std::pair<Pose, double> MclTracking::get_estimate() {
         total_weight += p.weight;
         weight_sqr_sum += p.weight * p.weight;
 
-        // Log - Print every 10 particles (50 total)
-        while (logging == true) {pros::delay(1);}
-        logging = true;
-        if (count % 10 == 0) *mclLog << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "," << roundTwoPlaces(p.pose.theta) << "\n";
-        logging = false;
+        // Log - Log Particle Positions
+        if (count % LOG_RATIO == 0) {
+            while (logging == true) {pros::delay(1);}
+            logging = true;
+            *mclLog << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "\n";
+            logging = false;
+        }
     }
-
-    // Log - Store overall position
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *mclLog << roundTwoPlaces(x / total_weight) << "," << roundTwoPlaces(y / total_weight) << "," << roundTwoPlaces(std::atan2(sin_sum, cos_sum)) << "\n";
-    logging = false;
 
     // Handle the case where all weights are zero (safety)
     if (total_weight < 1e-9) return {rawMcl, 0.0}; 
@@ -286,18 +291,21 @@ std::pair<Pose, double> MclTracking::get_estimate() {
 Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs) {
     
     double std_theta = vexToStd(vex_theta);
-    predict(std_theta);
+    predict(std_theta); // Also syncs position back to lemlib
     update_weights(dists, confs, std_theta);
 
-    // Log - Indicate cycle num
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *mclLog << mclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
-    logging = false;
+    // Log
+    logMcl();
 
     auto estimate = get_estimate();
 
-    if (estimate.second < RESAMPLE_THRESHOLD) resample();
+    // Prevent resampling during rotations at a single point
+    double distSinceResample = std::hypot(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
+
+    if (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > 4.0) {
+        resample();
+        lastResamplePose = estimate.first;
+    }
 
     return estimate.first;
 }
@@ -314,8 +322,19 @@ void MclTracking::set_pose(double x, double y, double vex_theta) {
         p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
         p.weight = 1.0;
     }
+}
 
-    odomLast = chassis->getPose();
+void MclTracking::uniform_reset() {
+    std::uniform_real_distribution<double> x_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
+    std::uniform_real_distribution<double> y_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
+    std::uniform_real_distribution<double> t_dist(-std::numbers::pi, std::numbers::pi);
+    lastTheta = 0;
+
+    auto& particles = *particles_ptr;
+    for (auto& p : particles) {
+        p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
+        p.weight = 1.0;
+    }
 }
 
 Pose MclTracking::updateMcl() {
@@ -326,22 +345,16 @@ Pose MclTracking::updateMcl() {
     // Update Filter
     rawMcl = step(chassis->getPose().theta, dists, confs);
 
-    // Sync
-    if (autoSync) updateBotPose();
-    odomLast = chassis->getPose();
-
     return rawMcl;
 }
 
-void MclTracking::updateBotPose(double weight) {
-    // Clamp weight
-    weight = std::clamp(weight, 0.0, 1.0);
+void MclTracking::updateBotPose() {
 
     lemlib::Pose odomPose = chassis->getPose();
     
     // Interpolate target x
-    double newX = odomPose.x + weight * (rawMcl.x - odomPose.x);
-    double newY = odomPose.y + weight * (rawMcl.y - odomPose.y);
+    double newX = odomPose.x + DIST_SYNC_PROP * (rawMcl.x - odomPose.x);
+    double newY = odomPose.y + DIST_SYNC_PROP * (rawMcl.y - odomPose.y);
 
     // Circular interpolation for theta
     // Convert Odom to Std Radians for calculation
@@ -355,7 +368,7 @@ void MclTracking::updateBotPose(double weight) {
     while (diff < -M_PI) diff += 2 * M_PI;
 
     // Apply weighted difference
-    double newThetaRad = odomRad + (diff * weight);
+    double newThetaRad = odomRad + (diff * THETA_SYNC_PROP);
 
     // Convert back to VEX Degrees for LemLib
     chassis->setPose(newX, newY, stdToVex(newThetaRad));
@@ -380,6 +393,39 @@ void MclTracking::startTracking() {
 
 void MclTracking::stopTracking() {
     if (MclTrackingTask != nullptr) { MclTrackingTask->remove(); delete MclTrackingTask; MclTrackingTask = nullptr; }
+}
+
+void MclTracking::logMcl() {
+    // Inside get_estimate() or at the end of step()
+    double sum_sq_diff_x = 0, sum_sq_diff_y = 0;
+    double sum_sin = 0, sum_cos = 0;
+
+    auto& particles = *particles_ptr;
+
+    for (const auto& p : particles) {
+        sum_sq_diff_x += std::pow(p.pose.x - rawMcl.x, 2);
+        sum_sq_diff_y += std::pow(p.pose.y - rawMcl.y, 2);
+        
+        // Use circular statistics for theta
+        sum_sin += std::sin(p.pose.theta);
+        sum_cos += std::cos(p.pose.theta);
+    }
+
+    // Calculate standard deviation
+    double std_dev_x = std::sqrt(sum_sq_diff_x / PARTICLE_COUNT);
+    double std_dev_y = std::sqrt(sum_sq_diff_y / PARTICLE_COUNT);
+
+    // Circular standard deviation for heading
+    double R = std::hypot(sum_sin / PARTICLE_COUNT, sum_cos / PARTICLE_COUNT);
+    double std_dev_theta = std::sqrt(-2.0 * std::log(R)); 
+
+    // Log to CSV
+    while (logging == true) {pros::delay(1);}
+    logging = true;
+    *mclLog << mclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
+    *mclLog << roundTwoPlaces(rawMcl.x) << "," << roundTwoPlaces(rawMcl.y) << "," << roundTwoPlaces(rawMcl.theta) << "\n";
+    *mclLog << roundTwoPlaces(std_dev_x) << "," << roundTwoPlaces(std_dev_y) << "," << roundTwoPlaces(std_dev_theta) << "\n";
+    logging = false;
 }
 
 MclTracking::~MclTracking() {

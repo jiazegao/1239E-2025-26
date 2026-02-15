@@ -10,17 +10,26 @@
 #include "pros/rotation.hpp"
 
 // --- Configuration Constants ---
-const int PARTICLE_COUNT = 500;
-const int RESAMPLE_THRESHOLD = 200;
+const int PARTICLE_COUNT = 1200;
+const int RESAMPLE_THRESHOLD = 120;
+const int LOG_AMOUNT = 25;
+const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
+
 const double MAX_RANGE = 300.0;
-const double BASE_DIST_SIGMA = 3.5;
-const double HEADING_SIGMA = 0.10;
-const double DIST_RESAMPLE_VARIANCE = 4.0;
-const double THETA_RESAMPLE_VARIANCE = 0.1;
-const int CONFIDENCE_THRESHOLD = 45;
-const double TRACKING_WHEEL_VARIANCE = 0.05;
-const double FAULT_TOLERANCE = 0.02;
-const double UNCERTAINTY_TOLERANCE = 3.0;
+const double BASE_DIST_SIGMA_L787 = 0.5;    // 0 ~ 200 mm
+const double BASE_DIST_SIGMA_G787 = 2.0;    // > 200 mm
+const double HEADING_SIGMA = 0.05;
+const double DIST_RESAMPLE_VARIANCE = 2.0;
+const double THETA_RESAMPLE_VARIANCE = 0.03;
+const int CONFIDENCE_THRESHOLD = 40;
+const double TRACKING_WHEEL_VARIANCE = 0.06;
+const double FAULT_TOLERANCE = 1e-10;
+const double UNCERTAINTY_TOLERANCE = 1.0;
+const double DIST_SYNC_PROP = 0.1;
+const double THETA_SYNC_PROP = 0.002;
+
+const double MSPT = 25;
+const double MINPAUSE = 10;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
@@ -99,10 +108,11 @@ private:
     double horiz_c = 0.0;
     double horiz_offset = 0.0;
     double last_horizontal_reading = 0.0;
+    Pose lastResamplePose = {0, 0, 0};
 
     lemlib::Pose odomLast = {0, 0, 0};
-    Timer t = Timer(30);
-    int minPause = 15;
+    Timer t = Timer(MSPT);
+    int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
 
     double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin);
@@ -127,11 +137,15 @@ public:
 
     Pose updateMcl();
 
-    void updateBotPose(double weight = 0.1);
+    void updateBotPose();
 
     void startTracking();
 
     void stopTracking();
+
+    void logMcl();
+
+    void uniform_reset();
 
     ~MclTracking();
 };
