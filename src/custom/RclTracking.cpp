@@ -151,11 +151,11 @@ bool RclSensor::isValid(double distVal) const {
     return true;
 }
 
-void RclSensor::logPos() {
+void RclSensor::logPos(std::ofstream* targetFile) {
     // Log
     while (logging == true) {pros::delay(1);}
     logging = true;
-    *rclLog << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
+    *targetFile << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
     logging = false;
 }
 
@@ -347,7 +347,7 @@ void RclTracking::mainUpdate() {
 
             double avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
-            sens->logPos();
+            sens->logPos(rclLog);
 
             // Validate and collect
             if (type == CoordType::X) {

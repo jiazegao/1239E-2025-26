@@ -81,7 +81,7 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> 
     gen = std::mt19937(rd());
     
     double start_std_theta = vexToStd(start_vex_theta);
-    this->lastTheta = start_std_theta;
+    this->lastTheta = vexToStd(this->chassis->getPose().theta);
     std::normal_distribution<double> x_init(start_x, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<double> y_init(start_y, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<double> t_init(start_std_theta, THETA_RESAMPLE_VARIANCE);
@@ -296,8 +296,13 @@ Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const
 
     // Log
     logMcl();
+    lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
+    for (auto x: RclSensor::sensorCollection) {
+        x->updatePose(p);
+        x->logPos(mclLog);
+    }
 
-    auto estimate = get_estimate();
+    auto estimate = get_estimate(); // (Logs Particles)
 
     // Prevent resampling during rotations at a single point
     double distSinceResample = std::hypot(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
@@ -315,7 +320,10 @@ void MclTracking::set_pose(double x, double y, double vex_theta) {
     std::normal_distribution<double> x_dist(x, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<double> y_dist(y, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<double> t_dist(std_theta, THETA_RESAMPLE_VARIANCE);
-    lastTheta = std_theta;
+
+    this->lastTheta = vexToStd(this->chassis->getPose().theta);
+    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0;
+    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0;
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
@@ -328,7 +336,10 @@ void MclTracking::uniform_reset() {
     std::uniform_real_distribution<double> x_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
     std::uniform_real_distribution<double> y_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
     std::uniform_real_distribution<double> t_dist(-std::numbers::pi, std::numbers::pi);
-    lastTheta = 0;
+
+    this->lastTheta = vexToStd(this->chassis->getPose().theta);
+    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0;
+    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0;
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
@@ -396,7 +407,7 @@ void MclTracking::stopTracking() {
 }
 
 void MclTracking::logMcl() {
-    // Inside get_estimate() or at the end of step()
+    // Inside step()
     double sum_sq_diff_x = 0, sum_sq_diff_y = 0;
     double sum_sin = 0, sum_cos = 0;
 

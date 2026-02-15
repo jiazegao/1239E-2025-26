@@ -31,8 +31,8 @@ void rightPush(double x_offset = 0, double y_offset = 0) {
 void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-47, 0, 0);
-    RclMain.setRclPose(chassis.getPose());
-    MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
+    //RclMain.setRclPose(chassis.getPose());
+    startMcl(-47, 0, 0, true, true, false);
 
     // Circle_Obstacle allianceBot(-52, 19, 6, 15000);
     //RclMain.updateBotPose(&left_rcl);

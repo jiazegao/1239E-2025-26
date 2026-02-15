@@ -499,3 +499,45 @@ void startMclBenchmark(double x, double y, double theta, double autoReset) {
         }
     });
 }
+
+void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight){
+    // Reset Chassis and RCL
+    chassis.setPose(x, y, vexTheta);
+	RclMain.setRclPose({x, y, vexTheta});
+
+    // Perform RCL Resets
+    if (resetLeft) RclMain.updateBotPose(&left_rcl);
+    if (resetBack) RclMain.updateBotPose(&back_rcl);
+    if (resetRight) RclMain.updateBotPose(&right_rcl);
+
+    // Reset MCL
+	MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
+
+    // Start MCL Tracking
+    MclMain.startTracking();
+}
+
+void initLog() {
+    // Retrive file count
+	int fileCount = 0;
+	std::ifstream dataFileR("/usd/DATA.1239e");
+	// If file exist, read from it
+	if (dataFileR.is_open()) {
+		dataFileR >> fileCount;
+		dataFileR.close();
+	}
+	// (Default is 1)
+	fileCount++;
+	
+	std::string mclFileName = "/usd/mcl_log" + std::to_string(fileCount) + ".1239e";
+	std::string rclFileName = "/usd/rcl_log" + std::to_string(fileCount) + ".1239e";
+	mclLog = new std::ofstream(mclFileName);
+	rclLog = new std::ofstream(rclFileName);
+
+	std::ofstream dataFileW("/usd/DATA.1239e");
+	dataFileW << fileCount;
+	dataFileW.close();
+
+	rclLogTimer.hardReset(10000000000);
+	mclLogTimer.hardReset(10000000000);
+}
