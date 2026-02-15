@@ -116,7 +116,6 @@ bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
 }
 
 // RCL sensor class
-std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol)
     : sensor(distSensor), mainAngle(mainAng), angleTolerance(std::abs(angleTol)) {
     offsetDist = std::hypot(horizOffset, vertOffset);

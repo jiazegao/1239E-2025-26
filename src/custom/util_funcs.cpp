@@ -500,11 +500,12 @@ void startMclBenchmark(double x, double y, double theta, double autoReset) {
     });
 }
 
-void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight){
+void startMcl(double x, double y, double vexTheta, bool resetLeft, bool resetBack, bool resetRight){
     // Reset Chassis and RCL
+    lemlib::Pose p(x,y,vexTheta);
     chassis.setPose(x, y, vexTheta);
-	RclMain.setRclPose({x, y, vexTheta});
-
+	RclMain.setRclPose(p);
+    
     // Perform RCL Resets
     if (resetLeft) RclMain.updateBotPose(&left_rcl);
     if (resetBack) RclMain.updateBotPose(&back_rcl);

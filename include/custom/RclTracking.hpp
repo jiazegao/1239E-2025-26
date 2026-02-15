@@ -303,6 +303,7 @@ private:
 };
 
 // Main RCL Tracking
+inline std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 class RclTracking {
 public:
     RclTracking(lemlib::Chassis* chassis_,

@@ -11,22 +11,25 @@
 
 // --- Configuration Constants ---
 const int PARTICLE_COUNT = 1000;
-const int RESAMPLE_THRESHOLD = 100;
-const int LOG_AMOUNT = 20;
+const int RESAMPLE_THRESHOLD = 200;
+const double MIN_DIS_FROM_RESAMPLE = 8.0;
+const double MAX_VELO_RESAMPLE = 10.0;
+const int LOG_AMOUNT = 10;
 const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
 const double MAX_RANGE = 300.0;
-const double BASE_DIST_SIGMA_L787 = 0.3;    // 0 ~ 200 mm
-const double BASE_DIST_SIGMA_G787 = 1.5;    // > 200 mm
-const double HEADING_SIGMA = 0.05;
-const double DIST_RESAMPLE_VARIANCE = 1.5;
+const double BASE_DIST_SIGMA_L787 = 1.5;    // 0 ~ 200 mm
+const double BASE_DIST_SIGMA_G787 = 1.8;    // > 200 mm
+const double HEADING_SIGMA = 0.04;
+const double DIST_RESAMPLE_VARIANCE = 2.0;
+const double DYNAMIC_DIST_VARIANCE_THRESHOLD = 40.0;
 const double THETA_RESAMPLE_VARIANCE = 0.02;
 const int CONFIDENCE_THRESHOLD = 40;
-const double TRACKING_WHEEL_VARIANCE = 0.02;
-const double FAULT_TOLERANCE = 1e-300;
-const double UNCERTAINTY_TOLERANCE = 0.8;
+const double TRACKING_WHEEL_VARIANCE = 0.05;
+const double FAULT_TOLERANCE = 1e-5;
+const double UNCERTAINTY_TOLERANCE = 1.0;
 const double DIST_SYNC_PROP = 0.1;
-const double THETA_SYNC_PROP = 0.002;
+const double THETA_SYNC_PROP = 0.001;
 
 const double MSPT = 20;
 const double MINPAUSE = 10;
@@ -109,6 +112,7 @@ private:
     double horiz_offset = 0.0;
     double last_horizontal_reading = 0.0;
     Pose lastResamplePose = {0, 0, 0};
+    double latest_speed = 0.0;
 
     lemlib::Pose odomLast = {0, 0, 0};
     Timer t = Timer(MSPT);

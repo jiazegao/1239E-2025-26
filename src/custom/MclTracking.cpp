@@ -126,6 +126,8 @@ void MclTracking::predict(double current_std_theta) {
     double d_vert_pure = d_vert_raw - (vert_offset * d_theta);
     double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta);
 
+    this->latest_speed = std::hypot(d_vert_pure, d_horiz_pure) / MSPT * 1000.0;
+
     // Sync right after tracking wheel calculations to minimize data loss
     if (autoSync) updateBotPose();
 
@@ -167,7 +169,7 @@ void MclTracking::update_weights(const std::vector<double>& sensor_readings, con
             s = BASE_DIST_SIGMA_L787;
         }
         else {
-            s = BASE_DIST_SIGMA_G787 * (63.0 / (double)confidences[i]) * (std::max(sensor_readings[i], 50.0) / 50.0);
+            s = BASE_DIST_SIGMA_G787 * (63.0 / (double)confidences[i]);
         }
         sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
     }
@@ -236,8 +238,10 @@ void MclTracking::resample() {
     auto& particles = *particles_ptr;
     for (const auto& p : particles) weights.push_back(p.weight);
 
+    double dynamic_dist_jitter = DIST_RESAMPLE_VARIANCE * (1.0 + (latest_speed / DYNAMIC_DIST_VARIANCE_THRESHOLD));
+
     std::discrete_distribution<int> sampler(weights.begin(), weights.end());
-    std::normal_distribution<double> dist_jitter(0, DIST_RESAMPLE_VARIANCE);
+    std::normal_distribution<double> dist_jitter(0, dynamic_dist_jitter);
     std::normal_distribution<double> theta_jitter(0, THETA_RESAMPLE_VARIANCE);
 
     for (int i = 0; i < PARTICLE_COUNT; ++i) {
@@ -307,7 +311,7 @@ Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const
     // Prevent resampling during rotations at a single point
     double distSinceResample = std::hypot(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
 
-    if (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > 4.0) {
+    if ((estimate.second < RESAMPLE_THRESHOLD / 2.0) || (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > MIN_DIS_FROM_RESAMPLE && latest_speed < MAX_VELO_RESAMPLE)) {
         resample();
         lastResamplePose = estimate.first;
     }
@@ -324,6 +328,7 @@ void MclTracking::set_pose(double x, double y, double vex_theta) {
     this->lastTheta = vexToStd(this->chassis->getPose().theta);
     this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0;
     this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0;
+    this->latest_speed = 0.0;
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
@@ -340,6 +345,7 @@ void MclTracking::uniform_reset() {
     this->lastTheta = vexToStd(this->chassis->getPose().theta);
     this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0;
     this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0;
+    this->latest_speed = 0.0;
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
