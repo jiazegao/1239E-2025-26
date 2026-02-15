@@ -11,7 +11,7 @@
 
 // --- Configuration Constants ---
 const int PARTICLE_COUNT = 1200;
-const int RESAMPLE_THRESHOLD = 120;
+const int RESAMPLE_THRESHOLD = 80;
 const int LOG_AMOUNT = 25;
 const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
@@ -19,11 +19,11 @@ const double MAX_RANGE = 300.0;
 const double BASE_DIST_SIGMA_L787 = 0.5;    // 0 ~ 200 mm
 const double BASE_DIST_SIGMA_G787 = 2.0;    // > 200 mm
 const double HEADING_SIGMA = 0.05;
-const double DIST_RESAMPLE_VARIANCE = 2.0;
+const double DIST_RESAMPLE_VARIANCE = 1.5;
 const double THETA_RESAMPLE_VARIANCE = 0.03;
 const int CONFIDENCE_THRESHOLD = 40;
 const double TRACKING_WHEEL_VARIANCE = 0.06;
-const double FAULT_TOLERANCE = 1e-10;
+const double FAULT_TOLERANCE = 1e-300;
 const double UNCERTAINTY_TOLERANCE = 1.0;
 const double DIST_SYNC_PROP = 0.1;
 const double THETA_SYNC_PROP = 0.002;
