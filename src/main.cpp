@@ -52,9 +52,6 @@ void initialize() {
 
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
-
-	MclMain.startTracking();
-	RclMain.startTracking();
 }
 
 void disabled() {}
@@ -103,6 +100,9 @@ void opcontrol() {
 	RclMain.updateBotPose(&right_rcl);
 	RclMain.updateBotPose(&back_rcl);
 	MclMain.set_pose(chassis.getPose().x, chassis.getPose().y, chassis.getPose().theta);
+
+	MclMain.startTracking();
+	RclMain.startTracking();
 
 	while (true) {
 		// Update Controls
