@@ -10,23 +10,22 @@
 #include "pros/rotation.hpp"
 
 // --- Configuration Constants ---
-const int PARTICLE_COUNT = 1000;
-const int RESAMPLE_THRESHOLD = 200;
-const double MIN_DIS_FROM_RESAMPLE = 8.0;
-const double MAX_VELO_RESAMPLE = 10.0;
+const int PARTICLE_COUNT = 1200;
+const int RESAMPLE_THRESHOLD = 300;
+const double MIN_DIST_FROM_RESAMPLE = 6.0;
+const double MAX_VELO_RESAMPLE = 100.0;
 const int LOG_AMOUNT = 10;
 const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
 const double MAX_RANGE = 300.0;
-const double BASE_DIST_SIGMA_L787 = 1.5;    // 0 ~ 200 mm
-const double BASE_DIST_SIGMA_G787 = 1.8;    // > 200 mm
+const double BASE_DIST_SIGMA_L787 = 0.6;    // 0 ~ 200 mm
+const double BASE_DIST_SIGMA_G787 = 1.2;    // > 200 mm
 const double HEADING_SIGMA = 0.04;
 const double DIST_RESAMPLE_VARIANCE = 2.0;
-const double DYNAMIC_DIST_VARIANCE_THRESHOLD = 40.0;
 const double THETA_RESAMPLE_VARIANCE = 0.02;
 const int CONFIDENCE_THRESHOLD = 40;
 const double TRACKING_WHEEL_VARIANCE = 0.05;
-const double FAULT_TOLERANCE = 1e-5;
+const double FAULT_TOLERANCE = 1e-3;
 const double UNCERTAINTY_TOLERANCE = 1.0;
 const double DIST_SYNC_PROP = 0.1;
 const double THETA_SYNC_PROP = 0.001;
@@ -99,6 +98,9 @@ private:
     std::mt19937 gen;
     std::vector<Trig> mountTrigs;
     lemlib::Chassis* chassis;
+    pros::MotorGroup* leftMotorGroup;
+    pros::MotorGroup* rightMotorGroup;
+    bool vertical_tracking_mode;
     pros::Task* MclTrackingTask;
     std::vector<pros::Distance*> distance_collection;
     bool autoSync = false;
@@ -119,12 +121,15 @@ private:
     int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
 
+    double vertical_drift = 0.0;
+    double horizontal_drift = 0.0;
+
     double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin);
 
     double intersect_circle(Pose ray, Circle c, double max_range, double dx, double dy);
 
 public:
-    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = false);
+    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = true);
 
     // Update particles and pTrigs
     void predict(double current_std_theta);
@@ -150,6 +155,8 @@ public:
     void logMcl();
 
     void uniform_reset();
+
+    void setDrift(double verticalDrift, double horizontalDrift);
 
     ~MclTracking();
 };

@@ -1,6 +1,7 @@
 #include "MclTracking.hpp"
 #include "Tracking_Util.hpp"
 #include "configs.hpp"
+#include "pros/motor_group.hpp"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
@@ -62,8 +63,10 @@ double MclTracking::intersect_circle(Pose ray, Circle c, double max_range, doubl
     return max_range;
 }
 
-MclTracking::MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_) {
+MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_) {
     this->chassis = chassis;
+    this->leftMotorGroup = leftMotorGroup;
+    this->rightMotorGroup = rightMotorGroup;
     this->distance_collection = dist_collection;
     this->autoSync = autoSync_;
 
@@ -111,6 +114,7 @@ void MclTracking::predict(double current_std_theta) {
     // Less certain if turning
     std::normal_distribution<double> theta_noise(0, THETA_RESAMPLE_VARIANCE);
     std::normal_distribution<double> tracking_wheel_noise(1, TRACKING_WHEEL_VARIANCE);
+    std::normal_distribution<double> drift_jitter(0, std::hypot(vertical_drift, horizontal_drift)/2.0);
 
     // Calculate vertical tracking wheel vector
     double vert_reading = vertical_tracking_wheel->get_position()/100.0;
@@ -123,8 +127,8 @@ void MclTracking::predict(double current_std_theta) {
     last_horizontal_reading = horiz_reading;
 
     // Get raw reading
-    double d_vert_pure = d_vert_raw - (vert_offset * d_theta);
-    double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta);
+    double d_vert_pure = d_vert_raw - (vert_offset * d_theta) + vertical_drift;
+    double d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta) + horizontal_drift;
 
     this->latest_speed = std::hypot(d_vert_pure, d_horiz_pure) / MSPT * 1000.0;
 
@@ -142,8 +146,8 @@ void MclTracking::predict(double current_std_theta) {
         double horiz_noise = tracking_wheel_noise(gen);
 
         // Forward / Backward motion with noise
-        double forward_dist = d_vert_pure * vert_noise;
-        double strafe_dist = d_horiz_pure * horiz_noise;
+        double forward_dist = d_vert_pure * vert_noise + drift_jitter(gen);
+        double strafe_dist = d_horiz_pure * horiz_noise + drift_jitter(gen);
 
         // Update position
         p.pose.x += forward_dist*pCos + strafe_dist*pSin;
@@ -238,10 +242,8 @@ void MclTracking::resample() {
     auto& particles = *particles_ptr;
     for (const auto& p : particles) weights.push_back(p.weight);
 
-    double dynamic_dist_jitter = DIST_RESAMPLE_VARIANCE * (1.0 + (latest_speed / DYNAMIC_DIST_VARIANCE_THRESHOLD));
-
     std::discrete_distribution<int> sampler(weights.begin(), weights.end());
-    std::normal_distribution<double> dist_jitter(0, dynamic_dist_jitter);
+    std::normal_distribution<double> dist_jitter(0, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<double> theta_jitter(0, THETA_RESAMPLE_VARIANCE);
 
     for (int i = 0; i < PARTICLE_COUNT; ++i) {
@@ -311,7 +313,7 @@ Pose MclTracking::step(double vex_theta, const std::vector<double>& dists, const
     // Prevent resampling during rotations at a single point
     double distSinceResample = std::hypot(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
 
-    if ((estimate.second < RESAMPLE_THRESHOLD / 2.0) || (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > MIN_DIS_FROM_RESAMPLE && latest_speed < MAX_VELO_RESAMPLE)) {
+    if ((estimate.second < RESAMPLE_THRESHOLD / 2.0) || (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > MIN_DIST_FROM_RESAMPLE && latest_speed < MAX_VELO_RESAMPLE)) {
         resample();
         lastResamplePose = estimate.first;
     }
@@ -443,6 +445,12 @@ void MclTracking::logMcl() {
     *mclLog << roundTwoPlaces(rawMcl.x) << "," << roundTwoPlaces(rawMcl.y) << "," << roundTwoPlaces(rawMcl.theta) << "\n";
     *mclLog << roundTwoPlaces(std_dev_x) << "," << roundTwoPlaces(std_dev_y) << "," << roundTwoPlaces(std_dev_theta) << "\n";
     logging = false;
+}
+
+void MclTracking::setDrift(double verticalDriftPerSec, double horizontalDriftPerSec) {
+    this->vertical_drift = verticalDriftPerSec / (1000.0 / MSPT);
+    this->horizontal_drift = horizontalDriftPerSec / (1000.0 / MSPT);
+
 }
 
 MclTracking::~MclTracking() {

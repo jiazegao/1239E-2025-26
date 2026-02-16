@@ -541,4 +541,7 @@ void initLog() {
 
 	rclLogTimer.hardReset(10000000000);
 	mclLogTimer.hardReset(10000000000);
+
+    // If SD card is absent, rumble controller
+    if (!mclLog->is_open()) controller.rumble("-.-.-.-");
 }
