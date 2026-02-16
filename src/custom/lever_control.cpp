@@ -29,7 +29,9 @@ double midDistReading = 200.0;
 std::array<double, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 double topDistReading = 250.0;
-inline std::array<int, INTAKE_CAPACITY> scoringPresets = {10, 20, 30, 40, 50, 60};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2767, 2767, 2767, 2767, 2767, 2767};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {2767, 2767, 2767, 2767, 2767, 2767};
+bool positionedForTop = true;
 bool removedFromTop = true;
 
 alliance_color topColor() { return currSize > 0 ? intake_array[head] : alliance_color::NONE; }
@@ -90,12 +92,12 @@ std::pair<alliance_color, int> frontContColor() {
 // Lever PID
 Lever_PID leverPID(
     &leverMotor,
-    &leverSensor, // rotation sensor
-    2.0, // kP
+    &leverPotent, // rotation sensor
+    0.15, // kP
     0.0, // kI
-    1.5, // kD
-    2.0, // error range
-    150, // error range timeout
+    0.3, // kD
+    0, // error range
+    9999999999, // error range timeout
     -127, // min speed
     127, // max speed
     true,
@@ -207,11 +209,17 @@ void startOuttake() {
 }
 
 void extendLift() {
-    if (currentStage != SCORING) lift.extend();
+    if (currentStage != SCORING) {
+        lift.extend();
+        positionedForTop = true;
+    }
 }
 
 void retractLift() {
-    if (currentStage != SCORING) lift.retract();
+    if (currentStage != SCORING) {
+        lift.retract();
+        positionedForTop = false;
+    }
 }
 
 void score(int timeOut, int count, int maxScoringSpeed) {
@@ -219,7 +227,7 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
-    leverPID.setTarget(scoringPresets[level], -400, maxScoringSpeed);
+    leverPID.setTarget((positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]), -999999999, maxScoringSpeed);
 
     removedFromTop = true;
     currentStage = SCORING;

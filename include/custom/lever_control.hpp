@@ -5,12 +5,12 @@
 // ----------------- LEVER MOTOR CONTROL -----------------
 
 // Scoring Presets (deg/s)
-const int FAST_TOP_SCORE = 999;
-const int FAST_MID_SCORE = 60;
-const int MODERATE_TOP_SCORE = 80;
-const int MODERATE_MID_SCORE = 40;
-const int SLOW_TOP_SCORE = 50;
-const int SLOW_MID_SCORE = 20;
+const int FAST_TOP_SCORE = 999999999;
+const int FAST_MID_SCORE = 999999999;
+const int MODERATE_TOP_SCORE = 999999999;
+const int MODERATE_MID_SCORE = 999999999;
+const int SLOW_TOP_SCORE = 999999999;
+const int SLOW_MID_SCORE = 999999999;
 
 void initLeverControl();
 /*

@@ -14,9 +14,10 @@
 
 void initialize() {
     chassis.calibrate();
+	
     chassis.setPose(0, 0, 0);
 	initControllerDisplay();
-
+	pros::lcd::initialize();
 	initLeverControl();
 
 	// Brain display (disabled)
@@ -27,7 +28,7 @@ void initialize() {
 
 	// Auton Selection
 	startControllerAutonSelectorDisplay();
-	init_auton_selector();
+	//init_auton_selector();
 
 	RclMain.startTracking();
 
@@ -65,16 +66,19 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	RclMain.setMaxSyncPerSec(0.001);
 	startControllerCoordDisplay();
 
 	// Display FB Logo
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
 
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updatePneumatics();
+		int i = getLeverPotentReading();
+		pros::lcd::print(0, "LEVER POTENT: %d", i);
+
+		scoreAll(7000);
 
 		pros::delay(20);
 	}

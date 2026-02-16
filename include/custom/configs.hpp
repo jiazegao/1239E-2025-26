@@ -25,10 +25,10 @@ inline alliance_color allianceColor = alliance_color::BLUE;
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-inline pros::MotorGroup leftMotors({-11, -12, -10}, pros::MotorGearset::blue);
-inline pros::MotorGroup rightMotors({19, 17, 18}, pros::MotorGearset::blue);
+inline pros::MotorGroup leftMotors({tempPort, tempPort, tempPort}, pros::MotorGearset::blue);
+inline pros::MotorGroup rightMotors({tempPort, tempPort, tempPort}, pros::MotorGearset::blue);
 inline pros::Motor frontMotor(tempPort, pros::MotorGearset::blue);
-inline pros::Motor leverMotor(tempPort, pros::MotorGearset::blue);
+inline pros::Motor leverMotor(-19, pros::MotorGearset::red);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
@@ -40,7 +40,6 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 
 // Odometry
 inline pros::Rotation vertSensor(tempPort);
-inline pros::Rotation leverSensor(tempPort);
 
 // IMU
 inline pros::Imu imu(tempPort);
@@ -49,12 +48,18 @@ inline pros::Imu imu(tempPort);
 inline pros::Optical frontOptic(tempPort);
 
 // Pneumatics
-inline pros::adi::Pneumatics matchLoadGate('F', false, false);
+inline pros::adi::Potentiometer leverPotent('A');
+inline pros::adi::Pneumatics matchLoadGate('B', false, false);
 inline pros::adi::Pneumatics lift('B', true, true);
-inline pros::adi::Pneumatics middleDescore('H', false, false);
-inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
-inline pros::adi::Pneumatics odomLift('G', false, false);
-inline pros::adi::Pneumatics trapDoor('E', false, false);
+inline pros::adi::Pneumatics middleDescore('B', false, false);
+inline pros::adi::Pneumatics leftDescoreArm('B', false, false);
+inline pros::adi::Pneumatics odomLift('B', false, false);
+inline pros::adi::Pneumatics trapDoor('B', false, false);
+
+inline const int potentLimit = 4090;
+inline int getLeverPotentReading() {
+    return (4090 - leverPotent.get_value());
+}
 
 // Odometry
 inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
@@ -111,11 +116,9 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Distance
-inline pros::Distance descoreDist(tempPort);
-
 inline pros::Distance midDist(tempPort);
 inline pros::Distance topDist(tempPort);
-inline pros::Distance lowDist(tempPort);
+inline pros::Distance descoreDist(tempPort);
 
 inline pros::Distance back_dist(tempPort);
 inline pros::Distance right_dist(tempPort);
