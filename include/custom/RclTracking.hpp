@@ -8,6 +8,7 @@
 #include <numeric> // IWYU pragma: keep
 #include "lemlib/chassis/chassis.hpp"
 #include "Tracking_Util.hpp"
+#include <fstream>
 
 // Enumerations
 enum class CoordType { X, Y, INVALID };
@@ -290,6 +291,7 @@ public:
     std::pair<CoordType, double> getBotCoord(const lemlib::Pose& botPose, double accum = NAN);
     int rawReading() const;
     SensorPose getPose() const;
+    void logPos(std::ofstream* targetFile);
 
 private:
     pros::Distance* sensor;
@@ -301,6 +303,7 @@ private:
 };
 
 // Main RCL Tracking
+inline std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 class RclTracking {
 public:
     RclTracking(lemlib::Chassis* chassis_,

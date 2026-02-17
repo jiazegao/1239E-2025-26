@@ -86,3 +86,5 @@
     1) Finished lever logic draft
 2/11/2026
     1) Refined lever control logic
+2/17/2026
+    1) Finished lever MCL structural adjustment

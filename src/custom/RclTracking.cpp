@@ -6,9 +6,13 @@
 //              intersection math.
 
 #include "custom/RclTracking.hpp"
-#include <cstdint>
+#include "Tracking_Util.hpp"
+#include "configs.hpp"
+#include <cmath>
 
-
+inline double roundTwoPlaces(double x) {
+    return std::round(x*100)/100;
+}
 
 // Line obstacle class
 Singly_Linked_List<Line_Obstacle> Line_Obstacle::obstacleCollection = Singly_Linked_List<Line_Obstacle>();
@@ -112,7 +116,6 @@ bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
 }
 
 // RCL sensor class
-std::vector<RclSensor*> RclSensor::sensorCollection = std::vector<RclSensor*>();
 RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol)
     : sensor(distSensor), mainAngle(mainAng), angleTolerance(std::abs(angleTol)) {
     offsetDist = std::hypot(horizOffset, vertOffset);
@@ -147,6 +150,14 @@ bool RclSensor::isValid(double distVal) const {
     return true;
 }
 
+void RclSensor::logPos(std::ofstream* targetFile) {
+    // Log
+    while (logging == true) {pros::delay(1);}
+    logging = true;
+    *targetFile << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
+    logging = false;
+}
+
 // Return which coordinate (X or Y) and its value
 std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose, double accum) {
 
@@ -155,12 +166,11 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
 
     // accumulative?
     double val = std::isnan(accum) ? sensor->get() : accum;
-
+    
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
 
-    //
     double angRad = degToRad(botToTrig(this->sp.heading));
     double cosA = std::cos(angRad);
     double sinA = std::sin(angRad);
@@ -300,6 +310,13 @@ void RclTracking::setMaxSyncPerSec(double maxSyncPerSec_) {
 void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
+
+        // Log
+        while (logging == true) {pros::delay(1);}
+        logging = true;
+        *rclLog << rclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
+        logging = false;
+
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
@@ -329,6 +346,7 @@ void RclTracking::mainUpdate() {
 
             double avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
+            sens->logPos(rclLog);
 
             // Validate and collect
             if (type == CoordType::X) {
@@ -356,6 +374,13 @@ void RclTracking::mainUpdate() {
                 poseAtLatest.y = chassis->getPose().y;
             }
         }
+
+        // Log
+        auto p = getRclPose();
+        while (logging == true) {pros::delay(1);}
+        logging = true;
+        *rclLog << p.x << "," << p.y << "," << vexToStd(p.theta) << "\n";
+        logging = false;
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))

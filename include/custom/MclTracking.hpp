@@ -5,24 +5,41 @@
 #include "main.h"
 #include <vector>
 #include <cmath>
-#include <algorithm>
 #include <random>
 #include "Tracking_Util.hpp"
+#include "pros/rotation.hpp"
 
 // --- Configuration Constants ---
-const double MAX_RANGE = 78.0;  
-const double BASE_DIST_SIGMA = 1.5;
-const double RESAMPLE_VARIANCE = 0.3;
-const double HEADING_SIGMA = 0.03; 
-const int CONFIDENCE_THRESHOLD = 40; 
-const int PARTICLE_COUNT = 500;
-const int RESAMPLE_COUNT = 5;
+const int PARTICLE_COUNT = 700;
+const int RESAMPLE_THRESHOLD = 150;
+const double MIN_DIST_FROM_RESAMPLE = 6.0;
+const double MAX_VELO_RESAMPLE = 100.0;
+const int LOG_AMOUNT = 10;
+const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
+
+const double MAX_RANGE = 300.0;
+const double BASE_DIST_SIGMA_L787 = 0.8;    // 0 ~ 200 mm
+const double BASE_DIST_SIGMA_G787 = 1.5;    // > 200 mm
+const double HEADING_SIGMA = 0.04;
+const double DIST_RESAMPLE_VARIANCE = 2.0;
+const double THETA_RESAMPLE_VARIANCE = 0.02;
+const int CONFIDENCE_THRESHOLD = 40;
+const double TRACKING_WHEEL_VARIANCE = 0.05;
+const double FAULT_TOLERANCE = 1e-3;
+const double UNCERTAINTY_TOLERANCE = 1.0;
+const double DIST_SYNC_PROP = 0.1;
+const double THETA_SYNC_PROP = 0.001;
+
+const double HORIZONTAL_DRIFT_PROP = 0.5;
+
+const double MSPT = 20;
+const double MINPAUSE = 10;
 
 struct Pose { double x, y, theta; };
 struct Circle { double x, y, radius; };
 struct Line_ { Pose p1, p2; };
 
-inline Pose totalDelta = {0.0, 0.0, 0.0};
+inline double roundTwoPlaces(int x);
 
 class MclTracking {
 private:
@@ -31,352 +48,122 @@ private:
         double weight;
     };
 
-    std::vector<Particle> particles;
-    std::mt19937 gen;
-    std::vector<Circle> circle_obstacles;
-    std::vector<Line_> walls, solid_line_obstacles, see_through_line_obstacles;
-    std::vector<Pose> sensor_mounts;
+    // walls
+    static constexpr Line_ walls[] = {
+        {{-70.5, -70.5}, { 70.5, -70.5}}, 
+        {{ 70.5, -70.5}, { 70.5,  70.5}}, 
+        {{ 70.5,  70.5}, {-70.5,  70.5}}, 
+        {{-70.5,  70.5}, {-70.5, -70.5}}
+    };
+
+    // Solid line obstacles (Middle goal posts)
+    static constexpr Line_ solid_line_obstacles[] = {
+        {{0.3068843, -2.711047}, {2.711047, -0.3068843}},
+        {{-2.711047, 0.3068843}, {-0.3068843, 2.711047}}
+    };
+
+    // See-through line obstacles
+    static constexpr Line_ see_through_line_obstacles[] = {
+        {{-21, 47}, {-21.7955, 47.7955}},
+        {{-21, 47}, {-21.7955, 46.2045}},
+        {{21, 47}, {21.7955, 47.7955}},
+        {{21, 47}, {21.7955, 46.2045}},
+        {{-21, -47}, {-21.7955, -46.2045}},
+        {{-21, -47}, {-21.7955, -47.7955}},
+        {{21, -47}, {21.7955, -46.2045}},
+        {{21, -47}, {21.7955, -47.7955}}
+    };
+
+    // Circle obstacles (Match loaders)
+    static constexpr Circle circle_obstacles[] = {
+        {-67.5, 46.5, 2.5},  {-67.5, -46.5, 2.5}, // Match loaders
+        {67.5, 46.5, 2.5},   {67.5, -46.5, 2.5}
+    };
+
+    // Sensor mounts
+    static constexpr int SENSOR_COUNT = 6;
+    static constexpr Pose sensor_mounts[] = {
+        // x (fwd/back), y (left/right), theta (angle sensor is pointing)
+        {0, 0, std::numbers::pi},       // back
+        {0, 0, std::numbers::pi*3/2},   // right
+        {0, 0, std::numbers::pi/2},     // left front
+        {0, 0, std::numbers::pi/2},     // left back
+        {0, 0, 0.0},                    // front left
+        {0, 0, 0.0}                     // front right
+    };
+    
     struct Trig { double cos_m, sin_m; };
+
+    // Particles
+    std::array<Particle, PARTICLE_COUNT> particles_array;
+    std::array<Particle, PARTICLE_COUNT> new_gen_array;
+    std::array<Particle, PARTICLE_COUNT>* particles_ptr = &particles_array;
+    std::array<Particle, PARTICLE_COUNT>* new_gen_ptr = &new_gen_array;
+    std::array<Trig, PARTICLE_COUNT> pTrigs = {};
+    std::mt19937 gen;
     std::vector<Trig> mountTrigs;
     lemlib::Chassis* chassis;
+    pros::MotorGroup* leftMotorGroup;
+    pros::MotorGroup* rightMotorGroup;
+    bool vertical_tracking_mode;
     pros::Task* MclTrackingTask;
-    std::vector<pros::Distance*> distance_collection;
+    std::array<pros::Distance*, SENSOR_COUNT> distance_collection;
     bool autoSync = false;
+    double lastTheta = 0.0;
+    pros::Rotation* vertical_tracking_wheel = nullptr;
+    double vert_c = 0.0;
+    double vert_offset = 0.0;
+    double last_vertical_reading = 0.0;
+    pros::Rotation* horizontal_tracking_wheel = nullptr;
+    double horiz_c = 0.0;
+    double horiz_offset = 0.0;
+    double last_horizontal_reading = 0.0;
+    Pose lastResamplePose = {0, 0, 0};
+    double latest_speed = 0.0;
 
     lemlib::Pose odomLast = {0, 0, 0};
-    Timer t = Timer(30);
-    int minPause = 15;
+    Timer t = Timer(MSPT);
+    int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
-    int resample_counter = 1;
 
-    double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin) {
-        double x1 = wall.p1.x; double y1 = wall.p1.y;
-        double x2 = wall.p2.x; double y2 = wall.p2.y;
-        double x3 = ray.x;     double y3 = ray.y;
-        double x4 = ray.x + rayCos * max_range;
-        double y4 = ray.y + raySin * max_range;
+    double vertical_drift = 0.0;
+    double horizontal_drift = 0.0;
 
-        double den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-        if (den == 0) return max_range;
+    double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin);
 
-        double t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
-        double u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
-
-        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) return u * max_range;
-        return max_range;
-    }
-
-    double intersect_circle(Pose ray, Circle c, double max_range, double dx, double dy) {
-        // Bound check
-        double x_diff = ray.x - c.x;
-        double y_diff = ray.y - c.y;
-        double c_temp = max_range + c.radius;
-        if (x_diff * x_diff + y_diff * y_diff > c_temp * c_temp) {
-            return max_range; 
-        }
-        // Calculations
-        double fx = ray.x - c.x;
-        double fy = ray.y - c.y;
-        double b = 2 * (fx * dx + fy * dy);
-        double val_c = (fx * fx + fy * fy) - (c.radius * c.radius);
-        double discriminant = b * b - 4 * val_c;
-        if (discriminant < 0) return max_range;
-        discriminant = std::sqrt(discriminant);
-        double t1 = (-b - discriminant) / 2;
-        double t2 = (-b + discriminant) / 2;
-        if (t1 >= 0 && t1 <= max_range) return t1;
-        if (t2 >= 0 && t2 <= max_range) return t2;
-        return max_range;
-    }
+    double intersect_circle(Pose ray, Circle c, double max_range, double dx, double dy);
 
 public:
-    MclTracking(lemlib::Chassis* chassis, std::vector<pros::Distance*> dist_collection, double start_x, double start_y, double start_vex_theta, bool autoSync_ = false) {
-        this->chassis = chassis;
-        this->distance_collection = dist_collection;
-        this->autoSync = autoSync_;
-        std::random_device rd;
-        gen = std::mt19937(rd());
-        
-        double start_std_theta = vexToStd(start_vex_theta);
-        std::normal_distribution<double> x_init(start_x, 2.0);
-        std::normal_distribution<double> y_init(start_y, 2.0);
-        std::normal_distribution<double> t_init(start_std_theta, 0.05);
+    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = true);
 
-        for (int i = 0; i < PARTICLE_COUNT; ++i) {
-            particles.push_back({{x_init(gen), y_init(gen), t_init(gen)}, 1.0});
-        }
+    // Update particles and pTrigs
+    void predict(double current_std_theta);
 
-        // Walls
-        walls = {
-            {{-70.5, -70.5}, { 70.5, -70.5}},   // Walls 
-            {{ 70.5, -70.5}, { 70.5,  70.5}}, 
-            {{ 70.5,  70.5}, {-70.5,  70.5}}, 
-            {{-70.5,  70.5}, {-70.5, -70.5}}
-        };
+    void update_weights(const std::vector<double>& sensor_readings, const std::vector<int>& confidences, double current_std_theta);
 
-        // Solid line obstacles
-        solid_line_obstacles = {
-            
-            {{-6.7171, 9.1919}, {9.1919, -6.7171}},
-            {{-9.1919, 6.7171}, {6.7171, -9.1919}}
-        };
+    void resample();
 
-        // See-through line obstacles
-        see_through_line_obstacles = {
-            {{-21, 47}, {-21.7955, 47.7955}},
-            {{-21, 47}, {-21.7955, 46.2045}},
-            {{21, 47}, {21.7955, 47.7955}},
-            {{21, 47}, {21.7955, 46.2045}},
-            {{-21, -47}, {-21.7955, -46.2045}},
-            {{-21, -47}, {-21.7955, -47.7955}},
-            {{21, -47}, {21.7955, -46.2045}},
-            {{21, -47}, {21.7955, -47.7955}}
-        };
+    std::pair<Pose, double> get_estimate();
 
-        // Circle obstacles
-        circle_obstacles = {
-            {-67.5, 46.5, 2.75},  {-67.5, -46.5, 2.75}, // Match loaders
-            {67.5, 46.5, 2.75},   {67.5, -46.5, 2.75}
-        };
+    Pose step(double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs);
 
-        // Sensor mounts
-        sensor_mounts = {
-            // x (fwd/back), y (left/right), theta (angle sensor is pointing)
-            {-4.25, -5.375, M_PI},      // Back sensor: faces West (180 degrees)
-            {0.0, -4.5, -M_PI/2.0},     // Right sensor: faces South (-90 degrees)
-            {0.0, 4.5, M_PI/2.0}        // Left sensor: faces North (90 degrees)
-        };
+    void set_pose(double x, double y, double vex_theta);
 
-        // Mount trig calculation
-        for(int i = 0; i < sensor_mounts.size(); ++i) {
-            mountTrigs.push_back({std::cos(sensor_mounts[i].theta), std::sin(sensor_mounts[i].theta)});
-        }
+    Pose updateMcl();
 
-    }
+    void updateBotPose();
 
-    std::vector<Trig> predict(double dist_traveled, double current_std_theta) {
-        std::vector<Trig> pTrigs;
+    void startTracking();
 
-        std::normal_distribution<double> dist_noise(0, 0.2);
-        std::normal_distribution<double> theta_noise(0, 0.002);
-        for (auto& p : particles) {
-            double d_theta = current_std_theta - p.pose.theta;
-            while (d_theta > M_PI) d_theta -= 2 * M_PI;
-            while (d_theta < -M_PI) d_theta += 2 * M_PI;
+    void stopTracking();
 
-            double pCos = std::cos(p.pose.theta + (d_theta/2));
-            double pSin = std::sin(p.pose.theta + (d_theta/2));
-            pTrigs.push_back({pCos, pSin});
+    void logMcl();
 
-            p.pose.x += pCos * dist_traveled + dist_noise(gen);
-            p.pose.y += pSin * dist_traveled + dist_noise(gen);
-            p.pose.theta += d_theta + theta_noise(gen);
-        }
+    void uniform_reset();
 
-        return pTrigs;
-    }
+    void setDrift(double verticalDrift, double horizontalDrift);
 
-    void update_weights(const std::vector<double>& sensor_readings, const std::vector<int>& confidences, double current_std_theta, const std::vector<Trig>& pTrigs) {
-
-        double robotCos = std::cos(current_std_theta);
-        double robotSin = std::sin(current_std_theta);
-
-        std::vector<double> sigmas_sq_2;
-        for(int i = 0; i < sensor_readings.size(); ++i) {
-            double s = BASE_DIST_SIGMA * (63.0 / (double)confidences[i]);
-            sigmas_sq_2.push_back(2.0 * s * s); // Pre-square and multiply by 2
-        }
-
-        for (int count = 0; count < PARTICLE_COUNT; count++) {
-            auto& p = particles[count];
-            double combined_prob = 1.0;
-
-            double diff = p.pose.theta - current_std_theta;
-            while (diff > M_PI) diff -= 2 * M_PI;
-            while (diff < -M_PI) diff += 2 * M_PI;
-            combined_prob *= std::exp(-(diff * diff) / (2 * HEADING_SIGMA * HEADING_SIGMA));
-
-            for (size_t i = 0; i < sensor_readings.size(); ++i) {
-                if (i >= sensor_mounts.size()) break; 
-                if (confidences[i] < CONFIDENCE_THRESHOLD || sensor_readings[i] > MAX_RANGE) continue;
-
-                double current_sigma_sq = sigmas_sq_2[i];
-
-                double s_theta = p.pose.theta + sensor_mounts[i].theta;
-                double s_x = p.pose.x + (pTrigs[count].cos_m * sensor_mounts[i].x) - (pTrigs[count].sin_m * sensor_mounts[i].y);
-                double s_y = p.pose.y + (pTrigs[count].sin_m * sensor_mounts[i].x) + (pTrigs[count].cos_m * sensor_mounts[i].y);
-
-                double p_dist = MAX_RANGE;
-                bool hit_hollow = false;
-
-                double rayCos = pTrigs[count].cos_m * mountTrigs[i].cos_m - pTrigs[count].sin_m  * mountTrigs[i].sin_m;
-                double raySin = pTrigs[count].sin_m * mountTrigs[i].cos_m + pTrigs[count].cos_m  * mountTrigs[i].sin_m;
-
-                for (const auto& wall : walls) {
-                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, wall, MAX_RANGE, rayCos, raySin));
-                }
-                for (const auto& slo : solid_line_obstacles) {
-                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, slo, MAX_RANGE, rayCos, raySin));
-                }
-                for (const auto& c : circle_obstacles) {
-                    p_dist = std::min(p_dist, intersect_circle({s_x, s_y, s_theta}, c, MAX_RANGE, rayCos, raySin));
-                }
-                for (const auto& stlo : see_through_line_obstacles) {
-                    double d = intersect_line({s_x, s_y, s_theta}, stlo, MAX_RANGE, rayCos, raySin);
-                    if (d < p_dist) { p_dist = d; hit_hollow = true; }
-                }
-
-                if (sensor_readings[i] < (p_dist - 10.0)) {
-                    continue; // Skip this sensor for this particle; don't update combined_prob
-                }
-
-                if (hit_hollow) {
-                    current_sigma_sq *= 3.0;
-                }
-
-                double error = std::abs(sensor_readings[i] - p_dist);
-                double prob_match = std::exp(-(error * error) / current_sigma_sq);
-                
-                combined_prob *= (prob_match + 0.02);
-            }
-            p.weight = combined_prob + 1e-300;
-        }
-    }
-
-    void resample() {
-        std::vector<double> weights;
-        for (const auto& p : particles) weights.push_back(p.weight);
-
-        std::discrete_distribution<int> sampler(weights.begin(), weights.end());
-        std::vector<Particle> new_gen(PARTICLE_COUNT);
-        std::uniform_real_distribution<double> jitter(-RESAMPLE_VARIANCE, RESAMPLE_VARIANCE);
-
-        for (int i = 0; i < PARTICLE_COUNT; ++i) {
-            Particle selected = particles[sampler(gen)];
-            selected.pose.x += jitter(gen);
-            selected.pose.y += jitter(gen);
-            selected.weight = 1.0;
-            new_gen[i] = selected;
-        }
-        particles = new_gen;
-    }
-
-    Pose get_estimate(const std::vector<Trig>& pTrigs) {
-    double x = 0, y = 0, sin_sum = 0, cos_sum = 0;
-    double total_weight = 0;
-
-    for (int count = 0; count < PARTICLE_COUNT; count++) {
-        const auto& p = particles[count];
-        
-        // Multiply each coordinate by the particle's weight
-        x += p.pose.x * p.weight;
-        y += p.pose.y * p.weight;
-        sin_sum += pTrigs[count].sin_m * p.weight;
-        cos_sum += pTrigs[count].cos_m * p.weight;
-        
-        total_weight += p.weight;
-    }
-
-    // Handle the case where all weights are zero (safety)
-    if (total_weight < 1e-9) return rawMcl; 
-
-    return {
-        x / total_weight, 
-        y / total_weight, 
-        std::atan2(sin_sum, cos_sum)
-    };
-    }
-
-    Pose step(double dist, double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs, bool do_resample) {
-        double std_theta = vexToStd(vex_theta);
-        auto pTrigs = predict(dist, std_theta);
-        update_weights(dists, confs, std_theta, pTrigs);
-
-        Pose estimate = get_estimate(pTrigs);
-
-        if (do_resample) resample();
-
-        return estimate;
-    }
-
-    void set_pose(double x, double y, double vex_theta) {
-        double std_theta = vexToStd(vex_theta);
-        std::normal_distribution<double> x_dist(x, 1.0);
-        std::normal_distribution<double> y_dist(y, 1.0);
-        std::normal_distribution<double> t_dist(std_theta, 0.02);
-
-        for (auto& p : particles) {
-            p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
-            p.weight = 1.0;
-        }
-
-        odomLast = chassis->getPose();
-    }
-
-    Pose updateMcl() {
-        // Get Sensors
-        std::vector<double> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
-        std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
-
-        // Calculate displacement
-        double dx = chassis->getPose().x - odomLast.x;
-        double dy = chassis->getPose().y - odomLast.y;
-        double move_dist = std::sqrt(dx * dx + dy * dy);
-
-        totalDelta.x += dx;
-        totalDelta.y += dy;
-
-        // --- Corrected Direction Logic ---
-        // Convert current VEX heading to Standard Math Radians
-        double std_theta = vexToStd(chassis->getPose().theta); 
-        
-        // If moving against the heading, flip move_dist sign
-        double headX = std::cos(std_theta);
-        double headY = std::sin(std_theta);
-        if ((dx * headX + dy * headY) < 0) {
-            move_dist *= -1.0;
-        }
-        
-        // Update Filter
-        if (resample_counter < RESAMPLE_COUNT) {
-            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, false);
-        }
-        else {
-            rawMcl = step(move_dist, chassis->getPose().theta, dists, confs, true);
-            resample_counter = 0;
-        }
-        resample_counter++;
-
-        // Sync
-        if (autoSync) updateBotPose();
-        odomLast = chassis->getPose();
-
-        return rawMcl;
-    }
-
-    void updateBotPose() {
-        chassis->setPose(rawMcl.x, rawMcl.y, 90.0 - (rawMcl.theta * 180.0 / M_PI));
-    }
-
-    void startTracking() {
-        if (MclTrackingTask == nullptr) {
-            MclTrackingTask = new pros::Task([this](){
-                
-                while (true) {
-                    this->t.reset();
-
-                    this->updateMcl();
-                
-                    if (t.timeLeft() < minPause) pros::delay(minPause);
-                    else pros::delay(round(t.timeLeft()));
-                }
-            });
-        }
-    }
-
-    void stopTracking() {
-        if (MclTrackingTask != nullptr) { MclTrackingTask->remove(); delete MclTrackingTask; MclTrackingTask = nullptr; }
-    }
+    ~MclTracking();
 };
 
 #endif

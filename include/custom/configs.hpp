@@ -11,6 +11,7 @@
 #include "pros/optical.hpp"     // IWYU pragma: keep
 #include "pros/rotation.hpp" // IWYU pragma: keep
 #include <cmath>
+#include <numbers>
 
 #include "custom/RclTracking.hpp"
 #include "custom/MclTracking.hpp"
@@ -122,19 +123,30 @@ inline pros::Distance descoreDist(tempPort);
 
 inline pros::Distance back_dist(tempPort);
 inline pros::Distance right_dist(tempPort);
-inline pros::Distance left_dist(tempPort);
+inline pros::Distance lf_dist(tempPort);
+inline pros::Distance lb_dist(tempPort);
 inline pros::Distance fl_dist(tempPort);
 inline pros::Distance fr_dist(tempPort);
-inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_dist, &left_dist, &fl_dist, &fr_dist};
+inline const std::array<pros::Distance*, 6> DISTANCE_COLLECTION = {&back_dist, &right_dist, &lf_dist, &lb_dist, &fl_dist, &fr_dist};
 
 // Rcl setup
 inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
-inline RclSensor left_rcl(&left_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor lf_rcl(&lf_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor lb_rcl(&lb_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclSensor fl_rcl(&fl_dist, 0.0, 0.0, 0.0, 15.0);
 inline RclSensor fr_rcl(&fr_dist, 0.0, 0.0, 0.0, 15.0);
 inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 6.0, 20);
-// inline MclTracking MclMain(&chassis, distance_collection, 0, 0, 0, false);
+
+// Mcl setup
+inline MclTracking MclMain(&chassis, &leftMotors, &rightMotors, DISTANCE_COLLECTION, {&vertSensor, 2.75, -0.5}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
+
+// Logging
+inline bool logging = false;
+inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
+inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
+inline Timer mclLogTimer(10000000000000);
+inline Timer rclLogTimer(10000000000000);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);
@@ -152,4 +164,3 @@ inline Circle_Obstacle downLongGoalRight(21, -47.5, 4);
 inline Line_Obstacle disableLine(0, FIELD_NEG_HALF_LENGTH, 0, FIELD_HALF_LENGTH);
 
 inline Circle_Obstacle centerGoals(0, 0, 5);
-
