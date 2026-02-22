@@ -635,9 +635,9 @@
       }
     },
     "upload_options": {
-      "description": "My PROS Projectmer",
+      "description": "My PROS Project",
       "icon": "pizza",
-      "after": "run"
+      "after": "none"
     },
     "use_early_access": false
   }

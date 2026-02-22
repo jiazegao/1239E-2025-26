@@ -26,14 +26,14 @@ inline alliance_color allianceColor = alliance_color::BLUE;
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-inline pros::MotorGroup leftMotors({-11, 12, -13}, pros::MotorGearset::blue);
-inline pros::MotorGroup rightMotors({20, -19, 18}, pros::MotorGearset::blue);
+inline pros::MotorGroup leftMotors({-11, -12, 13}, pros::MotorGearset::blue);
+inline pros::MotorGroup rightMotors({20, 19, -18}, pros::MotorGearset::blue);
 inline pros::Motor frontMotor(17, pros::MotorGearset::blue);
 inline pros::Motor leverMotor(-16, pros::MotorGearset::red);
 
 inline lemlib::Drivetrain drivetrain(&leftMotors,
                               &rightMotors,
-                              11.375,
+                              10.400,
                               3.25,
                               450,
                               2
