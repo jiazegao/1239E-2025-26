@@ -161,17 +161,6 @@ void startControllerAutonSelectorDisplay() {
         controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
     };
 };
-void startControllerRclCoordDisplay() {
-    controllerDisplayFunc = [](){
-        controller.clear();
-        pros::delay(50);
-        controller.print(0, 0, "RCL (%.1f, %.1f, %.1f)", RclMain.getRclPose().x, RclMain.getRclPose().y, RclMain.getRclPose().theta);
-        pros::delay(50);
-        controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
-        pros::delay(50);
-        controller.print(2, 0, "%d, %d, %d", left_rcl.rawReading(), back_rcl.rawReading(), right_rcl.rawReading());
-    };
-};
 
 void startBrainCoordDisplay() {
     brainDisplayFunc = [](){
@@ -186,18 +175,6 @@ void startBrainFBDisplay() {
     lv_image_set_src(image, &FB_Logo);
 };
 
-// Test Functions
-void startControllerDistDataDisplay() {
-    controllerDisplayFunc = [](){
-        controller.clear();
-        pros::delay(50);
-        controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
-        pros::delay(50);
-        controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
-        pros::delay(50);
-        controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
-    };
-};
 void startControllerOpticDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
@@ -236,7 +213,6 @@ void startMclBenchmark(double x, double y, double theta, double autoReset) {
     // Initial Sync
     chassis.setPose(x, y, theta);
     if (autoReset) {
-        RclMain.updateBotPose(&left_rcl);
         RclMain.updateBotPose(&right_rcl);
         RclMain.updateBotPose(&back_rcl);
     }
@@ -284,7 +260,6 @@ void startMcl(double x, double y, double vexTheta, bool resetLeft, bool resetBac
 	RclMain.setRclPose(p);
     
     // Perform RCL Resets
-    if (resetLeft) RclMain.updateBotPose(&left_rcl);
     if (resetBack) RclMain.updateBotPose(&back_rcl);
     if (resetRight) RclMain.updateBotPose(&right_rcl);
 
