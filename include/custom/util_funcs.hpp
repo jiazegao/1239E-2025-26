@@ -34,13 +34,11 @@ void initBrainDisplay();
 
 void startControllerCoordDisplay();
 void startControllerAutonSelectorDisplay();
-void startControllerRclCoordDisplay();
 
 void startBrainCoordDisplay();
 void startBrainFBDisplay();
 
 // Test Functions
-void startControllerDistDataDisplay();
 void startControllerOpticDisplay();
 void startControllerRCLInfoDisplay();
 
