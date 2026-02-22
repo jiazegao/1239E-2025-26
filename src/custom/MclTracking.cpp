@@ -450,7 +450,6 @@ void MclTracking::logMcl() {
 void MclTracking::setDrift(double verticalDriftPerSec, double horizontalDriftPerSec) {
     this->vertical_drift = verticalDriftPerSec / (1000.0 / MSPT);
     this->horizontal_drift = horizontalDriftPerSec / (1000.0 / MSPT);
-
 }
 
 MclTracking::~MclTracking() {

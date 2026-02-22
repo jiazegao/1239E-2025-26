@@ -27,7 +27,7 @@ const int CONFIDENCE_THRESHOLD = 40;
 const double TRACKING_WHEEL_VARIANCE = 0.05;
 const double FAULT_TOLERANCE = 1e-3;
 const double UNCERTAINTY_TOLERANCE = 1.0;
-const double DIST_SYNC_PROP = 0.1;
+inline double DIST_SYNC_PROP = 0.1;
 const double THETA_SYNC_PROP = 0.001;
 
 const double MSPT = 20;
@@ -157,6 +157,8 @@ public:
     void uniform_reset();
 
     void setDrift(double verticalDrift, double horizontalDrift);
+
+    void setLateralSyncWeight(double newWeight);
 
     ~MclTracking();
 };
