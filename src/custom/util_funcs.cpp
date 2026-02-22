@@ -9,24 +9,9 @@
 
 #include "MclTracking.hpp"
 #include "pros/misc.h"
+#include "pros/motors.h"
 #include "pros/rtos.h"
-
-// Indexer control
-void frontIn() {
-    frontMotor.move(127);
-}
-void frontOut() {
-    frontMotor.move(-127);
-}
-void stopFront() {
-    frontMotor.move(0);
-}
-void lockFront() {
-    frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-}
-void unlockFront() {
-    frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-}
+#include "lever_control.hpp"
 
 // Pneumatics functions
 void openGate() {
@@ -72,7 +57,6 @@ void shake(int repeats, int time) {
 }
 
 // Fucntion for managing pneumatics controls
-bool descoreMacroActivated = false;
 void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
@@ -82,27 +66,49 @@ void updatePneumatics() {
     // Button Down - Left descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         leftDescoreArm.toggle();
-        descoreMacroActivated = false; // Shutdown macro
-    }
-    // Button Right - Descore macro (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-        descoreMacroActivated = !descoreMacroActivated;
-        extendLeftArm();
     }
     // Button Y - Middle descore mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
         middleDescore.toggle();
         closeGate();
     }
+}
 
-    // Descore macro update
-    if (descoreMacroActivated) {
-        controller.rumble(".");
-        // Release descore arm if distance less than 15 cm
-        if (descoreDist.get() < 140) {
-            retractLeftArm();
-            controller.rumble("-");
-        }
+// Intake management
+void updateIntake() {
+
+    // Motor Controls ----------------------------------------------------
+
+    // Button B - Outtake
+    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+        startOuttake();
+    }
+    // Button A - Slow outtake
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        frontMotor.move(-30);
+    }
+    // Button R2 - Score top
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+        extendLift();
+        score(1500, 7, FAST_TOP_SCORE);
+    }
+    // Button R1 - Score mid
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+        retractLift();
+        score(1500, 7, FAST_MID_SCORE);
+    }
+    // Button L2 - Normal intake
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+        startIntake();
+    }
+    // Button L1 - Macro intake
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+        intakeFromMatchLoader();
+    }
+    // If no button is pressed, stop everything
+    else {
+        frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        stopIntake();
     }
 }
 
@@ -134,7 +140,6 @@ void initControllerDisplay() {
 void stopBrainDisplay() {
     brainDisplayFunc = nullptr;
 }
-
 void stopControllerDisplay() {
     controllerDisplayFunc = nullptr;
 }
@@ -175,6 +180,7 @@ void startBrainFBDisplay() {
     lv_image_set_src(image, &FB_Logo);
 };
 
+// Test Functions
 void startControllerOpticDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
@@ -246,8 +252,6 @@ void startMclBenchmark(double x, double y, double theta, double autoReset) {
             pros::lcd::print(1, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclTheta);
             pros::lcd::print(2, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
             pros::lcd::print(3, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
-            pros::lcd::print(4, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
-            pros::lcd::print(5, "Confs: B:%d L:%d R:%d", back_dist.get_confidence(), left_dist.get_confidence(), right_dist.get_confidence());
             pros::delay(60);
         }
     });

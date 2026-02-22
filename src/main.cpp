@@ -44,9 +44,7 @@ void autonomous() {
 	
 	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-
-	startControllerRclCoordDisplay();
-
+	
 	// Ensure descore arms are retracted
 	extendLeftArm();
 	extendLeftArm();
@@ -77,8 +75,6 @@ void opcontrol() {
 		updatePneumatics();
 		int i = getLeverPotentReading();
 		pros::lcd::print(0, "LEVER POTENT: %d", i);
-
-		scoreAll(7000);
 
 		pros::delay(20);
 	}
