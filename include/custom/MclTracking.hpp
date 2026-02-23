@@ -10,7 +10,7 @@
 #include "pros/rotation.hpp"
 
 // --- Configuration Constants ---
-const int PARTICLE_COUNT = 1200;
+const int PARTICLE_COUNT = 1000;
 const int RESAMPLE_THRESHOLD = 300;
 const double MIN_DIST_FROM_RESAMPLE = 6.0;
 const double MAX_VELO_RESAMPLE = 100.0;

@@ -45,7 +45,7 @@ void autonomous() {
 	extendLeftArm();
 	extendLeftArm();
 	
-	skills_v2();
+	skills_119();
 }
 
 void opcontrol() {
