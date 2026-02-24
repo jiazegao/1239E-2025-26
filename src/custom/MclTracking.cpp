@@ -7,6 +7,8 @@
 #include <numbers>
 #include <random>
 
+#include "fast_trig.hpp"
+
 inline float roundTwoPlaces(float x) {
     return std::round(x*100)/100;
 }
@@ -99,7 +101,7 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGr
 
     // Mount trig calculation
     for(int i = 0; i < SENSOR_COUNT; ++i) {
-        mountTrigs.push_back({std::cos(sensor_mounts[i].theta), std::sin(sensor_mounts[i].theta)});
+        mountTrigs.push_back({FastTrig::cos(sensor_mounts[i].theta), FastTrig::sin(sensor_mounts[i].theta)});
     }
 }
 
@@ -138,8 +140,8 @@ void MclTracking::predict(float current_std_theta) {
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
         auto& p = particles[i];
-        float pCos = std::cos(p.pose.theta + (d_theta/2));
-        float pSin = std::sin(p.pose.theta + (d_theta/2));
+        float pCos = FastTrig::cos(p.pose.theta + (d_theta/2));
+        float pSin = FastTrig::sin(p.pose.theta + (d_theta/2));
 
         // Get noise
         float vert_noise = tracking_wheel_noise(gen);
@@ -157,14 +159,14 @@ void MclTracking::predict(float current_std_theta) {
         while (p.pose.theta > M_PI) p.pose.theta -= 2 * M_PI;
         while (p.pose.theta < -M_PI) p.pose.theta += 2 * M_PI;
 
-        pTrigs[i] = {std::cos(p.pose.theta), std::sin(p.pose.theta)};
+        pTrigs[i] = {FastTrig::cos(p.pose.theta), FastTrig::sin(p.pose.theta)};
     }
 }
 
 void MclTracking::update_weights(const std::vector<float>& sensor_readings, const std::vector<int>& confidences, float current_std_theta) {
 
-    float robotCos = std::cos(current_std_theta);
-    float robotSin = std::sin(current_std_theta);
+    float robotCos = FastTrig::cos(current_std_theta);
+    float robotSin = FastTrig::sin(current_std_theta);
 
     std::vector<float> sigmas_sq_2;
     for(int i = 0; i < sensor_readings.size(); ++i) {
@@ -426,8 +428,8 @@ void MclTracking::logMcl() {
         sum_sq_diff_y += std::pow(p.pose.y - rawMcl.y, 2);
         
         // Use circular statistics for theta
-        sum_sin += std::sin(p.pose.theta);
-        sum_cos += std::cos(p.pose.theta);
+        sum_sin += FastTrig::sin(p.pose.theta);
+        sum_cos += FastTrig::cos(p.pose.theta);
     }
 
     // Calculate standard deviation

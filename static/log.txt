@@ -95,3 +95,4 @@
     4) Adjusted logging logic to record MCL data; ready for testing
 2/24/2026
     1) Replaced all double precision floating point numbers with float for optimization
+    2) Replaced standard trig calculations with 1D LUT for optimization
