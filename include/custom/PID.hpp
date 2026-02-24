@@ -9,17 +9,17 @@ inline const int FORCE_TERMINATE_TIMEOUT = 5000;
 
 class Lever_PID {
     public:
-        Lever_PID(pros::Motor* motor, pros::adi::Potentiometer* sensor, double kP, double kI, double kD, double errorRange, double errorTimeout, double maxReverseSpeed, double maxScoreSpeed, bool autoReset = true, LEVER_STAGE* leverStage = nullptr)
+        Lever_PID(pros::Motor* motor, pros::adi::Potentiometer* sensor, float kP, float kI, float kD, float errorRange, float errorTimeout, float maxReverseSpeed, float maxScoreSpeed, bool autoReset = true, LEVER_STAGE* leverStage = nullptr)
             : motor(motor), sensor(sensor), kP(kP), kI(kI), kD(kD), errorRange(errorRange), errorTimeout(errorTimeout), maxReverseSpeed(maxReverseSpeed), maxScoreSpeed(maxScoreSpeed), prevError(0), integral(0), target(0), autoReset(autoReset), leverStage(leverStage) { forceStopTimer.hardReset(FORCE_TERMINATE_TIMEOUT), errorRangeTimer.hardReset(errorTimeout); motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); tickTimer.hardReset(1000); } // Constructor
     
-        double calculate(double target, double measuredValue) {
-            double error = target - measuredValue;
+        float calculate(float target, float measuredValue) {
+            float error = target - measuredValue;
             integral += error;
-            double derivative = error - prevError;
+            float derivative = error - prevError;
             prevError = error;
     
             // Calculate PID output
-            double output = (kP * error) + (kI * integral) + (kD * derivative);
+            float output = (kP * error) + (kI * integral) + (kD * derivative);
     
             return output;
         }
@@ -31,8 +31,8 @@ class Lever_PID {
                 if (!mainLoopLocked && *leverStage == SCORING) {
 
                     // Get current measured value (e.g., from a sensor)
-                    double measuredValue = getLeverPotentReading();
-                    double output = 0.0;
+                    float measuredValue = getLeverPotentReading();
+                    float output = 0.0;
 
                     // If not within error range, reset timer
                     if (std::abs(target - measuredValue) > errorRange){
@@ -54,7 +54,7 @@ class Lever_PID {
                     // Otherwise, move motor
                     else {
                         // Clamp velocity
-                        double currSpeed = (measuredValue-previousValue) / tickTimer.elapsed(TimeUnit::SECOND);
+                        float currSpeed = (measuredValue-previousValue) / tickTimer.elapsed(TimeUnit::SECOND);
                         tickTimer.reset();
 
                         if (currSpeed > maxScoreSpeed) motor->move_velocity(maxScoreSpeed/6);
@@ -74,7 +74,7 @@ class Lever_PID {
             }
         }
 
-        void setTarget(double newTarget, double maxReverseSpeed_ = -300000, double maxScoreSpeed_ = 300000) {
+        void setTarget(float newTarget, float maxReverseSpeed_ = -300000, float maxScoreSpeed_ = 300000) {
             this->target = newTarget;
             this->prevError = 0; // Reset previous error term when setpoint changes
             this->integral = 0; // Reset integral term when setpoint changes
@@ -85,7 +85,7 @@ class Lever_PID {
             this->errorRangeTimer.reset();
         }
 
-        void hardReset(double timeout = 2000) {
+        void hardReset(float timeout = 2000) {
             // Lock mainloop
             mainLoopLocked = true;
 
@@ -107,24 +107,24 @@ class Lever_PID {
             mainLoopLocked = false;
         }
 
-        void setCurrentPosition(double currentPosition) {
+        void setCurrentPosition(float currentPosition) {
             target = currentPosition;
             prevError = 0;
             integral = 0;
         }
 
-        double kP, kI, kD;
-        double errorRange, errorTimeout;
-        double maxReverseSpeed, maxScoreSpeed;
-        double prevError;
-        double integral;
+        float kP, kI, kD;
+        float errorRange, errorTimeout;
+        float maxReverseSpeed, maxScoreSpeed;
+        float prevError;
+        float integral;
         pros::Motor* motor = nullptr;
         pros::adi::Potentiometer* sensor = nullptr;
-        double target;
+        float target;
         Timer forceStopTimer, errorRangeTimer, tickTimer;
         bool autoReset;
         LEVER_STAGE* leverStage;
-        double previousValue;
+        float previousValue;
 
         bool mainLoopLocked = false; // Flag to control main loop execution
 };

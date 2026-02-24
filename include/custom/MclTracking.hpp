@@ -12,40 +12,40 @@
 // --- Configuration Constants ---
 const int PARTICLE_COUNT = 700;
 const int RESAMPLE_THRESHOLD = 150;
-const double MIN_DIST_FROM_RESAMPLE = 6.0;
-const double MAX_VELO_RESAMPLE = 100.0;
+const float MIN_DIST_FROM_RESAMPLE = 6.0;
+const float MAX_VELO_RESAMPLE = 100.0;
 const int LOG_AMOUNT = 10;
 const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
-const double MAX_RANGE = 300.0;
-const double BASE_DIST_SIGMA_L787 = 0.8;    // 0 ~ 200 mm
-const double BASE_DIST_SIGMA_G787 = 1.5;    // > 200 mm
-const double HEADING_SIGMA = 0.04;
-const double DIST_RESAMPLE_VARIANCE = 2.0;
-const double THETA_RESAMPLE_VARIANCE = 0.02;
+const float MAX_RANGE = 300.0;
+const float BASE_DIST_SIGMA_L787 = 0.8;    // 0 ~ 200 mm
+const float BASE_DIST_SIGMA_G787 = 1.5;    // > 200 mm
+const float HEADING_SIGMA = 0.04;
+const float DIST_RESAMPLE_VARIANCE = 2.0;
+const float THETA_RESAMPLE_VARIANCE = 0.02;
 const int CONFIDENCE_THRESHOLD = 40;
-const double TRACKING_WHEEL_VARIANCE = 0.05;
-const double FAULT_TOLERANCE = 1e-3;
-const double UNCERTAINTY_TOLERANCE = 1.0;
-const double DIST_SYNC_PROP = 0.1;
-const double THETA_SYNC_PROP = 0.001;
+const float TRACKING_WHEEL_VARIANCE = 0.05;
+const float FAULT_TOLERANCE = 1e-3;
+const float UNCERTAINTY_TOLERANCE = 1.0;
+const float DIST_SYNC_PROP = 0.1;
+const float THETA_SYNC_PROP = 0.001;
 
-const double HORIZONTAL_DRIFT_PROP = 0.5;
+const float HORIZONTAL_DRIFT_PROP = 0.5;
 
-const double MSPT = 20;
-const double MINPAUSE = 10;
+const float MSPT = 20;
+const float MINPAUSE = 10;
 
-struct Pose { double x, y, theta; };
-struct Circle { double x, y, radius; };
+struct Pose { float x, y, theta; };
+struct Circle { float x, y, radius; };
 struct Line_ { Pose p1, p2; };
 
-inline double roundTwoPlaces(int x);
+inline float roundTwoPlaces(int x);
 
 class MclTracking {
 private:
     struct Particle {
         Pose pose;
-        double weight;
+        float weight;
     };
 
     // walls
@@ -92,7 +92,7 @@ private:
         {0, 0, 0.0}                     // front right
     };
     
-    struct Trig { double cos_m, sin_m; };
+    struct Trig { float cos_m, sin_m; };
 
     // Particles
     std::array<Particle, PARTICLE_COUNT> particles_array;
@@ -109,45 +109,45 @@ private:
     pros::Task* MclTrackingTask;
     std::array<pros::Distance*, SENSOR_COUNT> distance_collection;
     bool autoSync = false;
-    double lastTheta = 0.0;
+    float lastTheta = 0.0;
     pros::Rotation* vertical_tracking_wheel = nullptr;
-    double vert_c = 0.0;
-    double vert_offset = 0.0;
-    double last_vertical_reading = 0.0;
+    float vert_c = 0.0;
+    float vert_offset = 0.0;
+    float last_vertical_reading = 0.0;
     pros::Rotation* horizontal_tracking_wheel = nullptr;
-    double horiz_c = 0.0;
-    double horiz_offset = 0.0;
-    double last_horizontal_reading = 0.0;
+    float horiz_c = 0.0;
+    float horiz_offset = 0.0;
+    float last_horizontal_reading = 0.0;
     Pose lastResamplePose = {0, 0, 0};
-    double latest_speed = 0.0;
+    float latest_speed = 0.0;
 
     lemlib::Pose odomLast = {0, 0, 0};
     Timer t = Timer(MSPT);
     int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
 
-    double vertical_drift = 0.0;
-    double horizontal_drift = 0.0;
+    float vertical_drift = 0.0;
+    float horizontal_drift = 0.0;
 
-    double intersect_line(Pose ray, Line_ wall, double max_range, double rayCos, double raySin);
+    float intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin);
 
-    double intersect_circle(Pose ray, Circle c, double max_range, double dx, double dy);
+    float intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy);
 
 public:
-    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, double, double> vertical_tracking_wheel, std::tuple<pros::Rotation*, double, double> horizontal_tracking_wheel, double start_x, double start_y, double start_vex_theta, bool autoSync_ = true);
+    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
 
     // Update particles and pTrigs
-    void predict(double current_std_theta);
+    void predict(float current_std_theta);
 
-    void update_weights(const std::vector<double>& sensor_readings, const std::vector<int>& confidences, double current_std_theta);
+    void update_weights(const std::vector<float>& sensor_readings, const std::vector<int>& confidences, float current_std_theta);
 
     void resample();
 
-    std::pair<Pose, double> get_estimate();
+    std::pair<Pose, float> get_estimate();
 
-    Pose step(double vex_theta, const std::vector<double>& dists, const std::vector<int>& confs);
+    Pose step(float vex_theta, const std::vector<float>& dists, const std::vector<int>& confs);
 
-    void set_pose(double x, double y, double vex_theta);
+    void set_pose(float x, float y, float vex_theta);
 
     Pose updateMcl();
 
@@ -161,7 +161,7 @@ public:
 
     void uniform_reset();
 
-    void setDrift(double verticalDrift, double horizontalDrift);
+    void setDrift(float verticalDrift, float horizontalDrift);
 
     ~MclTracking();
 };

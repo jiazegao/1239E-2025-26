@@ -10,13 +10,15 @@
 #include "configs.hpp"
 #include <cmath>
 
-inline double roundTwoPlaces(double x) {
+#include "fast_trig.hpp"
+
+inline float roundTwoPlaces(float x) {
     return std::round(x*100)/100;
 }
 
 // Line obstacle class
 Singly_Linked_List<Line_Obstacle> Line_Obstacle::obstacleCollection = Singly_Linked_List<Line_Obstacle>();
-Line_Obstacle::Line_Obstacle(double x1, double y1, double x2, double y2, double lifeTimeMs)
+Line_Obstacle::Line_Obstacle(float x1, float y1, float x2, float y2, float lifeTimeMs)
     : lifeTimer(lifeTimeMs < 0 ? MAX_OBSTACLE_DURATION : lifeTimeMs) {
     // Init line
     line.pt1[0] = x1;
@@ -37,27 +39,27 @@ bool Line_Obstacle::expired() {
 // Check if sensor ray intersects this obstacle line
 bool Line_Obstacle::isIntersecting(const SensorPose& sp) const {
     // Ray direction vector
-    double angRad = degToRad(botToTrig(sp.heading));
-    double vAx = std::cos(angRad);
-    double vAy = std::sin(angRad);
+    float angRad = degToRad(botToTrig(sp.heading));
+    float vAx = FastTrig::cos(angRad);
+    float vAy = FastTrig::sin(angRad);
 
     // Obstacle segment vector
-    double vBx = line.pt2[0] - line.pt1[0];
-    double vBy = line.pt2[1] - line.pt1[1];
+    float vBx = line.pt2[0] - line.pt1[0];
+    float vBy = line.pt2[1] - line.pt1[1];
 
     // Determinant (Cross product of direction vectors)
-    double det = (vAx * vBy) - (vAy * vBx);
+    float det = (vAx * vBy) - (vAy * vBx);
 
     // If det is 0, the ray and the obstacle are parallel
     if (std::abs(det) < 1e-6) return false;
 
     // Solve for t (distance along sensor ray) and u (position along obstacle segment)
     // Formula: P_sensor + t*vA = P_obstacle_start + u*vB
-    double dx = line.pt1[0] - sp.x;
-    double dy = line.pt1[1] - sp.y;
+    float dx = line.pt1[0] - sp.x;
+    float dy = line.pt1[1] - sp.y;
 
-    double t = (dx * vBy - dy * vBx) / det;
-    double u = (dx * vAy - dy * vAx) / det;
+    float t = (dx * vBy - dy * vBx) / det;
+    float u = (dx * vAy - dy * vAx) / det;
 
     // Valid intersection if:
     // 1. t > 0 (Intersection is in front of the sensor)
@@ -66,7 +68,7 @@ bool Line_Obstacle::isIntersecting(const SensorPose& sp) const {
 }
 
 // Polygon obstacles
-void Line_Obstacle::addPolygonObstacle(const std::vector<std::pair<double, double>>& points, double lifeTimeMs) {
+void Line_Obstacle::addPolygonObstacle(const std::vector<std::pair<float, float>>& points, float lifeTimeMs) {
     // If the points are not enough to form a polygon, do nothing
     if (points.size() < 3) return;
     // Create a line for each pair of points
@@ -78,7 +80,7 @@ void Line_Obstacle::addPolygonObstacle(const std::vector<std::pair<double, doubl
 
 // Circle obstacle class
 Singly_Linked_List<Circle_Obstacle> Circle_Obstacle::obstacleCollection = Singly_Linked_List<Circle_Obstacle>();
-Circle_Obstacle::Circle_Obstacle(double x_, double y_, double r_, double lifeTimeMs)
+Circle_Obstacle::Circle_Obstacle(float x_, float y_, float r_, float lifeTimeMs)
     : x(x_), y(y_), radius(r_), lifeTimer(lifeTimeMs < 0 ? MAX_OBSTACLE_DURATION : lifeTimeMs) {
     Circle_Obstacle::obstacleCollection.add_front(this);
 }
@@ -90,33 +92,33 @@ bool Circle_Obstacle::expired() {
 
 // Check if sensor ray intersects this obstacle circle
 bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
-    double angRad = degToRad(botToTrig(sp.heading));
-    double vx = std::cos(angRad);
-    double vy = std::sin(angRad);
+    float angRad = degToRad(botToTrig(sp.heading));
+    float vx = FastTrig::cos(angRad);
+    float vy = FastTrig::sin(angRad);
 
     // Vector from sensor to circle center
-    double dx = x - sp.x;
-    double dy = y - sp.y;
+    float dx = x - sp.x;
+    float dy = y - sp.y;
 
     // Calculate 't' (the distance along the ray to the point closest to the circle center)
     // t = dot product of (vector to center) and (ray direction)
-    double t = dx * vx + dy * vy;
+    float t = dx * vx + dy * vy;
 
     // If t is negative, the circle is behind the sensor
     if (t < 0) return false;
 
     // Find the point on the ray at distance t
-    double closestX = sp.x + t * vx;
-    double closestY = sp.y + t * vy;
+    float closestX = sp.x + t * vx;
+    float closestY = sp.y + t * vy;
 
     // Check distance from that point to circle center
-    double distSq = std::pow(closestX - x, 2) + std::pow(closestY - y, 2);
+    float distSq = std::pow(closestX - x, 2) + std::pow(closestY - y, 2);
     
     return distSq <= (radius * radius);
 }
 
 // RCL sensor class
-RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol)
+RclSensor::RclSensor(pros::Distance* distSensor, float horizOffset, float vertOffset, float mainAng, float angleTol)
     : sensor(distSensor), mainAngle(mainAng), angleTolerance(std::abs(angleTol)) {
     offsetDist = std::hypot(horizOffset, vertOffset);
     offsetAngle = std::fmod(((std::atan2(vertOffset, horizOffset)*180.0/M_PI) + 360), 360);
@@ -126,9 +128,9 @@ RclSensor::RclSensor(pros::Distance* distSensor, double horizOffset, double vert
 // Compute pose of the ray origin & slope
 void RclSensor::updatePose(const lemlib::Pose& botPose) {
     // sensor's angle position relative to the bot's center
-    double theta = degToRad(offsetAngle - botPose.theta);
-    sp.x = botPose.x + std::cos(theta) * offsetDist;
-    sp.y = botPose.y + std::sin(theta) * offsetDist;
+    float theta = degToRad(offsetAngle - botPose.theta);
+    sp.x = botPose.x + FastTrig::cos(theta) * offsetDist;
+    sp.y = botPose.y + FastTrig::sin(theta) * offsetDist;
     // sensor ray's heading
     sp.heading = std::fmod(botPose.theta + mainAngle, 360.0);
     if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
@@ -137,7 +139,7 @@ void RclSensor::updatePose(const lemlib::Pose& botPose) {
     sp.yIntercept = sp.y - sp.slope * sp.x;
 }
 
-bool RclSensor::isValid(double distVal) const {
+bool RclSensor::isValid(float distVal) const {
     if (distVal > 2000) return false;  // Invalid Distance
     if (distVal > 200 && this->sensor->get_confidence() < 60) return false; // Invalid confidence
     if (std::abs( std::fmod(this->sp.heading, 90.0) ) > angleTolerance &&
@@ -159,45 +161,45 @@ void RclSensor::logPos(std::ofstream* targetFile) {
 }
 
 // Return which coordinate (X or Y) and its value
-std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose, double accum) {
+std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, float accum) {
 
     // Update sensor pose
     this->updatePose(botPose);
 
     // accumulative?
-    double val = std::isnan(accum) ? sensor->get() : accum;
+    float val = std::isnan(accum) ? sensor->get() : accum;
     
     // verify sensor data
     if (!isValid(val)) return {CoordType::INVALID, 0.0};
     val *= mmToInch;
 
-    double angRad = degToRad(botToTrig(this->sp.heading));
-    double cosA = std::cos(angRad);
-    double sinA = std::sin(angRad);
+    float angRad = degToRad(botToTrig(this->sp.heading));
+    float cosA = FastTrig::cos(angRad);
+    float sinA = FastTrig::sin(angRad);
 
-    double minDist = 1e9; // Start with a huge number
+    float minDist = 1e9; // Start with a huge number
     int wall = -1;
 
     // Check X-walls (Vertical lines)
     if (std::abs(cosA) > 1e-6) {
-        double dEast = (FIELD_HALF_LENGTH - sp.x) / cosA;
+        float dEast = (FIELD_HALF_LENGTH - sp.x) / cosA;
         if (dEast > 0 && dEast < minDist) { minDist = dEast; wall = 2; }
         
-        double dWest = (FIELD_NEG_HALF_LENGTH - sp.x) / cosA;
+        float dWest = (FIELD_NEG_HALF_LENGTH - sp.x) / cosA;
         if (dWest > 0 && dWest < minDist) { minDist = dWest; wall = 4; }
     }
 
     // Check Y-walls (Horizontal lines)
     if (std::abs(sinA) > 1e-6) {
-        double dNorth = (FIELD_HALF_LENGTH - sp.y) / sinA;
+        float dNorth = (FIELD_HALF_LENGTH - sp.y) / sinA;
         if (dNorth > 0 && dNorth < minDist) { minDist = dNorth; wall = 1; }
         
-        double dSouth = (FIELD_NEG_HALF_LENGTH - sp.y) / sinA;
+        float dSouth = (FIELD_NEG_HALF_LENGTH - sp.y) / sinA;
         if (dSouth > 0 && dSouth < minDist) { minDist = dSouth; wall = 3; }
     }
 
     // Compute coordinate
-    double res;
+    float res;
     CoordType type;
     if (wall == 1) { type = CoordType::Y; res = FIELD_HALF_LENGTH - sinA * val; }
     else if (wall == 2) { type = CoordType::X; res = FIELD_HALF_LENGTH - cosA * val; }
@@ -206,7 +208,7 @@ std::pair<CoordType, double> RclSensor::getBotCoord(const lemlib::Pose& botPose,
     else return {CoordType::INVALID, 0.0};  // Error case
 
     // Adjust by offset
-    double offRad = degToRad(offsetAngle - botPose.theta);
+    float offRad = degToRad(offsetAngle - botPose.theta);
     if (type == CoordType::X) res -= std::cos(offRad) * offsetDist;
     else if (type == CoordType::Y) res -= std::sin(offRad) * offsetDist;
 
@@ -220,10 +222,10 @@ SensorPose RclSensor::getPose() const { return sp; }
 RclTracking::RclTracking(lemlib::Chassis* chassis_,
             int frequencyHz_,
             bool autoSync_,
-            double minDelta_,
-            double maxDelta_,
-            double maxDeltaFromLemlib_,
-            double maxSyncPerSec_,
+            float minDelta_,
+            float maxDelta_,
+            float maxDeltaFromLemlib_,
+            float maxSyncPerSec_,
             int minPause_)
     : chassis(chassis_),
         goalMSPT(std::round(1000.0 / frequencyHz_)),
@@ -302,7 +304,7 @@ void RclTracking::discardData () {
     poseAtLatest = chassis->getPose();
 }
 
-void RclTracking::setMaxSyncPerSec(double maxSyncPerSec_) {
+void RclTracking::setMaxSyncPerSec(float maxSyncPerSec_) {
     maxSyncPT = maxSyncPerSec_ / (1000.0 / goalMSPT);
 };
 
@@ -330,11 +332,11 @@ void RclTracking::mainUpdate() {
         }
 
         // Collections
-        std::vector<double> xs, ys;
+        std::vector<float> xs, ys;
 
         // Make sure RclPosition doesn't deviate too much from the chassis position
         auto botPose = getRclPose();
-        double diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
+        float diff_from_lemlib = std::hypot(botPose.x-chassis->getPose().x, botPose.y-chassis->getPose().y);
         if (diff_from_lemlib > maxDeltaFromLemlib) {
             botPose.x += (chassis->getPose().x-botPose.x) / diff_from_lemlib;
             botPose.y += (chassis->getPose().y-botPose.y) / diff_from_lemlib;
@@ -344,31 +346,31 @@ void RclTracking::mainUpdate() {
         for (int i = 0; i < RclSensor::sensorCollection.size(); i++) {
             auto sens = RclSensor::sensorCollection[i];
 
-            double avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
+            float avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
             sens->logPos(rclLog);
 
             // Validate and collect
             if (type == CoordType::X) {
-                double diff = std::abs(coord - botPose.x);
+                float diff = std::abs(coord - botPose.x);
                 if (diff <= maxDelta) xs.push_back(coord);
             }
             else if (type == CoordType::Y) {
-                double diff = std::abs(coord - botPose.y);
+                float diff = std::abs(coord - botPose.y);
                 if (diff <= maxDelta) ys.push_back(coord);
             }
         }
 
         // Update means
         if (!xs.empty()) {
-            double meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
+            float meanX = std::accumulate(xs.begin(), xs.end(), 0.0) / xs.size();
             if (meanX > FIELD_NEG_HALF_LENGTH && meanX < FIELD_HALF_LENGTH && std::abs(meanX-botPose.x) >= minDelta) {
                 latestPrecise.x = meanX;
                 poseAtLatest.x = chassis->getPose().x;
             }
         }
         if (!ys.empty()) {
-            double meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
+            float meanY = std::accumulate(ys.begin(), ys.end(), 0.0) / ys.size();
             if (meanY > FIELD_NEG_HALF_LENGTH && meanY < FIELD_HALF_LENGTH && std::abs(meanY-botPose.y) >= minDelta) {
                 latestPrecise.y = meanY;
                 poseAtLatest.y = chassis->getPose().y;
@@ -389,12 +391,12 @@ void RclTracking::mainUpdate() {
 }
 void RclTracking::syncUpdate() {
     // variables
-    double x_diff = 0.0;
-    double y_diff = 0.0;
-    double real_diff = 0.0;
+    float x_diff = 0.0;
+    float y_diff = 0.0;
+    float real_diff = 0.0;
 
-    double x_update = 0.0;
-    double y_update = 0.0;
+    float x_update = 0.0;
+    float y_update = 0.0;
 
     // retrive rcl-based position
     lemlib::Pose currRclPosition = getRclPose();

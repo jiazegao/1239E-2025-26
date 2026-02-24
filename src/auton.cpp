@@ -8,14 +8,14 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
-void leftPush(double x_offset = 0, double y_offset = 0) {
+void leftPush(float x_offset = 0, float y_offset = 0) {
     chassis.moveToPoint(-40+x_offset, 37.5+y_offset, 900, {}, false);
     chassis.turnToHeading(90, 600, {}, false);
     retractLeftArm();
     chassis.moveToPoint(-21+x_offset, 37.5+y_offset, 2000, {.minSpeed=127, .earlyExitRange=1}, false);
     chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
 }
-void rightPush(double x_offset = 0, double y_offset = 0) {
+void rightPush(float x_offset = 0, float y_offset = 0) {
     chassis.moveToPoint(-40+x_offset, -37.5-y_offset, 900, {}, false);
     chassis.turnToHeading(270, 450, {}, false);
     retractLeftArm();

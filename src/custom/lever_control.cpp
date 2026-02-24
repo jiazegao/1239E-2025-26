@@ -23,12 +23,12 @@ const int INCREMENT_THRESHOLD = 20;
 const int DECREMENT_THRESHOLD = 30;
 
 // Scoring presets
-std::array<double, 10> midDistCumulative = {200,200,200,200,200,200,200,200,200,200};
+std::array<float, 10> midDistCumulative = {200,200,200,200,200,200,200,200,200,200};
 int midDistCumulativeIndex = 0;
-double midDistReading = 200.0;
-std::array<double, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
+float midDistReading = 200.0;
+std::array<float, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
-double topDistReading = 250.0;
+float topDistReading = 250.0;
 inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2767, 2767, 2767, 2767, 2767, 2767};
 inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {2767, 2767, 2767, 2767, 2767, 2767};
 bool positionedForTop = true;
@@ -138,12 +138,12 @@ void initLeverControl() {
                 opticColor = getOpticColor();
 
                 // Update cumulative values
-                double currMid = midDist.get();
+                float currMid = midDist.get();
                 midDistReading += (currMid-midDistCumulative[midDistCumulativeIndex])/midDistCumulative.size();
                 midDistCumulative[midDistCumulativeIndex] = currMid;
                 midDistCumulativeIndex = (midDistCumulativeIndex+1)%midDistCumulative.size();
                     
-                double currTop = topDist.get();
+                float currTop = topDist.get();
                 topDistReading += (currTop-topDistCumulative[topDistCumulativeIndex])/topDistCumulative.size();
                 topDistCumulative[topDistCumulativeIndex] = currTop;
                 topDistCumulativeIndex = (topDistCumulativeIndex+1)%topDistCumulative.size();
