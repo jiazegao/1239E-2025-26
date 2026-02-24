@@ -25,7 +25,7 @@ const float DIST_RESAMPLE_VARIANCE = 2.0;
 const float THETA_RESAMPLE_VARIANCE = 0.02;
 const int CONFIDENCE_THRESHOLD = 40;
 const float TRACKING_WHEEL_VARIANCE = 0.05;
-const float FAULT_TOLERANCE = 1e-3;
+const float FAULT_TOLERANCE = 1e-4f;
 const float UNCERTAINTY_TOLERANCE = 1.0;
 inline float DIST_SYNC_PROP = 0.1;
 const float THETA_SYNC_PROP = 0.001;
@@ -36,8 +36,6 @@ const float MINPAUSE = 10;
 struct Pose { float x, y, theta; };
 struct Circle { float x, y, radius; };
 struct Line_ { Pose p1, p2; };
-
-inline float roundTwoPlaces(int x);
 
 class MclTracking {
 private:
@@ -120,6 +118,16 @@ private:
     Timer t = Timer(MSPT);
     int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
+
+    static constexpr int NOISE_POOL_SIZE = 4001;
+    std::array<float, NOISE_POOL_SIZE> noise_pool;
+    int noise_idx = 0;
+
+    // Helper to get next noise value
+    inline float next_noise() {
+        noise_idx = (noise_idx + 1) % NOISE_POOL_SIZE;
+        return noise_pool[noise_idx];
+    }
 
     float vertical_drift = 0.0;
     float horizontal_drift = 0.0;
