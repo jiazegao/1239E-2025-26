@@ -81,10 +81,10 @@ void retractLeftArm() {
 };
 
 // Auton functions
-void moveForward(double inches, int timeout, float maxSpeed, float minSpeed, bool async) {
+void moveForward(float inches, int timeout, float maxSpeed, float minSpeed, bool async) {
     chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta)), timeout, {.forwards=inches > 0 ? true : false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
-void moveBackward(double inches, int timeout, float maxSpeed, float minSpeed,  bool async) {
+void moveBackward(float inches, int timeout, float maxSpeed, float minSpeed,  bool async) {
     chassis.moveToPoint(chassis.getPose().x+inches*std::cos(vexToStd(chassis.getPose().theta+180)), chassis.getPose().y+inches*std::sin(vexToStd(chassis.getPose().theta+180)), timeout, {.forwards=false, .maxSpeed=maxSpeed, .minSpeed=minSpeed}, async);
 }
 void jiggle(int repeats, int time, float forward, float backward) {
@@ -94,7 +94,7 @@ void jiggle(int repeats, int time, float forward, float backward) {
     }
 }
 void shake(int repeats, int time) {
-    double orig_theta = chassis.getPose().theta;
+    float orig_theta = chassis.getPose().theta;
     for (int i = 0; i < repeats; i++) {
         chassis.turnToHeading(orig_theta + 10, time/repeats/4, {.maxSpeed=60}, false);
         chassis.turnToHeading(orig_theta - 10, time/repeats/4, {.maxSpeed=60}, false);
@@ -223,13 +223,13 @@ void startOuttake() {
     frontOut();
     topIn();
 }
-double pivot(double curr_corrd, double pivot_coord) {
+float pivot(float curr_corrd, float pivot_coord) {
     return curr_corrd+std::abs(curr_corrd-pivot_coord)*std::abs(curr_corrd-pivot_coord)/(curr_corrd-pivot_coord);
 }
-double pivot_x(double pivot_coord) {
+float pivot_x(float pivot_coord) {
     return pivot(chassis.getPose().x, pivot_coord);
 }
-double pivot_y(double pivot_coord) {
+float pivot_y(float pivot_coord) {
     return pivot(chassis.getPose().y, pivot_coord);
 }
 
@@ -446,13 +446,13 @@ void startControllerRCLInfoDisplay() {
 // Mcl Benchmark with Heading Conversion for LCD
 inline Pose rawMcl = {0,0,0};
 inline Timer MclT(15);
-inline double MclRate = 0.0;
-inline double MclComputeTime = 0.0;
+inline float MclRate = 0.0;
+inline float MclComputeTime = 0.0;
 
 static pros::Task* mclTask = nullptr;
 static pros::Task* displayTask = nullptr;
 
-void startMclBenchmark(double x, double y, double theta, double autoReset) {
+void startMclBenchmark(float x, float y, float theta, float autoReset) {
 
     if (mclTask != nullptr) return;
 
@@ -500,7 +500,7 @@ void startMclBenchmark(double x, double y, double theta, double autoReset) {
     });
 }
 
-void startMcl(double x, double y, double vexTheta, bool resetLeft, bool resetBack, bool resetRight){
+void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight){
     // Reset Chassis and RCL
     lemlib::Pose p(x,y,vexTheta);
     chassis.setPose(x, y, vexTheta);

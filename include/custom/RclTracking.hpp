@@ -232,18 +232,18 @@ private:
 
 // Pose of a distance sensor (ray) for intersection math
 struct SensorPose {
-    double x = 0;
-    double y = 0;
-    double heading = 0;
-    double slope = 0;
-    double yIntercept = 0;
+    float x = 0;
+    float y = 0;
+    float heading = 0;
+    float slope = 0;
+    float yIntercept = 0;
 };
 
 struct Line {
-    double pt1[2] = {0, 0};
-    double pt2[2] = {0, 0};
-    double slope = 0;
-    double yIntercept = 0;
+    float pt1[2] = {0, 0};
+    float pt2[2] = {0, 0};
+    float slope = 0;
+    float yIntercept = 0;
 };
 
 // Line obstacle class
@@ -252,10 +252,10 @@ public:
 
     static Singly_Linked_List<Line_Obstacle> obstacleCollection;
 
-    Line_Obstacle(double x1, double y1, double x2, double y2, double lifeTimeMs = -1);
+    Line_Obstacle(float x1, float y1, float x2, float y2, float lifeTimeMs = -1);
     bool expired();
     bool isIntersecting(const SensorPose& sp) const;
-    static void addPolygonObstacle(const std::vector<std::pair<double, double>>& points, double lifeTimeMs = -1);
+    static void addPolygonObstacle(const std::vector<std::pair<float, float>>& points, float lifeTimeMs = -1);
 
 private:
     Line line;
@@ -268,7 +268,7 @@ public:
 
     static Singly_Linked_List<Circle_Obstacle> obstacleCollection;
 
-    Circle_Obstacle(double x_, double y_, double r_, double lifeTimeMs = -1);
+    Circle_Obstacle(float x_, float y_, float r_, float lifeTimeMs = -1);
 
     // Check if the obstacle expired
     bool expired();
@@ -276,7 +276,7 @@ public:
     // Check if sensor ray intersects this obstacle circle
     bool isIntersecting(const SensorPose& sp) const;
 
-    double x, y, radius;
+    float x, y, radius;
     Timer lifeTimer;
 };
 
@@ -285,21 +285,21 @@ class RclSensor {
 public:
     static std::vector<RclSensor*> sensorCollection;
 
-    RclSensor(pros::Distance* distSensor, double horizOffset, double vertOffset, double mainAng, double angleTol = 10.0);
+    RclSensor(pros::Distance* distSensor, float horizOffset, float vertOffset, float mainAng, float angleTol = 10.0);
     void updatePose(const lemlib::Pose& botPose);
-    bool isValid(double distVal) const;
-    std::pair<CoordType, double> getBotCoord(const lemlib::Pose& botPose, double accum = NAN);
+    bool isValid(float distVal) const;
+    std::pair<CoordType, float> getBotCoord(const lemlib::Pose& botPose, float accum = NAN);
     int rawReading() const;
     SensorPose getPose() const;
     void logPos(std::ofstream* targetFile);
 
 private:
     pros::Distance* sensor;
-    double offsetDist;
-    double offsetAngle;
-    double mainAngle;
+    float offsetDist;
+    float offsetAngle;
+    float mainAngle;
     SensorPose sp;
-    double angleTolerance;  // degrees
+    float angleTolerance;  // degrees
 };
 
 // Main RCL Tracking
@@ -309,10 +309,10 @@ public:
     RclTracking(lemlib::Chassis* chassis_,
                 int frequencyHz_ = 25,
                 bool autoSync_ = true,
-                double minDelta_ = 0.5,
-                double maxDelta_ = 4.0,
-                double maxDeltaFromLemlib_ = 10.0,
-                double maxSyncPerSec_ = 3.0,
+                float minDelta_ = 0.5,
+                float maxDelta_ = 4.0,
+                float maxDeltaFromLemlib_ = 10.0,
+                float maxSyncPerSec_ = 3.0,
                 int minPause_ = 20);
 
     // Start background task
@@ -325,7 +325,7 @@ public:
     void updateBotPose();
     void updateBotPose(RclSensor* sens);
 
-    void setMaxSyncPerSec(double _maxSyncPerSec); 
+    void setMaxSyncPerSec(float _maxSyncPerSec); 
 
     // Accumulation control
     void startAccumulating(bool autoUpdateAfterAccum = true);
@@ -344,8 +344,8 @@ private:
     lemlib::Chassis* chassis;
     int goalMSPT;
     int minPause;
-    double maxSyncPT;
-    double minDelta, maxDelta, maxDeltaFromLemlib;
+    float maxSyncPT;
+    float minDelta, maxDelta, maxDeltaFromLemlib;
     bool autoSync;
     bool accumulating;
     pros::Task* mainLoopTask = nullptr;
