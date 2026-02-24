@@ -10,6 +10,8 @@
 #include "configs.hpp"
 #include <cmath>
 
+#include "fast_trig.hpp"
+
 inline float roundTwoPlaces(float x) {
     return std::round(x*100)/100;
 }
@@ -38,8 +40,8 @@ bool Line_Obstacle::expired() {
 bool Line_Obstacle::isIntersecting(const SensorPose& sp) const {
     // Ray direction vector
     float angRad = degToRad(botToTrig(sp.heading));
-    float vAx = std::cos(angRad);
-    float vAy = std::sin(angRad);
+    float vAx = FastTrig::cos(angRad);
+    float vAy = FastTrig::sin(angRad);
 
     // Obstacle segment vector
     float vBx = line.pt2[0] - line.pt1[0];
@@ -91,8 +93,8 @@ bool Circle_Obstacle::expired() {
 // Check if sensor ray intersects this obstacle circle
 bool Circle_Obstacle::isIntersecting(const SensorPose& sp) const {
     float angRad = degToRad(botToTrig(sp.heading));
-    float vx = std::cos(angRad);
-    float vy = std::sin(angRad);
+    float vx = FastTrig::cos(angRad);
+    float vy = FastTrig::sin(angRad);
 
     // Vector from sensor to circle center
     float dx = x - sp.x;
@@ -127,8 +129,8 @@ RclSensor::RclSensor(pros::Distance* distSensor, float horizOffset, float vertOf
 void RclSensor::updatePose(const lemlib::Pose& botPose) {
     // sensor's angle position relative to the bot's center
     float theta = degToRad(offsetAngle - botPose.theta);
-    sp.x = botPose.x + std::cos(theta) * offsetDist;
-    sp.y = botPose.y + std::sin(theta) * offsetDist;
+    sp.x = botPose.x + FastTrig::cos(theta) * offsetDist;
+    sp.y = botPose.y + FastTrig::sin(theta) * offsetDist;
     // sensor ray's heading
     sp.heading = std::fmod(botPose.theta + mainAngle, 360.0);
     if (sp.heading <= 0) sp.heading += 360.0;  // avoid 0 or negative
@@ -172,8 +174,8 @@ std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, 
     val *= mmToInch;
 
     float angRad = degToRad(botToTrig(this->sp.heading));
-    float cosA = std::cos(angRad);
-    float sinA = std::sin(angRad);
+    float cosA = FastTrig::cos(angRad);
+    float sinA = FastTrig::sin(angRad);
 
     float minDist = 1e9; // Start with a huge number
     int wall = -1;
@@ -207,8 +209,8 @@ std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, 
 
     // Adjust by offset
     float offRad = degToRad(offsetAngle - botPose.theta);
-    if (type == CoordType::X) res -= std::cos(offRad) * offsetDist;
-    else if (type == CoordType::Y) res -= std::sin(offRad) * offsetDist;
+    if (type == CoordType::X) res -= FastTrig::cos(offRad) * offsetDist;
+    else if (type == CoordType::Y) res -= FastTrig::sin(offRad) * offsetDist;
 
     return {type, res};
 }
