@@ -9,7 +9,7 @@
 
 #include "fast_trig.hpp"
 
-inline float roundTwoPlaces(float x) {
+float roundTwoPlaces(float x) {
     return std::round(x*100)/100;
 }
 
@@ -109,6 +109,9 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGr
     for (int i = 0; i < NOISE_POOL_SIZE; i++) {
         noise_pool[i] = dist(gen);
     }
+
+    // Generate likelihood map
+    this->generate_likelihood_map();
 }
 
 void MclTracking::predict(float current_std_theta) {
@@ -135,7 +138,7 @@ void MclTracking::predict(float current_std_theta) {
     float d_vert_pure = d_vert_raw - (vert_offset * d_theta) + vertical_drift;
     float d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta) + horizontal_drift;
 
-    this->latest_speed = std::hypotf(d_vert_pure, d_horiz_pure) / MSPT * 1000.0f;
+    this->latest_speed = std::hypotf(d_vert_pure, d_horiz_pure) * INV_MSPT * 1000.0f;
 
     // Sync right after tracking wheel calculations to minimize data loss
     if (autoSync) updateBotPose();
@@ -166,79 +169,60 @@ void MclTracking::predict(float current_std_theta) {
     }
 }
 
-void MclTracking::update_weights(const std::vector<float>& sensor_readings, const std::vector<int>& confidences, float current_std_theta) {
+void MclTracking::update_weights(const std::vector<float>& readings, const std::vector<int>& confs) {
 
-    float robotCos = FastTrig::cos(current_std_theta);
-    float robotSin = FastTrig::sin(current_std_theta);
-
-    std::vector<float> sigmas_sq_2;
-    for(int i = 0; i < sensor_readings.size(); ++i) {
-        float s = 0.0f;
-        if (sensor_readings[i] < 7.87f) {
-            s = BASE_DIST_SIGMA_L787;
-        }
-        else {
-            s = BASE_DIST_SIGMA_G787 * (63.0f / (float)confidences[i]);
-        }
-        sigmas_sq_2.push_back(2.0f * s * s); // Pre-square and multiply by 2
+    float inv_sigmas[SENSOR_COUNT];
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        // Sigma in inches: 20mm = 0.787in, 5% = readings[i] * 0.05
+        float sigma = (readings[i] < 7.87f) ? 0.787f : (readings[i] * 0.05f);
+        inv_sigmas[i] = 1.0f / sigma;
     }
 
-    auto& particles = *particles_ptr;
-    for (int count = 0; count < PARTICLE_COUNT; count++) {
-        auto& p = particles[count];
-        float combined_prob = 1.0f;
+    for (auto& p : *particles_ptr) {
+        float total_weight = 1.0f;
+        
+        // Cache particle trig
+        float cp = FastTrig::cos(p.pose.theta);
+        float sp = FastTrig::sin(p.pose.theta);
 
-        // Intant penalize if out of bounds
-        if (p.pose.x < FIELD_NEG_HALF_LENGTH || p.pose.x > FIELD_HALF_LENGTH || p.pose.y < FIELD_NEG_HALF_LENGTH || p.pose.y > FIELD_HALF_LENGTH) {
-            p.weight = 1e-20f;
-            continue;
+        for (int i = 0; i < SENSOR_COUNT; i++) {
+            if (confs[i] < CONFIDENCE_THRESHOLD) continue;
+
+            // Transform Sensor Mount to World Space
+            // (Standard 2D Rotation: x' = x*cos - y*sin, y' = x*sin + y*cos)
+            float sx = p.pose.x + (sensor_mounts[i].x * cp - sensor_mounts[i].y * sp);
+            float sy = p.pose.y + (sensor_mounts[i].x * sp + sensor_mounts[i].y * cp);
+
+            // Project Sensor Reading (Hit Point)
+            float ray_angle = p.pose.theta + sensor_mounts[i].theta;
+            float hx = sx + FastTrig::cos(ray_angle) * readings[i];
+            float hy = sy + FastTrig::sin(ray_angle) * readings[i];
+
+            // Grid Lookup
+            int gx = (int)((hx + MAP_OFFSET) * MAP_SCALE);
+            int gy = (int)((hy + MAP_OFFSET) * MAP_SCALE);
+
+            if (gx >= 0 && gx < MAP_RES && gy >= 0 && gy < MAP_RES) {
+                // Retrieve d^0.5
+                float d_root = (float)likelihood_map[gy * MAP_RES + gx] * INV_DIST_MULTIPLIER;
+                
+                // Calculate z = d / sigma
+                // Since d_root is d^0.5, d is (d_root * d_root)
+                float z = (d_root * d_root) * inv_sigmas[i];
+
+                // 4. LUT Lookup (Index = z * 256, because 1024 samples / 4.0 max sigma)
+                int lut_idx = (int)(z * 256.0f);
+
+                if (lut_idx < 1024) {
+                    total_weight *= gaussian_lut[lut_idx];
+                } else {
+                    total_weight *= FAULT_TOLERANCE; 
+                }
+            } else {
+                total_weight *= FAULT_TOLERANCE;
+            }
         }
-
-        float diff = p.pose.theta - current_std_theta;
-        while (diff > M_PI) diff -= 2 * M_PI;
-        while (diff < -M_PI) diff += 2 * M_PI;
-        combined_prob *= std::expf(-(diff * diff) / (2 * HEADING_SIGMA * HEADING_SIGMA));
-
-        for (size_t i = 0; i < sensor_readings.size(); ++i) {
-            if (i >= SENSOR_COUNT) break; 
-            if (confidences[i] < CONFIDENCE_THRESHOLD || sensor_readings[i] > MAX_RANGE) continue;
-
-            float current_sigma_sq = sigmas_sq_2[i];
-
-            float s_theta = p.pose.theta + sensor_mounts[i].theta;
-            float s_x = p.pose.x + (pTrigs[count].cos_m * sensor_mounts[i].x) - (pTrigs[count].sin_m * sensor_mounts[i].y);
-            float s_y = p.pose.y + (pTrigs[count].sin_m * sensor_mounts[i].x) + (pTrigs[count].cos_m * sensor_mounts[i].y);
-
-            float p_dist = MAX_RANGE;
-            bool hit_hollow = false;
-
-            float rayCos = pTrigs[count].cos_m * mountTrigs[i].cos_m - pTrigs[count].sin_m  * mountTrigs[i].sin_m;
-            float raySin = pTrigs[count].sin_m * mountTrigs[i].cos_m + pTrigs[count].cos_m  * mountTrigs[i].sin_m;
-
-            for (const auto& wall : walls) {
-                p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, wall, MAX_RANGE, rayCos, raySin));
-            }
-            for (const auto& slo : solid_line_obstacles) {
-                p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, slo, MAX_RANGE, rayCos, raySin));
-            }
-            for (const auto& c : circle_obstacles) {
-                p_dist = std::min(p_dist, intersect_circle({s_x, s_y, s_theta}, c, MAX_RANGE, rayCos, raySin));
-            }
-            for (const auto& stlo : see_through_line_obstacles) {
-                float d = intersect_line({s_x, s_y, s_theta}, stlo, MAX_RANGE, rayCos, raySin);
-                if (d < p_dist) { p_dist = d; hit_hollow = true; }
-            }
-
-            if (hit_hollow) {
-                current_sigma_sq *= UNCERTAINTY_TOLERANCE;
-            }
-
-            float error = std::abs(sensor_readings[i] - p_dist);
-            float prob_match = std::expf(-(error * error) / current_sigma_sq);
-            
-            combined_prob *= (prob_match + FAULT_TOLERANCE);
-        }
-        p.weight = combined_prob + 1e-20f;
+        p.weight = total_weight;
     }
 }
 
@@ -252,7 +236,7 @@ void MclTracking::resample() {
     }
 
     // Average step distance
-    float step = total_weight / PARTICLE_COUNT;
+    float step = total_weight * INV_PARTICLE_COUNT;
 
     // Generate one random starting point inside the first gap
     std::uniform_real_distribution<float> starter(0.0f, step);
@@ -324,14 +308,16 @@ Pose MclTracking::step(float vex_theta, const std::vector<float>& dists, const s
     
     float std_theta = vexToStd(vex_theta);
     predict(std_theta); // Also syncs position back to lemlib
-    update_weights(dists, confs, std_theta);
+    update_weights(dists, confs);
 
     // Log
-    logMcl();
-    lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
-    for (auto x: RclSensor::sensorCollection) {
-        x->updatePose(p);
-        x->logPos(mclLog);
+    if (log_on) {
+        logMcl();
+        lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
+        for (auto x: RclSensor::sensorCollection) {
+            x->updatePose(p);
+            x->logPos(mclLog);
+        }
     }
 
     auto estimate = get_estimate(); // (Logs Particles)
@@ -339,7 +325,7 @@ Pose MclTracking::step(float vex_theta, const std::vector<float>& dists, const s
     // Prevent resampling during rotations at a single point
     float distSinceResample = std::hypotf(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
 
-    if ((estimate.second < RESAMPLE_THRESHOLD / 2.0f) || (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > MIN_DIST_FROM_RESAMPLE && latest_speed < MAX_VELO_RESAMPLE)) {
+    if ((estimate.second < RESAMPLE_THRESHOLD * 0.5f) || (estimate.second < RESAMPLE_THRESHOLD && distSinceResample > MIN_DIST_FROM_RESAMPLE && latest_speed < MAX_VELO_RESAMPLE)) {
         resample();
         lastResamplePose = estimate.first;
     }
@@ -457,11 +443,11 @@ void MclTracking::logMcl() {
     }
 
     // Calculate standard deviation
-    float std_dev_x = std::sqrtf(sum_sq_diff_x / PARTICLE_COUNT);
-    float std_dev_y = std::sqrtf(sum_sq_diff_y / PARTICLE_COUNT);
+    float std_dev_x = std::sqrtf(sum_sq_diff_x * INV_PARTICLE_COUNT);
+    float std_dev_y = std::sqrtf(sum_sq_diff_y * INV_PARTICLE_COUNT);
 
     // Circular standard deviation for heading
-    float R = std::hypotf(sum_sin / PARTICLE_COUNT, sum_cos / PARTICLE_COUNT);
+    float R = std::hypotf(sum_sin * INV_PARTICLE_COUNT, sum_cos * INV_PARTICLE_COUNT);
     float std_dev_theta = std::sqrtf(-2.0f * std::log(R)); 
 
     // Log to CSV
@@ -474,8 +460,63 @@ void MclTracking::logMcl() {
 }
 
 void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSec) {
-    this->vertical_drift = verticalDriftPerSec / (1000.0f / MSPT);
-    this->horizontal_drift = horizontalDriftPerSec / (1000.0f / MSPT);
+    this->vertical_drift = verticalDriftPerSec / (1000.0f * INV_MSPT);
+    this->horizontal_drift = horizontalDriftPerSec / (1000.0f * INV_MSPT);
+}
+
+void MclTracking::generate_likelihood_map() {
+    // Initialize gaussian lut
+    for (int i = 0; i < 1024; i++) {
+        float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
+        gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
+    }
+
+    // Build the Map
+    for (int y = 0; y < MAP_RES; y++) {
+        for (int x = 0; x < MAP_RES; x++) {
+            // Index to world coordinates (Center of cell)
+            float fx = (x / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
+            float fy = (y / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
+            
+            float min_d = 1e6;
+
+            // Distance to perimeter walls
+            for (const auto& wall : walls) 
+                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall));
+
+            // Distance to diagonal obstacles (the middle bars)
+            for (const auto& obs : line_obstacles) 
+                min_d = std::min(min_d, get_dist_to_segment(fx, fy, obs));
+
+            // Distance to circular match loaders
+            for (const auto& circle : circle_obstacles) {
+                float d = std::hypot(fx - circle.x, fy - circle.y);
+                min_d = std::min(min_d, std::abs(d - circle.radius));
+            }
+
+            // Store distance to objects
+            float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;
+            likelihood_map[y * MAP_RES + x] = (uint8_t)std::min(stored_val, 255.0f);
+        }
+    }
+}
+
+float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
+    float dx = seg.p2.x - seg.p1.x;
+    float dy = seg.p2.y - seg.p1.y;
+    float l2 = dx*dx + dy*dy;
+    
+    // If the line is actually a point
+    if (l2 == 0.0) return std::hypot(px - seg.p1.x, py - seg.p1.y);
+    
+    // Project point onto line, clamped to [0, 1]
+    float t = ((px - seg.p1.x) * dx + (py - seg.p1.y) * dy) / l2;
+    t = std::max(0.0f, std::min(1.0f, t));
+    
+    float closest_x = seg.p1.x + t * dx;
+    float closest_y = seg.p1.y + t * dy;
+    
+    return std::hypot(px - closest_x, py - closest_y);
 }
 
 MclTracking::~MclTracking() {

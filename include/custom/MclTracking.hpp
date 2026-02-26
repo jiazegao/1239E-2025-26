@@ -11,27 +11,37 @@
 
 // --- Configuration Constants ---
 const int PARTICLE_COUNT = 1000;
+const float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
 const int RESAMPLE_THRESHOLD = 300;
-const float MIN_DIST_FROM_RESAMPLE = 6.0;
-const float MAX_VELO_RESAMPLE = 100.0;
+const float MIN_DIST_FROM_RESAMPLE = 6.0f;
+const float MAX_VELO_RESAMPLE = 100.0f;
 const int LOG_AMOUNT = 10;
 const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
-const float MAX_RANGE = 300.0;
-const float BASE_DIST_SIGMA_L787 = 0.6;    // 0 ~ 200 mm
-const float BASE_DIST_SIGMA_G787 = 1.2;    // > 200 mm
-const float HEADING_SIGMA = 0.04;
-const float DIST_RESAMPLE_VARIANCE = 2.0;
-const float THETA_RESAMPLE_VARIANCE = 0.02;
+const float MAX_RANGE = 300.0f;
+const float BASE_DIST_SIGMA_L787 = 0.6f;    // 0 ~ 200 mm
+const float BASE_DIST_SIGMA_G787 = 1.2f;    // > 200 mm
+const float HEADING_SIGMA = 0.04f;
+const float DIST_RESAMPLE_VARIANCE = 2.0f;
+const float THETA_RESAMPLE_VARIANCE = 0.02f;
 const int CONFIDENCE_THRESHOLD = 40;
-const float TRACKING_WHEEL_VARIANCE = 0.05;
+const float TRACKING_WHEEL_VARIANCE = 0.05f;
 const float FAULT_TOLERANCE = 1e-4f;
-const float UNCERTAINTY_TOLERANCE = 1.0;
-inline float DIST_SYNC_PROP = 0.1;
-const float THETA_SYNC_PROP = 0.001;
+inline float DIST_SYNC_PROP = 0.1f;
+const float THETA_SYNC_PROP = 0.001f;
 
-const float MSPT = 20;
-const float MINPAUSE = 10;
+const float MSPT = 20.0f;
+const float INV_MSPT = 1.0f / MSPT;
+const float MINPAUSE = 10.0f;
+
+// Likelihood map
+static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
+static constexpr float MAP_SCALE = 2.0f; // samples per inch
+static constexpr float MAP_OFFSET = 72.0f; // field center offset
+static constexpr float GAUSSIAN_SIGMA = 1.5f; // "Blur" width in inches
+static constexpr float LIKELIHOOD_RANGE = 10.0f; // maximum differentiation of 10.0 inches from an object
+static const float DIST_MULTIPLIER = 255.0f / std::sqrt(LIKELIHOOD_RANGE);
+static const float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
 
 struct Pose { float x, y, theta; };
 struct Circle { float x, y, radius; };
@@ -52,14 +62,12 @@ private:
         {{-70.5,  70.5}, {-70.5, -70.5}}
     };
 
-    // Solid line obstacles
-    static constexpr Line_ solid_line_obstacles[] = {
+    // Line obstacles
+    static constexpr Line_ line_obstacles[] = {
+        // Middle goal
         {{-6.7171, 9.1919}, {9.1919, -6.7171}},
-        {{-9.1919, 6.7171}, {6.7171, -9.1919}}
-    };
-
-    // See-through line obstacles
-    static constexpr Line_ see_through_line_obstacles[] = {
+        {{-9.1919, 6.7171}, {6.7171, -9.1919}},
+        // Long goal legs
         {{-21, 47}, {-21.7955, 47.7955}},
         {{-21, 47}, {-21.7955, 46.2045}},
         {{21, 47}, {21.7955, 47.7955}},
@@ -86,6 +94,21 @@ private:
     };
     
     struct Trig { float cos_m, sin_m; };
+
+    // Likelihood Map Constants
+    static constexpr int MAP_RES = 288;
+    static constexpr float MAP_SCALE = 2.0f; 
+    static constexpr float MAP_OFFSET = 72.0f;
+    static constexpr float GAUSSIAN_SIGMA = 1.5f;
+
+    // 81KB Map
+    uint8_t likelihood_map[MAP_RES * MAP_RES];
+
+    // Gaussian cheatsheeet for dynamic sigma
+    float gaussian_lut[1024]; 
+
+    void generate_likelihood_map();
+    float get_dist_to_segment(float px, float py, Line_ seg);
 
     // Particles
     std::array<Particle, PARTICLE_COUNT> particles_array;
@@ -142,7 +165,7 @@ public:
     // Update particles and pTrigs
     void predict(float current_std_theta);
 
-    void update_weights(const std::vector<float>& sensor_readings, const std::vector<int>& confidences, float current_std_theta);
+    void update_weights(const std::vector<float>& readings, const std::vector<int>& confs);
 
     void resample();
 
@@ -165,8 +188,6 @@ public:
     void uniform_reset();
 
     void setDrift(float verticalDrift, float horizontalDrift);
-
-    void setLateralSyncWeight(float newWeight);
 
     ~MclTracking();
 };

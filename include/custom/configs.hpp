@@ -129,8 +129,9 @@ inline MclTracking MclMain(&chassis, &leftMotors, &rightMotors, distance_collect
 inline bool logging = false;
 inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
 inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
-inline Timer mclLogTimer(10000000000000);
-inline Timer rclLogTimer(10000000000000);
+inline Timer mclLogTimer(100000000000.0f);
+inline Timer rclLogTimer(100000000000.0f);
+inline bool log_on = false;
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);

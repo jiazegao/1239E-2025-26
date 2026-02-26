@@ -97,3 +97,6 @@
     1) Replaced all double precision floating point numbers with float for optimization
     2) Replaced standard trig calculations with 1D LUT for optimization
     3) Partially replaced standard normal distribution noise generation with noise LUT
+2/26/2026
+    1) Replaced per-particle intersection math with likelihood lookup table
+    2) Incorporated dynamic sigma based on sensor reading (+-20mm <200mm; +-5% >200mm)
