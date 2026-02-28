@@ -9,46 +9,45 @@
 #include "Tracking_Util.hpp"
 #include "pros/rotation.hpp"
 
-// --- Configuration Constants ---
-const int PARTICLE_COUNT = 1000;
-const float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-const int RESAMPLE_THRESHOLD = 300;
-const float MIN_DIST_FROM_RESAMPLE = 6.0f;
-const float MAX_VELO_RESAMPLE = 100.0f;
-const int LOG_AMOUNT = 10;
-const int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
-
-const float MAX_RANGE = 300.0f;
-const float BASE_DIST_SIGMA_L787 = 0.6f;    // 0 ~ 200 mm
-const float BASE_DIST_SIGMA_G787 = 1.2f;    // > 200 mm
-const float HEADING_SIGMA = 0.04f;
-const float DIST_RESAMPLE_VARIANCE = 2.0f;
-const float THETA_RESAMPLE_VARIANCE = 0.02f;
-const int CONFIDENCE_THRESHOLD = 40;
-const float TRACKING_WHEEL_VARIANCE = 0.05f;
-const float FAULT_TOLERANCE = 1e-4f;
-inline float DIST_SYNC_PROP = 0.1f;
-const float THETA_SYNC_PROP = 0.001f;
-
-const float MSPT = 20.0f;
-const float INV_MSPT = 1.0f / MSPT;
-const float MINPAUSE = 10.0f;
-
-// Distance map
-static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
-static constexpr float MAP_SCALE = 2.0f; // samples per inch
-static constexpr float MAP_OFFSET = 72.0f; // field center offset
-static constexpr float GAUSSIAN_SIGMA = 1.0f; // "Blur" width in inches
-static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 10.0 inches from an object
-static const float DIST_MULTIPLIER = 255.0f / std::sqrt(DISTANCE_RANGE);
-static const float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
-
 struct Pose { float x, y, theta; };
 struct Circle { float x, y, radius; };
 struct Line_ { Pose p1, p2; };
 
 class MclTracking {
 private:
+
+    // --- Configuration Constants ---
+    static constexpr int PARTICLE_COUNT = 2400;
+    static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
+    static constexpr int RESAMPLE_THRESHOLD = 600;
+    static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
+    static constexpr float MAX_VELO_RESAMPLE = 100.0f;
+    static constexpr int LOG_AMOUNT = 10;
+    static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
+
+    static constexpr float MAX_RANGE = 300.0f;
+    static constexpr float HEADING_SIGMA = 0.04f;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
+    static constexpr int CONFIDENCE_THRESHOLD = 40;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.05f;
+    static constexpr float FAULT_TOLERANCE = 1e-4f;
+    float DIST_SYNC_PROP = 0.1f;
+    float THETA_SYNC_PROP = 0.001f;
+
+    static constexpr float MSPT = 20.0f;
+    static constexpr float INV_MSPT = 1.0f / MSPT;
+    static constexpr float MINPAUSE = 10.0f;
+
+    // Distance map
+    static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
+    static constexpr float MAP_SCALE = 2.0f; // samples per inch
+    static constexpr float MAP_OFFSET = 72.0f; // field center offset
+    static constexpr float GAUSSIAN_SIGMA = 2.5f; // "Blur" width in inches
+    static constexpr float DISTANCE_RANGE = 10.0f; // maximum differentiation of 10.0 inches from an object
+    static constexpr float DIST_MULTIPLIER = 80.6380803343f;   // (255.0 / sqrt(DISTANCE_RANGE))
+    static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
+
     struct Particle {
         Pose pose;
         float weight;
@@ -175,11 +174,15 @@ public:
 
     void startTracking();
 
+    void setDistSyncProp(float newDistSyncProp);
+
     void stopTracking();
 
     void logMcl();
 
     void uniform_reset();
+
+    void startAsyncLogger();
 
     void setDrift(float verticalDrift, float horizontalDrift);
 

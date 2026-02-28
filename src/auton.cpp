@@ -727,7 +727,7 @@ void skills_v2() {
 
     // Score two red
     chassis.turnToPoint(-11, 11, 500,{.forwards=false}, false);
-    DIST_SYNC_PROP = 1e-30;
+    MclMain.setDistSyncProp(1e-20f);
     startOuttake();
     frontMotor.move(-25);
     chassis.moveToPose(-9, 9, 315, 3000, {.forwards=false, .lead = 0.3}, true);
@@ -740,7 +740,7 @@ void skills_v2() {
     startOuttake();
     pros::delay(400);
     middleMech.extend();
-    DIST_SYNC_PROP = 0.1;
+    MclMain.setDistSyncProp(0.1f);
 
     // Empty top-left loader
     startIntake();
@@ -812,7 +812,7 @@ void skills_v2() {
     chassis.turnToPoint(30, -21, 700, {}, false);
     chassis.moveToPoint(30, -21, 1000, {.maxSpeed=80}, false);
     chassis.turnToPoint(11.5, -11.5, 800, {.forwards=false}, false);
-    DIST_SYNC_PROP = 1e-30;
+    MclMain.setDistSyncProp(1e-20);
     chassis.moveToPose(11, -4, 135, 2400, {.forwards=false, .lead=0.2}, true);
     pros::delay(400);
     openGate();
@@ -827,7 +827,7 @@ void skills_v2() {
     pros::delay(400);
     middleMech.extend();
     closeGate();
-    DIST_SYNC_PROP = 0.1;
+    MclMain.setDistSyncProp(0.1);
 
     // Empty bottom-right loader
     chassis.moveToPoint(40, -47, 1400, {}, false);

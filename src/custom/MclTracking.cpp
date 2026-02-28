@@ -6,12 +6,22 @@
 #include <cmath>
 #include <numbers>
 #include <random>
+#include <queue>
 
 #include "fast_trig.hpp"
+#include "pros/rtos.h"
 
-float roundTwoPlaces(float x) {
-    return std::round(x*100)/100;
-}
+// --- Async Logging Variables ---
+enum class LogType { PARTICLE, POSE };
+
+struct LogData {
+    LogType type;
+    float v1, v2, v3, v4, v5, v6, v7; // Generic payload to hold either pose or particle data
+};
+
+std::queue<LogData> log_queue;
+pros::Mutex log_mutex;
+pros::Task* asyncLogTask = nullptr;
 
 float MclTracking::intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin) {
 
@@ -150,8 +160,8 @@ void MclTracking::predict(float current_std_theta) {
         float pSin = FastTrig::sin(p.pose.theta + (d_theta/2));
 
         // Get noise
-        float vert_noise = 1.0 + next_noise()*TRACKING_WHEEL_VARIANCE;
-        float horiz_noise = 1.0 + next_noise()*TRACKING_WHEEL_VARIANCE;
+        float vert_noise = 1.0f + next_noise()*TRACKING_WHEEL_VARIANCE;
+        float horiz_noise = 1.0f + next_noise()*TRACKING_WHEEL_VARIANCE;
 
         // Forward / Backward motion with noise
         float forward_dist = d_vert_pure * vert_noise + next_noise()*drift_variance;
@@ -286,11 +296,15 @@ std::pair<Pose, float> MclTracking::get_estimate() {
         weight_sqr_sum += p.weight * p.weight;
 
         // Log - Log Particle Positions
-        if (count % LOG_RATIO == 0) {
-            while (logging == true) {pros::delay(1);}
-            logging = true;
-            *mclLog << roundTwoPlaces(p.pose.x) << "," << roundTwoPlaces(p.pose.y) << "\n";
-            logging = false;
+        if (log_on && count % LOG_RATIO == 0) {
+            LogData pLog;
+            pLog.type = LogType::PARTICLE;
+            pLog.v1 = p.pose.x;
+            pLog.v2 = p.pose.y;
+
+            log_mutex.take();
+            log_queue.push(pLog);
+            log_mutex.give();
         }
     }
 
@@ -408,16 +422,16 @@ void MclTracking::updateBotPose() {
 
 void MclTracking::startTracking() {
     if (MclTrackingTask == nullptr) {
-        MclTrackingTask = new pros::Task([this](){
 
-            // Log distance map
-            if (log_on) {
-                for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
-                    *mclLog << distance_map[i] << " ";
-                }
-                *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
+        // Log distance map
+        if (log_on) {
+            for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
+                *mclLog << distance_map[i] << " ";
             }
-            
+            *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
+        }
+
+        MclTrackingTask = new pros::Task([this](){
             while (true) {
                 this->t.reset();
 
@@ -432,6 +446,10 @@ void MclTracking::startTracking() {
 
 void MclTracking::stopTracking() {
     if (MclTrackingTask != nullptr) { MclTrackingTask->remove(); delete MclTrackingTask; MclTrackingTask = nullptr; }
+}
+
+void MclTracking::setDistSyncProp(float newDistSyncProp) {
+    DIST_SYNC_PROP = newDistSyncProp;
 }
 
 void MclTracking::logMcl() {
@@ -458,13 +476,20 @@ void MclTracking::logMcl() {
     float R = std::hypotf(sum_sin * INV_PARTICLE_COUNT, sum_cos * INV_PARTICLE_COUNT);
     float std_dev_theta = std::sqrtf(-2.0f * std::log(R)); 
 
-    // Log to CSV
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *mclLog << mclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
-    *mclLog << roundTwoPlaces(rawMcl.x) << "," << roundTwoPlaces(rawMcl.y) << "," << roundTwoPlaces(rawMcl.theta) << "\n";
-    *mclLog << roundTwoPlaces(std_dev_x) << "," << roundTwoPlaces(std_dev_y) << "," << roundTwoPlaces(std_dev_theta) << "\n";
-    logging = false;
+    // Log to Queue (Zero Blocking)
+    LogData pLog;
+    pLog.type = LogType::POSE;
+    pLog.v1 = mclLogTimer.elapsed(TimeUnit::SECOND);
+    pLog.v2 = rawMcl.x;
+    pLog.v3 = rawMcl.y;
+    pLog.v4 = rawMcl.theta;
+    pLog.v5 = std_dev_x;
+    pLog.v6 = std_dev_y;
+    pLog.v7 = std_dev_theta;
+
+    log_mutex.take();
+    log_queue.push(pLog);
+    log_mutex.give();
 }
 
 void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSec) {
@@ -525,6 +550,40 @@ float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
     float closest_y = seg.p1.y + t * dy;
     
     return std::hypot(px - closest_x, py - closest_y);
+}
+
+void MclTracking::startAsyncLogger() {
+    if (asyncLogTask == nullptr) {
+        asyncLogTask = new pros::Task([this]() {
+            while (true) {
+                LogData data;
+                bool has_data = false;
+
+                // Safely pull one item from the queue
+                log_mutex.take();
+                if (!log_queue.empty()) {
+                    data = log_queue.front();
+                    log_queue.pop();
+                    has_data = true;
+                }
+                log_mutex.give();
+
+                // Do the slow string formatting and SD card I/O outside the lock
+                if (has_data) {
+                    if (data.type == LogType::PARTICLE) {
+                        *mclLog << data.v1 << "," << data.v2 << "\n";
+                    } else if (data.type == LogType::POSE) {
+                        *mclLog << data.v1 << "\n"; // Time
+                        *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; // Pose
+                        *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; // Std Dev
+                    }
+                } else {
+                    // Sleep to prevent CPU hogging when queue is empty
+                    pros::delay(MSPT); 
+                }
+            }
+        }, TASK_PRIORITY_DEFAULT-1);
+    }
 }
 
 MclTracking::~MclTracking() {
