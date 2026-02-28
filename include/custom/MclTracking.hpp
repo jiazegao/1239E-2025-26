@@ -2,6 +2,7 @@
 #define MCLTRACKING_HPP
 
 #include "lemlib/chassis/chassis.hpp"
+#include "pros/distance.hpp"
 #include "main.h"
 #include <vector>
 #include <cmath>
@@ -12,6 +13,7 @@
 struct Pose { float x, y, theta; };
 struct Circle { float x, y, radius; };
 struct Line_ { Pose p1, p2; };
+struct Trig { float cos_m, sin_m; };
 
 class MclTracking {
 private:
@@ -53,16 +55,16 @@ private:
         float weight;
     };
 
-    // walls
-    static constexpr Line_ walls[] = {
-        {{-70.5, -70.5}, { 70.5, -70.5}}, 
+    // Walls
+    static constexpr Line_ walls[4] = {
+        {{-70.5, -70.5,}, { 70.5, -70.5}}, 
         {{ 70.5, -70.5}, { 70.5,  70.5}}, 
         {{ 70.5,  70.5}, {-70.5,  70.5}}, 
         {{-70.5,  70.5}, {-70.5, -70.5}}
     };
 
     // Line obstacles
-    static constexpr Line_ line_obstacles[] = {
+    static constexpr Line_ line_obstacles[10] = {
         // Middle goal
         {{-6.7171, 9.1919}, {9.1919, -6.7171}},
         {{-9.1919, 6.7171}, {6.7171, -9.1919}},
@@ -78,21 +80,27 @@ private:
     };
 
     // Circle obstacles
-    static constexpr Circle circle_obstacles[] = {
+    static constexpr Circle circle_obstacles[4] = {
         {-67.5, 46.5, 2.75},  {-67.5, -46.5, 2.75}, // Match loaders
         {67.5, 46.5, 2.75},   {67.5, -46.5, 2.75}
     };
 
     // Sensor mounts
     static constexpr int SENSOR_COUNT = 3;
-    static constexpr Pose sensor_mounts[] = {
+    static constexpr Pose sensor_mounts[SENSOR_COUNT] = {
         // x (fwd/back), y (left/right), theta (angle sensor is pointing)
         {-4.25, -5.375, M_PI},      // Back sensor: faces West (180 degrees)
         {0.0, -4.5, -M_PI/2.0},     // Right sensor: faces South (-90 degrees)
         {0.0, 4.5, M_PI/2.0}        // Left sensor: faces North (90 degrees)
     };
-    
-    struct Trig { float cos_m, sin_m; };
+    std::array<pros::Distance*, SENSOR_COUNT> distance_collection = {nullptr, nullptr, nullptr};
+    std::array<Trig, SENSOR_COUNT> mountTrigs;
+
+    // Disabling line obstacles
+    std::vector<Line_>* disabling_line_obstacles = nullptr;
+
+    // Disabling circle obstacles
+    std::vector<Circle>* disabling_circle_obstacles = nullptr;
 
     // 81KB Map
     uint8_t distance_map[MAP_RES * MAP_RES];
@@ -110,13 +118,11 @@ private:
     std::array<Particle, PARTICLE_COUNT>* new_gen_ptr = &new_gen_array;
     std::array<Trig, PARTICLE_COUNT> pTrigs = {};
     std::mt19937 gen;
-    std::vector<Trig> mountTrigs;
     lemlib::Chassis* chassis;
     pros::MotorGroup* leftMotorGroup;
     pros::MotorGroup* rightMotorGroup;
     bool vertical_tracking_mode;
     pros::Task* MclTrackingTask;
-    std::vector<pros::Distance*> distance_collection;
     bool autoSync = false;
     float lastTheta = 0.0;
     pros::Rotation* vertical_tracking_wheel = nullptr;
@@ -134,6 +140,13 @@ private:
     Timer t = Timer(MSPT);
     int minPause = MINPAUSE;
     Pose rawMcl = {0, 0, 0};
+
+    // Sensor data access
+    std::array<bool, SENSOR_COUNT> valid_sensors;
+    std::array<int, SENSOR_COUNT> sensor_readings_mm;
+    std::array<float, SENSOR_COUNT> sensor_readings_inch;
+    std::array<int, SENSOR_COUNT> sensor_confs;
+    std::array<bool, SENSOR_COUNT> disabled_sensors = {0, 0, 0};
 
     static constexpr int NOISE_POOL_SIZE = 4001;
     std::array<float, NOISE_POOL_SIZE> noise_pool;
@@ -153,18 +166,16 @@ private:
     float intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy);
 
 public:
-    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
+    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
 
     // Update particles and pTrigs
     void predict(float current_std_theta);
 
-    void update_weights(const std::vector<float>& readings, const std::vector<int>& confs);
+    void update_weights();
 
     void resample();
 
     std::pair<Pose, float> get_estimate();
-
-    Pose step(float vex_theta, const std::vector<float>& dists, const std::vector<int>& confs);
 
     void set_pose(float x, float y, float vex_theta);
 
@@ -183,6 +194,12 @@ public:
     void uniform_reset();
 
     void startAsyncLogger();
+
+    void enableSens(int sens);
+
+    void disableSens(int sens);
+
+    void setObstacles(std::vector<Line_>* newLineObstaclesPtr = nullptr, std::vector<Circle>* newCirleObstaclesPtr = nullptr);
 
     void setDrift(float verticalDrift, float horizontalDrift);
 

@@ -117,7 +117,7 @@ inline pros::Distance descoreDist(2);
 inline pros::Distance back_dist(15);
 inline pros::Distance right_dist(3);
 inline pros::Distance left_dist(4);
-inline std::vector<pros::Distance*> distance_collection = {&back_dist, &right_dist, &left_dist};
+inline std::array<pros::Distance*, 3> distance_collection = {&back_dist, &right_dist, &left_dist};
 
 // Rcl setup
 inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
@@ -132,6 +132,22 @@ inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
 inline Timer mclLogTimer(100000000000.0f);
 inline Timer rclLogTimer(100000000000.0f);
 inline bool log_on = false;
+
+// Mcl obstacles
+inline std::vector<Line_> soloAWP_obstacles = {
+    // Alliance Robot Disable Lines
+    {{-72.0f, 8.0f}, {-46.0f, 8.0f}},
+    {{-46.0f, 8.0f}, {-46.0f, 32.0f}},
+    {{-72.0f, 32.0f}, {-46.0f, 32.0f}},
+    // Middle Line
+    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+};
+inline std::vector<Line_> quadrant_dividers = {
+    // x-axis
+    {{-72.0f, 0.0f}, {72.0f, 0.0f}},
+    // y-axis
+    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+};
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);

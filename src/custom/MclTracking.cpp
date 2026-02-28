@@ -43,7 +43,7 @@ float MclTracking::intersect_line(Pose ray, Line_ wall, float max_range, float r
     float y4 = ray.y + raySin * max_range;
 
     float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if (den == 0) return max_range;
+    if (std::abs(den) < 1e-6f) return max_range;
 
     float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
     float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
@@ -75,11 +75,11 @@ float MclTracking::intersect_circle(Pose ray, Circle c, float max_range, float d
     return max_range;
 }
 
-MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::vector<pros::Distance*> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_) {
+MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_) {
     this->chassis = chassis;
     this->leftMotorGroup = leftMotorGroup;
     this->rightMotorGroup = rightMotorGroup;
-    this->distance_collection = dist_collection;
+    for (int i = 0; i < SENSOR_COUNT; i++) {this->distance_collection[i] = dist_collection[i];}
     this->autoSync = autoSync_;
 
     this->vertical_tracking_wheel = get<0>(vertical_tracking_wheel);
@@ -105,13 +105,13 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGr
     new_gen_ptr = &new_gen_array;
 
     auto& particles = *particles_ptr;
-    for (int i = 0; i < PARTICLE_COUNT; ++i) {
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
         particles[i] = {{x_init(gen), y_init(gen), t_init(gen)}, 1.0f};
     }
 
     // Mount trig calculation
-    for(int i = 0; i < SENSOR_COUNT; ++i) {
-        mountTrigs.push_back({FastTrig::cos(sensor_mounts[i].theta), FastTrig::sin(sensor_mounts[i].theta)});
+    for(int i = 0; i < SENSOR_COUNT; i++) {
+        mountTrigs[i] = {FastTrig::cos(sensor_mounts[i].theta), FastTrig::sin(sensor_mounts[i].theta)};
     }
 
     // Pre-generated noise
@@ -179,15 +179,74 @@ void MclTracking::predict(float current_std_theta) {
     }
 }
 
-void MclTracking::update_weights(const std::vector<float>& readings, const std::vector<int>& confs) {
+void MclTracking::update_weights() {
 
+    // Pre-processing filters
+
+    // Bot trigs
+    float botCos = FastTrig::cos(rawMcl.theta);
+    float botSin = FastTrig::sin(rawMcl.theta);
+
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        sensor_readings_mm[i] = distance_collection[i]->get();
+        sensor_readings_inch[i] = sensor_readings_mm[i] * mmToInch;
+        sensor_confs[i] = distance_collection[i]->get_confidence();
+        valid_sensors[i] = true;
+
+        // Validify sensors
+
+        // Case #1: Sensor disabled
+        if (disabled_sensors[i]) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #2: Invalid reading
+        if (sensor_readings_mm[i] > 9000) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #3: Invalid confidence
+        else if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #4: Disqualifying intersection with obstacles
+
+        // Sensor positions
+        float sx = rawMcl.x + (sensor_mounts[i].x * botCos - sensor_mounts[i].y * botSin);
+        float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
+        float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
+
+        // Test for intersections
+        if (disabling_line_obstacles != nullptr) {
+            for (auto line : *disabling_line_obstacles) {
+                if (intersect_line({sx, sy, ray_ang}, line, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                    valid_sensors[i] = false;
+                    break;
+                }
+            }
+        }
+        if (!valid_sensors[i]) continue;
+
+        if (disabling_circle_obstacles != nullptr) {
+            for (auto circle : *disabling_circle_obstacles) {
+                if (intersect_circle({sx, sy, ray_ang}, circle, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                    valid_sensors[i] = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Calculate sigmas
     float inv_sigmas[SENSOR_COUNT];
     for (int i = 0; i < SENSOR_COUNT; i++) {
-        // Sigma in inches: 20mm = 0.787in, 5% = readings[i] * 0.05
-        float sigma = (readings[i] < 7.87f) ? 0.787f : (readings[i] * 0.05f);
+        // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
+        float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
         inv_sigmas[i] = 1.0f / sigma;
     }
 
+    // Process particles
     for (auto& p : *particles_ptr) {
         float total_weight = 1.0f;
         
@@ -196,7 +255,7 @@ void MclTracking::update_weights(const std::vector<float>& readings, const std::
         float sp = FastTrig::sin(p.pose.theta);
 
         for (int i = 0; i < SENSOR_COUNT; i++) {
-            if (confs[i] < CONFIDENCE_THRESHOLD) continue;
+            if (!valid_sensors[i]) continue;
 
             // Transform Sensor Mount to World Space
             // (Standard 2D Rotation: x' = x*cos - y*sin, y' = x*sin + y*cos)
@@ -205,8 +264,8 @@ void MclTracking::update_weights(const std::vector<float>& readings, const std::
 
             // Project Sensor Reading (Hit Point)
             float ray_angle = p.pose.theta + sensor_mounts[i].theta;
-            float hx = sx + FastTrig::cos(ray_angle) * readings[i];
-            float hy = sy + FastTrig::sin(ray_angle) * readings[i];
+            float hx = sx + FastTrig::cos(ray_angle) * sensor_readings_inch[i];
+            float hy = sy + FastTrig::sin(ray_angle) * sensor_readings_inch[i];
 
             // Grid Lookup
             int gx = (int)((hx + MAP_OFFSET) * MAP_SCALE);
@@ -309,7 +368,10 @@ std::pair<Pose, float> MclTracking::get_estimate() {
     }
 
     // Handle the case where all weights are zero (safety)
-    if (total_weight < 1e-20f) return {rawMcl, 0.0}; 
+    if (total_weight < 1e-20f) {
+        uniform_reset();
+        return {rawMcl, 0.0};
+    }
 
     return {{
         x / total_weight, 
@@ -318,13 +380,12 @@ std::pair<Pose, float> MclTracking::get_estimate() {
     }, total_weight*total_weight/weight_sqr_sum};
 }
 
-Pose MclTracking::step(float vex_theta, const std::vector<float>& dists, const std::vector<int>& confs) {
-    
-    float std_theta = vexToStd(vex_theta);
-    predict(std_theta); // Also syncs position back to lemlib
-    update_weights(dists, confs);
+Pose MclTracking::updateMcl() {
 
-    // Log
+    predict(vexToStd(chassis->getPose().theta)); // Also syncs position back to lemlib
+    update_weights();
+
+    // Log general position
     if (log_on) {
         logMcl();
         lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
@@ -368,7 +429,6 @@ void MclTracking::set_pose(float x, float y, float vex_theta) {
 void MclTracking::uniform_reset() {
     std::uniform_real_distribution<float> x_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
     std::uniform_real_distribution<float> y_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
-    std::uniform_real_distribution<float> t_dist(-std::numbers::pi, std::numbers::pi);
 
     this->lastTheta = vexToStd(this->chassis->getPose().theta);
     this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0f;
@@ -377,20 +437,9 @@ void MclTracking::uniform_reset() {
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
-        p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
+        p.pose = {x_dist(gen), y_dist(gen), lastTheta};
         p.weight = 1.0f;
     }
-}
-
-Pose MclTracking::updateMcl() {
-    // Get Sensors
-    std::vector<float> dists = {distance_collection[0]->get()*mmToInch, distance_collection[1]->get()*mmToInch, distance_collection[2]->get()*mmToInch};
-    std::vector<int> confs = {distance_collection[0]->get_confidence(), distance_collection[1]->get_confidence(), distance_collection[2]->get_confidence()};
-
-    // Update Filter
-    rawMcl = step(chassis->getPose().theta, dists, confs);
-
-    return rawMcl;
 }
 
 void MclTracking::updateBotPose() {
@@ -534,6 +583,21 @@ void MclTracking::generate_distance_map() {
     }
 }
 
+void MclTracking::enableSens(int sens) {
+    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
+    disabled_sensors[filtered] = false;
+}
+
+void MclTracking::disableSens(int sens) {
+    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
+    disabled_sensors[filtered] = true;
+}
+
+void MclTracking::setObstacles(std::vector<Line_>* newLineObstaclesPtr, std::vector<Circle>* newCirleObstaclesPtr) {
+    disabling_line_obstacles = newLineObstaclesPtr;
+    disabling_circle_obstacles = newCirleObstaclesPtr;
+}
+
 float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
     float dx = seg.p2.x - seg.p1.x;
     float dy = seg.p2.y - seg.p1.y;
@@ -556,26 +620,28 @@ void MclTracking::startAsyncLogger() {
     if (asyncLogTask == nullptr) {
         asyncLogTask = new pros::Task([this]() {
             while (true) {
-                LogData data;
-                bool has_data = false;
+                std::queue<LogData> local_queue;
 
-                // Safely pull one item from the queue
+                // Lock once, swap the contents, and unlock immediately
                 log_mutex.take();
                 if (!log_queue.empty()) {
-                    data = log_queue.front();
-                    log_queue.pop();
-                    has_data = true;
+                    std::swap(log_queue, local_queue);
                 }
                 log_mutex.give();
 
-                // Do the slow string formatting and SD card I/O outside the lock
-                if (has_data) {
-                    if (data.type == LogType::PARTICLE) {
-                        *mclLog << data.v1 << "," << data.v2 << "\n";
-                    } else if (data.type == LogType::POSE) {
-                        *mclLog << data.v1 << "\n"; // Time
-                        *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; // Pose
-                        *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; // Std Dev
+                if (!local_queue.empty()) {
+                    // Process the entire batch completely outside the lock
+                    while (!local_queue.empty()) {
+                        LogData data = local_queue.front();
+                        local_queue.pop();
+                        
+                        if (data.type == LogType::PARTICLE) {
+                            *mclLog << data.v1 << "," << data.v2 << "\n";
+                        } else if (data.type == LogType::POSE) {
+                            *mclLog << data.v1 << "\n"; 
+                            *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
+                            *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; 
+                        }
                     }
                 } else {
                     // Sleep to prevent CPU hogging when queue is empty
