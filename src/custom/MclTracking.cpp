@@ -112,14 +112,6 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGr
 
     // Generate distance map
     this->generate_distance_map();
-
-    // Log distance map
-    if (log_on) {
-        for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
-            *mclLog << distance_map[i] << " ";
-        }
-        *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
-    }
 }
 
 void MclTracking::predict(float current_std_theta) {
@@ -417,6 +409,14 @@ void MclTracking::updateBotPose() {
 void MclTracking::startTracking() {
     if (MclTrackingTask == nullptr) {
         MclTrackingTask = new pros::Task([this](){
+
+            // Log distance map
+            if (log_on) {
+                for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
+                    *mclLog << distance_map[i] << " ";
+                }
+                *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
+            }
             
             while (true) {
                 this->t.reset();
