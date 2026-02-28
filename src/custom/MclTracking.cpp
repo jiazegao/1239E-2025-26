@@ -110,8 +110,16 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGr
         noise_pool[i] = dist(gen);
     }
 
-    // Generate likelihood map
-    this->generate_likelihood_map();
+    // Generate distance map
+    this->generate_distance_map();
+
+    // Log distance map
+    if (log_on) {
+        for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
+            *mclLog << distance_map[i] << " ";
+        }
+        *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
+    }
 }
 
 void MclTracking::predict(float current_std_theta) {
@@ -204,7 +212,7 @@ void MclTracking::update_weights(const std::vector<float>& readings, const std::
 
             if (gx >= 0 && gx < MAP_RES && gy >= 0 && gy < MAP_RES) {
                 // Retrieve d^0.5
-                float d_root = (float)likelihood_map[gy * MAP_RES + gx] * INV_DIST_MULTIPLIER;
+                float d_root = (float)distance_map[gy * MAP_RES + gx] * INV_DIST_MULTIPLIER;
                 
                 // Calculate z = d / sigma
                 // Since d_root is d^0.5, d is (d_root * d_root)
@@ -464,7 +472,7 @@ void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSe
     this->horizontal_drift = horizontalDriftPerSec / (1000.0f * INV_MSPT);
 }
 
-void MclTracking::generate_likelihood_map() {
+void MclTracking::generate_distance_map() {
     // Initialize gaussian lut
     for (int i = 0; i < 1024; i++) {
         float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
@@ -496,7 +504,7 @@ void MclTracking::generate_likelihood_map() {
 
             // Store distance to objects
             float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;
-            likelihood_map[y * MAP_RES + x] = (uint8_t)std::min(stored_val, 255.0f);
+            distance_map[y * MAP_RES + x] = (uint8_t)std::min(stored_val, 255.0f);
         }
     }
 }

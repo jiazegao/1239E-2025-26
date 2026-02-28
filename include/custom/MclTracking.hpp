@@ -34,13 +34,13 @@ const float MSPT = 20.0f;
 const float INV_MSPT = 1.0f / MSPT;
 const float MINPAUSE = 10.0f;
 
-// Likelihood map
+// Distance map
 static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
 static constexpr float MAP_SCALE = 2.0f; // samples per inch
 static constexpr float MAP_OFFSET = 72.0f; // field center offset
 static constexpr float GAUSSIAN_SIGMA = 1.5f; // "Blur" width in inches
-static constexpr float LIKELIHOOD_RANGE = 10.0f; // maximum differentiation of 10.0 inches from an object
-static const float DIST_MULTIPLIER = 255.0f / std::sqrt(LIKELIHOOD_RANGE);
+static constexpr float DISTANCE_RANGE = 10.0f; // maximum differentiation of 10.0 inches from an object
+static const float DIST_MULTIPLIER = 255.0f / std::sqrt(DISTANCE_RANGE);
 static const float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
 
 struct Pose { float x, y, theta; };
@@ -95,19 +95,19 @@ private:
     
     struct Trig { float cos_m, sin_m; };
 
-    // Likelihood Map Constants
+    // Distance Map Constants
     static constexpr int MAP_RES = 288;
     static constexpr float MAP_SCALE = 2.0f; 
     static constexpr float MAP_OFFSET = 72.0f;
     static constexpr float GAUSSIAN_SIGMA = 1.5f;
 
     // 81KB Map
-    uint8_t likelihood_map[MAP_RES * MAP_RES];
+    uint8_t distance_map[MAP_RES * MAP_RES];
 
     // Gaussian cheatsheeet for dynamic sigma
     float gaussian_lut[1024]; 
 
-    void generate_likelihood_map();
+    void generate_distance_map();
     float get_dist_to_segment(float px, float py, Line_ seg);
 
     // Particles
