@@ -12,7 +12,7 @@
 #include "pros/rtos.h"
 
 // --- Async Logging Variables ---
-enum class LogType { PARTICLE, POSE };
+enum class LogType { PARTICLE, POSE, SENSOR };
 
 struct LogData {
     LogType type;
@@ -217,6 +217,18 @@ void MclTracking::update_weights() {
         float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
 
+        // Log
+        LogData pLog;
+        pLog.type = LogType::SENSOR;
+        pLog.v1 = sensor_readings_mm[i];
+        pLog.v2 = sx;
+        pLog.v3 = sy;
+        pLog.v4 = ray_ang;
+
+        log_mutex.take();
+        log_queue.push(pLog);
+        log_mutex.give();
+
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
             for (auto line : *disabling_line_obstacles) {
@@ -386,14 +398,6 @@ Pose MclTracking::updateMcl() {
     update_weights();
 
     // Log general position
-    if (mclLogType == SDCARD) {
-        logMcl();
-        lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
-        for (auto x: RclSensor::sensorCollection) {
-            x->updatePose(p);
-            x->logPos(mclLog);
-        }
-    }
     auto estimate = get_estimate(); // (Logs Particles)
 
     // Prevent resampling during rotations at a single point
@@ -645,6 +649,8 @@ void MclTracking::startAsyncLogger() {
                             *mclLog << data.v1 << "\n"; 
                             *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
                             *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; 
+                        } else if (data.type == LogType::SENSOR ) {
+                            *mclLog << data.v1 << "," << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
                         }
                     }
                 } else {

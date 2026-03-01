@@ -152,14 +152,6 @@ bool RclSensor::isValid(float distVal) const {
     return true;
 }
 
-void RclSensor::logPos(std::ofstream* targetFile) {
-    // Log
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *targetFile << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
-    logging = false;
-}
-
 // Return which coordinate (X or Y) and its value
 std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, float accum) {
 
@@ -313,12 +305,6 @@ void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
 
-        // Log
-        while (logging == true) {pros::delay(1);}
-        logging = true;
-        *rclLog << rclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
-        logging = false;
-
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
@@ -348,7 +334,6 @@ void RclTracking::mainUpdate() {
 
             float avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
-            sens->logPos(rclLog);
 
             // Validate and collect
             if (type == CoordType::X) {
@@ -376,13 +361,6 @@ void RclTracking::mainUpdate() {
                 poseAtLatest.y = chassis->getPose().y;
             }
         }
-
-        // Log
-        auto p = getRclPose();
-        while (logging == true) {pros::delay(1);}
-        logging = true;
-        *rclLog << p.x << "," << p.y << "," << vexToStd(p.theta) << "\n";
-        logging = false;
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))
