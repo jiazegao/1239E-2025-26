@@ -6,6 +6,7 @@
 // Controls
 void updatePneumatics();
 void updateTankDrive();
+void updateIntake();
 
 // Pneumatics functions
 void moveForward(float inches, int timeout, float maxSpeed=127, float minSpeed=1, bool async=true);

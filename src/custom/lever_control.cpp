@@ -187,11 +187,10 @@ void initLeverControl() {
                 }
                 // Reached target, immediately reverse then move position
                 else if (getLeverPotentReading() >= currTarget) {
-                    leverMotor.move(-127);
-                    pros::delay(400);
                     leverMotor.move(0);
                     // If auto reset, move to the next stage
                     if (autoReset) currentStage = LOWERING;
+                    else currentStage = INACTIVE;
                 }
             }
             else if (currentStage == LOWERING) {

@@ -6,6 +6,7 @@
 #include "custom/util_funcs.hpp"
 #include "custom/auton_selector.hpp" // IWYU pragma: keep
 #include "liblvgl/llemu.hpp"
+#include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include "pros/motors.h"
 #include "pros/motors.h"
@@ -34,6 +35,9 @@ void initialize() {
 
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
+
+	// Motor modes
+	leverMotor.set_brake_mode(pros::MotorBrake::hold);
 }
 
 void disabled() {}
@@ -73,8 +77,7 @@ void opcontrol() {
 		// Update Controls
 		updateTankDrive();
 		updatePneumatics();
-		int i = getLeverPotentReading();
-		pros::lcd::print(0, "LEVER POTENT: %d", i);
+		updateIntake();
 
 		pros::delay(20);
 	}
