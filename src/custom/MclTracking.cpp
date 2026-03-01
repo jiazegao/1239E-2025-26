@@ -355,7 +355,7 @@ std::pair<Pose, float> MclTracking::get_estimate() {
         weight_sqr_sum += p.weight * p.weight;
 
         // Log - Log Particle Positions
-        if (log_on && count % LOG_RATIO == 0) {
+        if (mclLogType == SDCARD && count % LOG_RATIO == 0) {
             LogData pLog;
             pLog.type = LogType::PARTICLE;
             pLog.v1 = p.pose.x;
@@ -386,7 +386,7 @@ Pose MclTracking::updateMcl() {
     update_weights();
 
     // Log general position
-    if (log_on) {
+    if (mclLogType == SDCARD) {
         logMcl();
         lemlib::Pose p (rawMcl.x, rawMcl.y, stdToVex(rawMcl.theta));
         for (auto x: RclSensor::sensorCollection) {
@@ -394,7 +394,6 @@ Pose MclTracking::updateMcl() {
             x->logPos(mclLog);
         }
     }
-
     auto estimate = get_estimate(); // (Logs Particles)
 
     // Prevent resampling during rotations at a single point
@@ -473,7 +472,7 @@ void MclTracking::startTracking() {
     if (MclTrackingTask == nullptr) {
 
         // Log distance map
-        if (log_on) {
+        if (mclLogType == SDCARD) {
             for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
                 *mclLog << distance_map[i] << " ";
             }
@@ -485,6 +484,11 @@ void MclTracking::startTracking() {
                 this->t.reset();
 
                 this->updateMcl();
+
+                // Log on brain
+                if (mclLogType == SCREEN) {
+                    pros::lcd::print(5, "MCL Calculation Time: %f", t.elapsed());
+                }
             
                 if (t.timeLeft() < minPause) pros::delay(minPause);
                 else pros::delay(round(t.timeLeft()));
