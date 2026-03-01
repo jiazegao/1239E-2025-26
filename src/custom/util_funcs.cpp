@@ -20,12 +20,6 @@ void openGate() {
 void closeGate() {
     matchLoadGate.retract();
 };
-void extendMidDescore() {
-    middleDescore.extend();
-};
-void retractMidDescore() {
-    middleDescore.retract();
-};
 void extendLeftArm() {
     leftDescoreArm.extend();
 };
