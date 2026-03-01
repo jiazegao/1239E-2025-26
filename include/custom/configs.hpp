@@ -52,7 +52,6 @@ inline pros::Optical frontOptic(tempPort);
 inline pros::adi::Potentiometer leverPotent('A');
 inline pros::adi::Pneumatics matchLoadGate('B', false, false);
 inline pros::adi::Pneumatics lift('B', true, true);
-inline pros::adi::Pneumatics middleDescore('B', false, false);
 inline pros::adi::Pneumatics leftDescoreArm('B', false, false);
 inline pros::adi::Pneumatics odomLift('B', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
@@ -119,23 +118,19 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 // Distance
 inline pros::Distance midDist(tempPort);
 inline pros::Distance topDist(tempPort);
-inline pros::Distance descoreDist(tempPort);
 
+inline pros::Distance front_dist(tempPort);
+inline pros::Distance left_dist(tempPort);
 inline pros::Distance back_dist(tempPort);
 inline pros::Distance right_dist(tempPort);
-inline pros::Distance lf_dist(tempPort);
-inline pros::Distance lb_dist(tempPort);
-inline pros::Distance fl_dist(tempPort);
-inline pros::Distance fr_dist(tempPort);
-inline const std::array<pros::Distance*, 6> DISTANCE_COLLECTION = {&back_dist, &right_dist, &lf_dist, &lb_dist, &fl_dist, &fr_dist};
+
+inline const std::array<pros::Distance*, 6> DISTANCE_COLLECTION = {&front_dist, &left_dist, &back_dist, &right_dist};
 
 // Rcl setup
-inline RclSensor back_rcl(&back_dist, 5.375, -4.25, 180, 15.0);
-inline RclSensor right_rcl(&right_dist, 4.5, 0.0, 90.0, 15.0);
-inline RclSensor lf_rcl(&lf_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclSensor lb_rcl(&lb_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclSensor fl_rcl(&fl_dist, 0.0, 0.0, 0.0, 15.0);
-inline RclSensor fr_rcl(&fr_dist, 0.0, 0.0, 0.0, 15.0);
+inline RclSensor front_rcl(&front_dist, 5.375, -4.25, 180, 15.0);
+inline RclSensor left_rcl(&left_dist, 4.5, 0.0, 90.0, 15.0);
+inline RclSensor back_rcl(&back_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor right_rcl(&right_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 6.0, 20);
 
 // Mcl setup
@@ -145,8 +140,8 @@ inline MclTracking MclMain(&chassis, &leftMotors, &rightMotors, DISTANCE_COLLECT
 inline bool logging = false;
 inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
 inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
-inline Timer mclLogTimer(10000000000000);
-inline Timer rclLogTimer(10000000000000);
+inline Timer mclLogTimer(1000000000);
+inline Timer rclLogTimer(1000000000);
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);

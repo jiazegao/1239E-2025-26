@@ -1,12 +1,16 @@
 #include "lever_control.hpp"
 #include "configs.hpp"
-#include "custom/PID.hpp"
 #include <atomic>
 #include <queue>
+#include "custom/util_funcs.hpp"
+#include "string"
 
 pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
 
+enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
+inline const int RESTING_POS = 910;
+inline const int FORCE_TERMINATE_TIMEOUT = 5000;
 LEVER_STAGE currentStage = INACTIVE;
 
 // Circular Array
@@ -89,27 +93,17 @@ std::pair<alliance_color, int> frontContColor() {
     return std::make_pair(alliance_color::NONE, 0);
 }
 
-// Lever PID
-Lever_PID leverPID(
-    &leverMotor,
-    &leverPotent, // rotation sensor
-    0.15, // kP
-    0.0, // kI
-    0.3, // kD
-    0, // error range
-    9999999999, // error range timeout
-    -127, // min speed
-    127, // max speed
-    true,
-    &currentStage
-);
-
 // Color Detection
 alliance_color getOpticColor() {
     if (330 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
     else if (170 < frontOptic.get_hue() && frontOptic.get_hue() < 250) return alliance_color::BLUE;
     return alliance_color::NONE;
 }
+
+// Global variables for lever control
+int currTarget = 0;
+int currMaxSpeed = 0;
+bool autoReset = true;
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -132,7 +126,7 @@ void initLeverControl() {
         };
 
         while (true) {
-            if (currentStage != SCORING) {
+            if (currentStage != RAISING && currentStage != LOWERING) {
 
                 // Update readings
                 opticColor = getOpticColor();
@@ -181,19 +175,48 @@ void initLeverControl() {
         }
     });
 
+    // Bang-Bang controller
     leverControlTask = new pros::Task([](){
-        leverPID.mainloop();
+        while (true) {
+            // Raising - Move upward
+            if (currentStage == RAISING) {
+                trapDoor.extend();
+                // Haven't reached target, keep going
+                if (getLeverPotentReading() < currTarget) {
+                    leverMotor.move_velocity(currMaxSpeed);
+                }
+                // Reached target, immediately reverse then move position
+                else if (getLeverPotentReading() >= currTarget) {
+                    leverMotor.move(-127);
+                    pros::delay(400);
+                    leverMotor.move(0);
+                    // If auto reset, move to the next stage
+                    if (autoReset) currentStage = LOWERING;
+                }
+            }
+            else if (currentStage == LOWERING) {
+                trapDoor.retract();
+                // Keep reversing until back to resting position
+                if (getLeverPotentReading() > RESTING_POS) leverMotor.move(-127);
+                else {
+                    leverMotor.move(0);
+                    currentStage = INACTIVE;
+                }
+            }
+
+            pros::delay(20);
+        }
     });
 }
 
 void stopIntake() {
     frontMotor.move(0);
-    if (currentStage != SCORING) currentStage = INACTIVE;
+    if (currentStage != RAISING && currentStage != LOWERING) currentStage = INACTIVE;
     removedFromTop = true;
 }
 
 void startIntake() {
-    if (currentStage != SCORING) {
+    if (currentStage != RAISING && currentStage != LOWERING) {
         frontMotor.move(127);
         currentStage = INTAKING;
         removedFromTop = true;
@@ -201,7 +224,7 @@ void startIntake() {
 }
 
 void startOuttake() {
-    if (currentStage != SCORING) {
+    if (currentStage != RAISING && currentStage != LOWERING) {
         frontMotor.move(-127);
         currentStage = OUTTAKING;
         removedFromTop = false;
@@ -209,14 +232,14 @@ void startOuttake() {
 }
 
 void extendLift() {
-    if (currentStage != SCORING) {
+    if (currentStage != RAISING && currentStage != LOWERING) {
         lift.extend();
         positionedForTop = true;
     }
 }
 
 void retractLift() {
-    if (currentStage != SCORING) {
+    if (currentStage != RAISING && currentStage != LOWERING) {
         lift.retract();
         positionedForTop = false;
     }
@@ -227,11 +250,12 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
-    leverPID.setTarget((positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]), -999999999, maxScoringSpeed);
+    currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
+    currMaxSpeed = maxScoringSpeed;
 
+    currentStage = RAISING;
     removedFromTop = true;
-    currentStage = SCORING;
-    pros::delay(timeOut);
+    if (timeOut > 0) pros::delay(timeOut);
 }
 
 void scoreColor(int timeOut, int maxScoringSpeed, alliance_color color) {
@@ -254,9 +278,57 @@ void intakeFromMatchLoader(alliance_color color) {
         // Discard balls with the wrong color and get balls with the right color
         stopIntake();
         score(5, std::max(0, currSize-1), FAST_TOP_SCORE);
-        while (currentStage == SCORING) {pros::delay(20);}
+        while (currentStage == RAISING || currentStage == LOWERING) {pros::delay(20);}
         startIntake();
         pros::delay(500);
         stopIntake();
     });
+}
+
+void resetLever() {
+    currentStage = LOWERING;
+}
+
+void setAutoReset(bool newConfig) {
+    autoReset = newConfig;
+}
+
+void startLeverTuningDisplay() {
+    brainDisplayFunc = [](){
+        std::string intake_info;
+        int currHead = head;
+        int currTail = tail;
+
+        while (currHead <= currTail) {
+            if (intake_array[currHead] == alliance_color::RED) {
+                intake_info += "RED ";
+            }
+            else if (intake_array[currHead] == alliance_color::BLUE) {
+                intake_info += "BLUE ";
+            }
+            else {
+                intake_info += "NAN ";
+            }
+            currHead = (currHead+1)%INTAKE_CAPACITY;
+        }
+
+        pros::lcd::print(0, 0, "Intake: %s", intake_info.c_str());
+
+
+        if (currentStage == INACTIVE) {
+            pros::lcd::print(1, 0, "Current Stage: %s", "INACTIVE");
+        }
+        else if (currentStage == INTAKING) {
+            pros::lcd::print(1, 0, "Current Stage: %s", "INTAKING");
+        }
+        else if (currentStage == OUTTAKING) {
+            pros::lcd::print(1, 0, "Current Stage: %s", "OUTTAKING");
+        }
+        else if (currentStage == RAISING) {
+            pros::lcd::print(1, 0, "Current Stage: %s", "RAISING");
+        }
+        else if (currentStage == LOWERING) {
+            pros::lcd::print(1, 0, "Current Stage: %s", "LOWERING");
+        }
+    };
 }

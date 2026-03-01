@@ -61,16 +61,15 @@ void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
         matchLoadGate.toggle();
-        retractMidDescore();
     }
     // Button Down - Left descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         leftDescoreArm.toggle();
     }
-    // Button Y - Middle descore mech (Toggle)
+    // Button Y - Lower lift + Hood down (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-        middleDescore.toggle();
-        closeGate();
+        lift.retract();
+        trapDoor.retract();
     }
 }
 
@@ -78,31 +77,63 @@ void updatePneumatics() {
 void updateIntake() {
 
     // Motor Controls ----------------------------------------------------
+    enum scoringStates {INACTIVE, SCORE3, SCOREALL};
+    static scoringStates midState = INACTIVE;
+    static scoringStates topState = INACTIVE;
 
-    // Button B - Outtake
+    setAutoReset(false);
+
+    // Button B - Outtake (Hold)
     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+        extendLift();
         startOuttake();
     }
-    // Button A - Slow outtake
+    // Button A - Slow outtake (Hold)
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        extendLift();
         frontMotor.move(-30);
     }
-    // Button R2 - Score top
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+    // Button R2 - Top state (Toggle)
+    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
         extendLift();
-        score(1500, 7, FAST_TOP_SCORE);
+        midState = INACTIVE;
+        if (topState == INACTIVE) {
+            topState = SCORE3;
+            score(0, 3, FAST_TOP_SCORE);
+        }
+        else if (topState == SCORE3) {
+            topState = SCOREALL;
+            score(0, 7, FAST_TOP_SCORE);
+        }
+        else if (topState == SCOREALL) {
+            topState = INACTIVE;
+            resetLever();
+        }
     }
-    // Button R1 - Score mid
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+    // Button R1 - Mid state (Toggle)
+    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
         retractLift();
-        score(1500, 7, FAST_MID_SCORE);
+        topState = INACTIVE;
+        if (midState == INACTIVE) {
+            midState = SCORE3;
+            score(0, 3, FAST_MID_SCORE);
+        }
+        else if (midState == SCORE3) {
+            midState = SCOREALL;
+            score(0, 7, FAST_MID_SCORE);
+        }
+        else if (midState == SCOREALL) {
+            midState = INACTIVE;
+            resetLever();
+        }
     }
-    // Button L2 - Normal intake
+    // Button L2 - Raise mid + hold intake (Hold)
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+        extendLift();
         startIntake();
     }
     // Button L1 - Macro intake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
         intakeFromMatchLoader();
     }
     // If no button is pressed, stop everything

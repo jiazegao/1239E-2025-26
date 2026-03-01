@@ -4,13 +4,13 @@
 
 // ----------------- LEVER MOTOR CONTROL -----------------
 
-// Scoring Presets (deg/s)
-const int FAST_TOP_SCORE = 999999999;
-const int FAST_MID_SCORE = 999999999;
-const int MODERATE_TOP_SCORE = 999999999;
-const int MODERATE_MID_SCORE = 999999999;
-const int SLOW_TOP_SCORE = 999999999;
-const int SLOW_MID_SCORE = 999999999;
+// Scoring Presets (rpm)
+const int FAST_TOP_SCORE = 100;
+const int FAST_MID_SCORE = 60;
+const int MODERATE_TOP_SCORE = 70;
+const int MODERATE_MID_SCORE = 40;
+const int SLOW_TOP_SCORE = 50;
+const int SLOW_MID_SCORE = 30;
 
 void initLeverControl();
 /*
@@ -63,3 +63,12 @@ void retractLift();
 /*
     - Retract lift piston -> Score top middle goal
 */
+
+
+// ----------------- MISCELLANEOUS --------------------------
+
+void resetLever();
+
+void setAutoReset(bool newConfig);
+
+void startLeverTuningDisplay();
