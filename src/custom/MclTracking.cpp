@@ -217,17 +217,19 @@ void MclTracking::update_weights() {
         float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
 
-        // Log
-        LogData pLog;
-        pLog.type = LogType::SENSOR;
-        pLog.v1 = sensor_readings_mm[i];
-        pLog.v2 = sx;
-        pLog.v3 = sy;
-        pLog.v4 = ray_ang;
+        if (mclLogType == SDCARD) {
+            // Log
+            LogData pLog;
+            pLog.type = LogType::SENSOR;
+            pLog.v1 = sensor_readings_mm[i];
+            pLog.v2 = sx;
+            pLog.v3 = sy;
+            pLog.v4 = ray_ang;
 
-        log_mutex.take();
-        log_queue.push(pLog);
-        log_mutex.give();
+            log_mutex.take();
+            log_queue.push(pLog);
+            log_mutex.give();
+        }
 
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
@@ -394,11 +396,14 @@ std::pair<Pose, float> MclTracking::get_estimate() {
 
 Pose MclTracking::updateMcl() {
 
-    predict(vexToStd(chassis->getPose().theta)); // Also syncs position back to lemlib
-    update_weights();
+    predict(vexToStd(chassis->getPose().theta));
+    update_weights(); // Log sensor
 
+    auto estimate = get_estimate(); // Log particles
     // Log general position
-    auto estimate = get_estimate(); // (Logs Particles)
+    if (mclLogType == SDCARD) {
+        logMcl();
+    }
 
     // Prevent resampling during rotations at a single point
     float distSinceResample = std::hypotf(estimate.first.x - lastResamplePose.x, estimate.first.y - lastResamplePose.y);
