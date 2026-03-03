@@ -127,11 +127,9 @@ inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 200.0, 6.0, 50);
 inline MclTracking MclMain(&chassis, &leftMotors, &rightMotors, distance_collection, {&vertSensor, 2.75, -0.5}, {&horiSensor, 2.75, -3.06}, 0, 0, 0, true);
 
 enum MCL_Log_Format {DISABLED, SDCARD, SCREEN};
-inline MCL_Log_Format mclLogType = DISABLED;
-inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
-inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
+inline MCL_Log_Format mclLogType = SDCARD;
+inline std::ofstream* mclLog = nullptr;
 inline Timer mclLogTimer(100000000000.0f);
-inline Timer rclLogTimer(100000000000.0f);
 
 // Mcl obstacles
 inline std::vector<Line_> soloAWP_obstacles = {

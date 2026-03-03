@@ -531,22 +531,21 @@ void initLog() {
 	fileCount++;
 	
 	std::string mclFileName = "/usd/mcl_log" + std::to_string(fileCount) + ".1239e";
-	std::string rclFileName = "/usd/rcl_log" + std::to_string(fileCount) + ".1239e";
 	mclLog = new std::ofstream(mclFileName);
-	rclLog = new std::ofstream(rclFileName);
     
-
 	std::ofstream dataFileW("/usd/DATA.1239e");
 	dataFileW << fileCount;
 	dataFileW.close();
 
-	rclLogTimer.hardReset(10000000000);
 	mclLogTimer.hardReset(10000000000);
 
     // If SD card is absent, rumble controller
-    if (!mclLog->is_open()) controller.rumble("-.-.-.-");
+    if (!mclLog->is_open()) {
+        controller.rumble("-.-.");
+        mclLogType = DISABLED;
+    }
     else {
         mclLog->precision(8);
-        rclLog->precision(8);
+        MclMain.startAsyncLogger();
     }
 }
