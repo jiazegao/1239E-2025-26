@@ -24,7 +24,7 @@ private:
     static constexpr int RESAMPLE_THRESHOLD = 600;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
-    static constexpr int LOG_AMOUNT = 10;
+    static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 300.0f;

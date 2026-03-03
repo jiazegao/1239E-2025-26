@@ -16,15 +16,15 @@ void initialize() {
 
 	pros::lcd::initialize();
 	initControllerDisplay();
-	// initBrainDisplay();
+	initBrainDisplay();
 	initLog();
 
 	// Ensure odom pod is down
 	odomLift.retract();
 
 	// Auton Selection
-	startControllerAutonSelectorDisplay();
-	init_auton_selector();
+	// startControllerAutonSelectorDisplay();
+	// init_auton_selector();
 
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
@@ -63,7 +63,7 @@ void opcontrol() {
 	startControllerCoordDisplay();
 
 	// Display FB Logo
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
 
 	// Mcl Tracking
 	startMcl(0, 0, 270, false, true, true);
@@ -73,6 +73,8 @@ void opcontrol() {
 		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
+
+		pros::lcd::print(0, "Motor???: %f", leftMotors.get_position_all()[0]);
 
 		pros::delay(20);
 	}

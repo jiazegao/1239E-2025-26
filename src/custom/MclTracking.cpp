@@ -11,18 +11,6 @@
 #include "fast_trig.hpp"
 #include "pros/rtos.h"
 
-// --- Async Logging Variables ---
-enum class LogType { PARTICLE, POSE, SENSOR };
-
-struct LogData {
-    LogType type;
-    float v1, v2, v3, v4, v5, v6, v7; // Generic payload to hold either pose or particle data
-};
-
-std::queue<LogData> log_queue;
-pros::Mutex log_mutex;
-pros::Task* asyncLogTask = nullptr;
-
 float MclTracking::intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin) {
 
     // Vert wall
@@ -218,17 +206,7 @@ void MclTracking::update_weights() {
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
 
         if (mclLogType == SDCARD) {
-            // Log
-            LogData pLog;
-            pLog.type = LogType::SENSOR;
-            pLog.v1 = sensor_readings_mm[i];
-            pLog.v2 = sx;
-            pLog.v3 = sy;
-            pLog.v4 = ray_ang;
-
-            log_mutex.take();
-            log_queue.push(pLog);
-            log_mutex.give();
+            *mclLog << sensor_readings_mm[i] << "," << sx << "," << sy << "," << ray_ang << "\n";
         }
 
         // Test for intersections
@@ -370,14 +348,7 @@ std::pair<Pose, float> MclTracking::get_estimate() {
 
         // Log - Log Particle Positions
         if (mclLogType == SDCARD && count % LOG_RATIO == 0) {
-            LogData pLog;
-            pLog.type = LogType::PARTICLE;
-            pLog.v1 = p.pose.x;
-            pLog.v2 = p.pose.y;
-
-            log_mutex.take();
-            log_queue.push(pLog);
-            log_mutex.give();
+            *mclLog << p.pose.x << "," << p.pose.y << "\n";
         }
     }
 
@@ -413,6 +384,8 @@ Pose MclTracking::updateMcl() {
         lastResamplePose = estimate.first;
     }
 
+    rawMcl = estimate.first;
+
     return estimate.first;
 }
 
@@ -432,6 +405,8 @@ void MclTracking::set_pose(float x, float y, float vex_theta) {
         p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
         p.weight = 1.0f;
     }
+
+    rawMcl = {x, y, std_theta};
 }
 
 void MclTracking::uniform_reset() {
@@ -539,19 +514,9 @@ void MclTracking::logMcl() {
     float std_dev_theta = std::sqrtf(-2.0f * std::log(R)); 
 
     // Log to Queue (Zero Blocking)
-    LogData pLog;
-    pLog.type = LogType::POSE;
-    pLog.v1 = mclLogTimer.elapsed(TimeUnit::SECOND);
-    pLog.v2 = rawMcl.x;
-    pLog.v3 = rawMcl.y;
-    pLog.v4 = rawMcl.theta;
-    pLog.v5 = std_dev_x;
-    pLog.v6 = std_dev_y;
-    pLog.v7 = std_dev_theta;
-
-    log_mutex.take();
-    log_queue.push(pLog);
-    log_mutex.give();
+    *mclLog << mclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
+    *mclLog << rawMcl.x << "," << rawMcl.y << "," << rawMcl.theta << "\n";
+    *mclLog << std_dev_x << "," << std_dev_y << "," << std_dev_theta << "\n";
 }
 
 void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSec) {
@@ -627,44 +592,6 @@ float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
     float closest_y = seg.p1.y + t * dy;
     
     return std::hypot(px - closest_x, py - closest_y);
-}
-
-void MclTracking::startAsyncLogger() {
-    if (asyncLogTask == nullptr) {
-        asyncLogTask = new pros::Task([this]() {
-            while (true) {
-                std::queue<LogData> local_queue;
-
-                // Lock once, swap the contents, and unlock immediately
-                log_mutex.take();
-                if (!log_queue.empty()) {
-                    std::swap(log_queue, local_queue);
-                }
-                log_mutex.give();
-
-                if (!local_queue.empty()) {
-                    // Process the entire batch completely outside the lock
-                    while (!local_queue.empty()) {
-                        LogData data = local_queue.front();
-                        local_queue.pop();
-                        
-                        if (data.type == LogType::PARTICLE) {
-                            *mclLog << data.v1 << "," << data.v2 << "\n";
-                        } else if (data.type == LogType::POSE) {
-                            *mclLog << data.v1 << "\n"; 
-                            *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
-                            *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; 
-                        } else if (data.type == LogType::SENSOR ) {
-                            *mclLog << data.v1 << "," << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
-                        }
-                    }
-                } else {
-                    // Sleep to prevent CPU hogging when queue is empty
-                    pros::delay(MSPT); 
-                }
-            }
-        }, TASK_PRIORITY_DEFAULT-1);
-    }
 }
 
 MclTracking::~MclTracking() {

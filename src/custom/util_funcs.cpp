@@ -546,9 +546,7 @@ void initLog() {
     // If SD card is absent, rumble controller
     if (!mclLog->is_open()) controller.rumble("-.-.-.-");
     else {
-        mclLogType = SDCARD;
-        mclLog->precision(2);
-        rclLog->precision(2);
-        MclMain.startAsyncLogger();
+        mclLog->precision(8);
+        rclLog->precision(8);
     }
 }
