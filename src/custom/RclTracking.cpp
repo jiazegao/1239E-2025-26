@@ -25,7 +25,8 @@ Line_Obstacle::Line_Obstacle(float x1, float y1, float x2, float y2, float lifeT
     line.pt1[1] = y1;
     line.pt2[0] = x2;
     line.pt2[1] = y2;
-    line.slope = (y2 - y1) / (x2 - x1);
+    if (std::fabs(x1-x2) < 1e-10) line.slope = (y2 - y1) * 1e10f;
+    else line.slope = (y2 - y1) / (x2 - x1);
     line.yIntercept = y1 - line.slope * x1;
     // Add to collection if space available
     Line_Obstacle::obstacleCollection.add_front(this);
