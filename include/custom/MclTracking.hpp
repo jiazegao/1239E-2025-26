@@ -40,7 +40,7 @@ private:
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 10.0f;
+    static constexpr float MINPAUSE = 5.0f;
 
     // Distance map
     static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch

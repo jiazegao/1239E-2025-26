@@ -293,25 +293,23 @@ void MclTracking::update_weights() {
     }
 
     // Process particles
-    for (auto& p : *particles_ptr) {
+    auto& derefP = *particles_ptr;
+
+    for (int j = 0; j < PARTICLE_COUNT; j++) {
         float total_weight = 1.0f;
-        
-        // Cache particle trig
-        float cp = FastTrig::cos(p.pose.theta);
-        float sp = FastTrig::sin(p.pose.theta);
+        auto& p = derefP[j];
 
         for (int i = 0; i < SENSOR_COUNT; i++) {
             if (!valid_sensors[i]) continue;
 
             // Transform Sensor Mount to World Space
             // (Standard 2D Rotation: x' = x*cos - y*sin, y' = x*sin + y*cos)
-            float sx = p.pose.x + (sensor_mounts[i].x * cp - sensor_mounts[i].y * sp);
-            float sy = p.pose.y + (sensor_mounts[i].x * sp + sensor_mounts[i].y * cp);
+            float sx = p.pose.x + (sensor_mounts[i].x * pTrigs[j].cos_m - sensor_mounts[i].y * pTrigs[j].sin_m);
+            float sy = p.pose.y + (sensor_mounts[i].x * pTrigs[j].sin_m + sensor_mounts[i].y * pTrigs[j].cos_m);
 
             // Project Sensor Reading (Hit Point)
-            float ray_angle = p.pose.theta + sensor_mounts[i].theta;
-            float hx = sx + FastTrig::cos(ray_angle) * sensor_readings_inch[i];
-            float hy = sy + FastTrig::sin(ray_angle) * sensor_readings_inch[i];
+            float hx = sx + (pTrigs[j].cos_m*mountTrigs[i].cos_m - pTrigs[j].sin_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
+            float hy = sy + (pTrigs[j].sin_m*mountTrigs[i].cos_m + pTrigs[j].cos_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
 
             // Grid Lookup
             int gx = (int)((hx + MAP_OFFSET) * MAP_SCALE);
@@ -343,6 +341,7 @@ void MclTracking::update_weights() {
 
 void MclTracking::resample() {
     auto& particles = *particles_ptr;
+    auto& new_gen = *new_gen_ptr;
 
     // Calculate the total weight of all particles
     float total_weight = 0.0f;
@@ -361,23 +360,21 @@ void MclTracking::resample() {
     int index = 0;  // particle index
 
     for (int m = 0; m < PARTICLE_COUNT; ++m) {
-        currPos += step;    // Current target position
-
         // Walk down until reach target
-        while (currPos > cumWeight) {
+        while (index < PARTICLE_COUNT-1 && currPos > cumWeight) {
             index++;
             cumWeight += particles[index].weight;
         }
 
         // Select particle at current position
         Particle selected = particles[index];
-
         selected.pose.x += next_noise() * DIST_RESAMPLE_VARIANCE;
         selected.pose.y += next_noise() * DIST_RESAMPLE_VARIANCE;
         selected.pose.theta += next_noise() * THETA_RESAMPLE_VARIANCE;
         selected.weight = 1.0f;
 
-        (*new_gen_ptr)[m] = selected;
+        new_gen[m] = selected;
+        currPos += step;    // Increment currPos
     }
     std::swap(particles_ptr, new_gen_ptr);
 }
