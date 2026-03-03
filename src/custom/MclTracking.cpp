@@ -225,25 +225,6 @@ void MclTracking::update_weights() {
         sensor_confs[i] = distance_collection[i]->get_confidence();
         valid_sensors[i] = true;
 
-        // Validify sensors
-
-        // Case #1: Sensor disabled
-        if (disabled_sensors[i]) {
-            valid_sensors[i] = false;
-            continue;
-        }
-        // Case #2: Invalid reading
-        if (sensor_readings_mm[i] > 9000) {
-            valid_sensors[i] = false;
-            continue;
-        }
-        // Case #3: Invalid confidence
-        else if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
-            valid_sensors[i] = false;
-            continue;
-        }
-        // Case #4: Disqualifying intersection with obstacles
-
         // Sensor positions
         float sx = rawMcl.x + (sensor_mounts[i].x * botCos - sensor_mounts[i].y * botSin);
         float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
@@ -263,6 +244,25 @@ void MclTracking::update_weights() {
             log_mutex.give();
         }
 
+        // Validify sensors
+
+        // Case #1: Sensor disabled
+        if (disabled_sensors[i]) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #2: Invalid reading
+        if (sensor_readings_mm[i] > 9000) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #3: Invalid confidence
+        else if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #4: Disqualifying intersection with obstacles
+        
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
             for (auto line : *disabling_line_obstacles) {
