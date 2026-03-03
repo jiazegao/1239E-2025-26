@@ -522,9 +522,9 @@ void MclTracking::startTracking() {
         // Log distance map
         if (mclLogType == SDCARD) {
             for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
-                *mclLog << distance_map[i] << " ";
+                *mclLog << static_cast<int>(distance_map[i]) << " ";
             }
-            *mclLog << distance_map[MAP_RES*MAP_RES-1] << "\n";
+            *mclLog << static_cast<int>(distance_map[MAP_RES*MAP_RES-1]) << "\n";
         }
 
         MclTrackingTask = new pros::Task([this](){
