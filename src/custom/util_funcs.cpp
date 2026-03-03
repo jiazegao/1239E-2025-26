@@ -210,9 +210,7 @@ void startBrainMotorInfoDisplay() {
     brainDisplayFunc = [](){
         for (int i = 0; i < 3; i++) {
             pros::lcd::print(i, 0, "LMotor%d: %f", i+1, leftMotors.get_position_all()[i]);
-        }
-        for (int i = 3; i < 6; i++) {
-            pros::lcd::print(i, 0, "RMotor%d: %f", i+1, rightMotors.get_position_all()[i]);
+			pros::lcd::print(i+3, 0, "RMotor%d: %f", i+4, rightMotors.get_position_all()[i]);
         }
     };
 };

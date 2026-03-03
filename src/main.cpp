@@ -20,7 +20,7 @@ void initialize() {
 	initLeverControl();
 
 	pros::lcd::initialize();
-	initBrainDisplay();
+	//initBrainDisplay();
 	initControllerDisplay();
 
 	// Ensure odom pod is down
@@ -68,7 +68,7 @@ void opcontrol() {
 
 	// Display FB Logo
 	// startBrainFBDisplay();
-	startBrainMotorInfoDisplay();
+	//startBrainMotorInfoDisplay();
 
 	while (true) {
 		// Update Controls
@@ -78,6 +78,13 @@ void opcontrol() {
 
 		if (hoodLock) controller.rumble(".");
 
+		pros::lcd::print(0, 0, "LMotor%d: %f", 1, leftMotors.get_position_all()[0]);
+		pros::lcd::print(1, 0, "LMotor%d: %f", 2, leftMotors.get_position_all()[1]);
+		pros::lcd::print(2, 0, "LMotor%d: %f", 3, leftMotors.get_position_all()[2]);
+		pros::lcd::print(3, 0, "RMotor%d: %f", 1, rightMotors.get_position_all()[0]);
+		pros::lcd::print(4, 0, "RMotor%d: %f", 2, rightMotors.get_position_all()[1]);
+		pros::lcd::print(5, 0, "RMotor%d: %f", 3, rightMotors.get_position_all()[2]);
+		
 		pros::delay(20);
 	}
 }
