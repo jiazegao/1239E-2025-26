@@ -63,7 +63,9 @@ void retractLift();
 /*
     - Retract lift piston -> Score top middle goal
 */
-
+void openHood();
+void closeHood();
+inline bool hoodLock = false;
 
 // ----------------- MISCELLANEOUS --------------------------
 

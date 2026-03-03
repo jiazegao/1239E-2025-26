@@ -38,6 +38,7 @@ void startControllerAutonSelectorDisplay();
 
 void startBrainCoordDisplay();
 void startBrainFBDisplay();
+void startBrainMotorInfoDisplay();
 
 // Test Functions
 void startControllerOpticDisplay();

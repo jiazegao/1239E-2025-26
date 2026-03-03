@@ -15,23 +15,19 @@
 
 void initialize() {
     chassis.calibrate();
-	
     chassis.setPose(0, 0, 0);
-	initControllerDisplay();
-	pros::lcd::initialize();
+
 	initLeverControl();
 
-	// Brain display (disabled)
-	// initBrainDisplay();
+	pros::lcd::initialize();
+	initBrainDisplay();
+	initControllerDisplay();
 
 	// Ensure odom pod is down
 	odomLift.retract();
 
 	// Auton Selection
 	startControllerAutonSelectorDisplay();
-	//init_auton_selector();
-
-	RclMain.startTracking();
 
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
@@ -68,16 +64,19 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	startControllerCoordDisplay();
+	// startControllerCoordDisplay();
 
 	// Display FB Logo
 	// startBrainFBDisplay();
+	startBrainMotorInfoDisplay();
 
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updatePneumatics();
 		updateIntake();
+
+		if (hoodLock) controller.rumble(".");
 
 		pros::delay(20);
 	}

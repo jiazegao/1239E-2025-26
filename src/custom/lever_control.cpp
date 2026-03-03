@@ -194,7 +194,7 @@ void initLeverControl() {
                 }
             }
             else if (currentStage == LOWERING) {
-                trapDoor.retract();
+                closeHood();
                 // Keep reversing until back to resting position
                 if (getLeverPotentReading() > RESTING_POS) leverMotor.move(-127);
                 else {
@@ -242,6 +242,13 @@ void retractLift() {
         lift.retract();
         positionedForTop = false;
     }
+}
+
+void openHood() {
+    if (!hoodLock) trapDoor.extend();
+}
+void closeHood() {
+    if (!hoodLock) trapDoor.retract();
 }
 
 void score(int timeOut, int count, int maxScoringSpeed) {

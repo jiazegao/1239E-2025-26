@@ -51,9 +51,9 @@ inline pros::Optical frontOptic(tempPort);
 // Pneumatics
 inline pros::adi::Potentiometer leverPotent('H');
 inline pros::adi::Pneumatics matchLoadGate('D', false, false);
-inline pros::adi::Pneumatics lift('C', true, true);
+inline pros::adi::Pneumatics lift('C', true, false);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
-inline pros::adi::Pneumatics odomLift('E', false, false);
+inline pros::adi::Pneumatics odomLift('F', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
 inline pros::adi::Pneumatics intakeLift('G', false, false);
 

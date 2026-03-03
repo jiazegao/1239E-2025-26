@@ -62,8 +62,14 @@ void updatePneumatics() {
     }
     // Button Y - Lower lift + Hood down (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-        lift.retract();
-        trapDoor.retract();
+        retractLift();
+        closeHood();
+    }
+    // Button Up - Open hood
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+        if (!hoodLock) trapDoor.extend();
+        else trapDoor.retract();
+        hoodLock = !hoodLock;
     }
 }
 
@@ -199,6 +205,18 @@ void startBrainCoordDisplay() {
         pros::lcd::print(2, 0, "Heading: %f", chassis.getPose().theta);
     };
 };
+
+void startBrainMotorInfoDisplay() {
+    brainDisplayFunc = [](){
+        for (int i = 0; i < 3; i++) {
+            pros::lcd::print(i, 0, "LMotor%d: %f", i+1, leftMotors.get_position_all()[i]);
+        }
+        for (int i = 3; i < 6; i++) {
+            pros::lcd::print(i, 0, "RMotor%d: %f", i+1, rightMotors.get_position_all()[i]);
+        }
+    };
+};
+
 void startBrainFBDisplay() {
     static lv_obj_t* image = lv_image_create(lv_screen_active());
     lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
