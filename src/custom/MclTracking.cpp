@@ -1,6 +1,7 @@
 #include "MclTracking.hpp"
 #include "Tracking_Util.hpp"
 #include "configs.hpp"
+#include "lemlib/chassis/chassis.hpp"
 #include "pros/motor_group.hpp"
 #include <algorithm>
 #include <cmath>
@@ -75,22 +76,35 @@ float MclTracking::intersect_circle(Pose ray, Circle c, float max_range, float d
     return max_range;
 }
 
-MclTracking::MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_) {
+MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_) {
     this->chassis = chassis;
-    this->leftMotorGroup = leftMotorGroup;
-    this->rightMotorGroup = rightMotorGroup;
+    this->dt = dt;
     for (int i = 0; i < SENSOR_COUNT; i++) {this->distance_collection[i] = dist_collection[i];}
     this->autoSync = autoSync_;
 
     this->vertical_tracking_wheel = get<0>(vertical_tracking_wheel);
-    this->vert_c = get<1>(vertical_tracking_wheel)*std::numbers::pi;
-    this->vert_offset = get<2>(vertical_tracking_wheel);
-    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0f;
+    if (this->vertical_tracking_wheel != nullptr) {
+        this->vert_c = get<1>(vertical_tracking_wheel)*std::numbers::pi;
+        this->vert_offset = get<2>(vertical_tracking_wheel);
+        this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0f;
+    }
+    else {
+        this->vert_c = dt->wheelDiameter*std::numbers::pi;
+        this->vert_offset = 0.0;
+        this->last_vertical_reading = getDTWheelDegrees();
+    }
 
     this->horizontal_tracking_wheel = get<0>(horizontal_tracking_wheel);
-    this->horiz_c = get<1>(horizontal_tracking_wheel)*std::numbers::pi;
-    this->horiz_offset = get<2>(horizontal_tracking_wheel);
-    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0f;
+    if (this->horizontal_tracking_wheel != nullptr) {
+        this->horiz_c = get<1>(horizontal_tracking_wheel)*std::numbers::pi;
+        this->horiz_offset = get<2>(horizontal_tracking_wheel);
+        this->last_horizontal_reading = -this->horizontal_tracking_wheel->get_position()/100.0f;
+    }
+    else {
+        this->horiz_c = 0.0;
+        this->horiz_offset = 0.0;
+        this->last_horizontal_reading = 0.0;
+    }
 
     std::random_device rd;
     gen = std::mt19937(rd());
@@ -135,12 +149,24 @@ void MclTracking::predict(float current_std_theta) {
     float drift_variance = std::hypotf(vertical_drift, horizontal_drift)/2.0f;
 
     // Calculate vertical tracking wheel vector
-    float vert_reading = vertical_tracking_wheel->get_position()/100.0f;
+    float vert_reading = 0.0;
+    // Retrieve reading from verticle tracking wheel
+    if (vertical_tracking_wheel != nullptr) {
+        vert_reading = vertical_tracking_wheel->get_position()/100.0f;
+    }
+    // Retrieve readings from drive motors
+    else {
+        vert_reading = getDTWheelDegrees();
+    }
     float d_vert_raw = (vert_reading-last_vertical_reading)/360.0f * vert_c;
     last_vertical_reading = vert_reading;
 
     // Calculate horizontal tracking wheel vector
-    float horiz_reading = (-1)*horizontal_tracking_wheel->get_position()/100.0f;
+    float horiz_reading = 0.0;
+    // Retrieve reading from horizontal tracking wheel
+    if (horizontal_tracking_wheel != nullptr) {
+        horiz_reading = -horizontal_tracking_wheel->get_position()/100.0f;
+    }
     float d_horiz_raw = (horiz_reading-last_horizontal_reading)/360.0f * horiz_c;
     last_horizontal_reading = horiz_reading;
 
@@ -149,6 +175,12 @@ void MclTracking::predict(float current_std_theta) {
     float d_horiz_pure = d_horiz_raw + (horiz_offset * d_theta) + horizontal_drift;
 
     this->latest_speed = std::hypotf(d_vert_pure, d_horiz_pure) * INV_MSPT * 1000.0f;
+
+    // If horizontal wheel is absent, introduce more variance
+    float horiz_dependent_variance = 0.0;
+    if (horizontal_tracking_wheel == nullptr) {
+        horiz_dependent_variance = d_vert_pure * HORIZ_DEPENDENT_VARIANCE_PROP;
+    }
 
     // Sync right after tracking wheel calculations to minimize data loss
     if (autoSync) updateBotPose();
@@ -165,7 +197,7 @@ void MclTracking::predict(float current_std_theta) {
 
         // Forward / Backward motion with noise
         float forward_dist = d_vert_pure * vert_noise + next_noise()*drift_variance;
-        float strafe_dist = d_horiz_pure * horiz_noise + next_noise()*drift_variance;
+        float strafe_dist = d_horiz_pure * horiz_noise + next_noise()*drift_variance + next_noise()*horiz_dependent_variance;
 
         // Update position
         p.pose.x += forward_dist*pCos + strafe_dist*pSin;
@@ -425,8 +457,10 @@ void MclTracking::set_pose(float x, float y, float vex_theta) {
     std::normal_distribution<float> t_dist(std_theta, THETA_RESAMPLE_VARIANCE);
 
     this->lastTheta = vexToStd(this->chassis->getPose().theta);
-    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0f;
-    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0f;
+    // Verticle / DT
+    this->last_vertical_reading = (vertical_tracking_wheel != nullptr) ? vertical_tracking_wheel->get_position()/100.0f : getDTWheelDegrees();
+    // Horizontal / NULL
+    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : this->last_horizontal_reading = 0.0f;
     this->latest_speed = 0.0f;
 
     auto& particles = *particles_ptr;
@@ -443,8 +477,10 @@ void MclTracking::uniform_reset() {
     std::uniform_real_distribution<float> y_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
 
     this->lastTheta = vexToStd(this->chassis->getPose().theta);
-    this->last_vertical_reading = this->vertical_tracking_wheel->get_position()/100.0f;
-    this->last_horizontal_reading = (-1)*this->horizontal_tracking_wheel->get_position()/100.0f;
+    // Verticle / DT
+    this->last_vertical_reading = (vertical_tracking_wheel != nullptr) ? vertical_tracking_wheel->get_position()/100.0f : getDTWheelDegrees();
+    // Horizontal / NULL
+    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : this->last_horizontal_reading = 0.0f;
     this->latest_speed = 0.0f;
 
     auto& particles = *particles_ptr;
@@ -672,6 +708,35 @@ void MclTracking::startAsyncLogger() {
         });
     }
 }
+
+float MclTracking::getDTWheelDegrees() {
+    if (dt == nullptr || dt->leftMotors == nullptr || dt->rightMotors == nullptr) {
+        return 0.0f;
+    }
+
+    // Get average raw encoder ticks
+    std::vector<double> leftPos = dt->leftMotors->get_position_all();
+    std::vector<double> rightPos = dt->rightMotors->get_position_all();
+
+    double sum = 0;
+    for (double pos : leftPos) sum += pos;
+    for (double pos : rightPos) sum += pos;
+
+    // 6 wheels, 3 on each side
+    float avgTicks = static_cast<float>(sum) * 0.166666666667f;
+
+    // Calculate Manual Gear Ratio
+    // Blue cartridge (11W) = 600 RPM internal
+    float gearRatio = dt->rpm * 0.0016666666667f;
+
+    // Convert Ticks to Wheel Degrees
+    // (Ticks * 1.2) converts ticks to motor degrees
+    // Dividing by gearRatio converts motor degrees to wheel degrees
+    float wheelDegrees = (avgTicks * 1.2f) * gearRatio;
+
+    return wheelDegrees;
+}
+
 
 MclTracking::~MclTracking() {
     stopTracking();

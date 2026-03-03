@@ -36,6 +36,7 @@ private:
     static constexpr float FAULT_TOLERANCE = 1e-4f;
     float DIST_SYNC_PROP = 0.1f;
     float THETA_SYNC_PROP = 0.001f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.333333f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
@@ -119,8 +120,7 @@ private:
     std::array<Trig, PARTICLE_COUNT> pTrigs = {};
     std::mt19937 gen;
     lemlib::Chassis* chassis;
-    pros::MotorGroup* leftMotorGroup;
-    pros::MotorGroup* rightMotorGroup;
+    lemlib::Drivetrain* dt;
     bool vertical_tracking_mode;
     pros::Task* MclTrackingTask;
     bool autoSync = false;
@@ -164,9 +164,11 @@ private:
     float intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin);
 
     float intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy);
+    
+    float getDTWheelDegrees();
 
 public:
-    MclTracking(lemlib::Chassis* chassis, pros::MotorGroup* leftMotorGroup, pros::MotorGroup* rightMotorGroup, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
+    MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
 
     // Update particles and pTrigs
     void predict(float current_std_theta);
