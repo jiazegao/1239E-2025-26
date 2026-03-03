@@ -22,10 +22,6 @@ void initialize() {
 	// Ensure odom pod is down
 	odomLift.retract();
 
-	// Auton Selection
-	// startControllerAutonSelectorDisplay();
-	// init_auton_selector();
-
 	// Set Optical LED
 	topOptic.set_led_pwm(100);
 }
@@ -38,8 +34,6 @@ void autonomous() {
 	
 	odomLift.retract();
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-
-	startControllerRclCoordDisplay();
 
 	// Ensure descore arms are retracted
 	extendLeftArm();
@@ -60,21 +54,14 @@ void opcontrol() {
 	stopTopScore();
 	stopIntake();
 
-	startControllerCoordDisplay();
-
-	// Display FB Logo
-	// startBrainFBDisplay();
-
 	// Mcl Tracking
-	startMcl(0, 0, 270, false, true, true);
+	// startMcl(0, 0, 270, false, true, true);
 
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
-
-		pros::lcd::print(0, "Motor???: %f", leftMotors.get_position_all()[0]);
 
 		pros::delay(20);
 	}

@@ -105,3 +105,4 @@
     2) Revised logging algorithm to speed up MCL main process
 3/3/2026
     1) Added motor encoder support for lateral movement estimation
+    2) Completed PID Tuner

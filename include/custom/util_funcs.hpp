@@ -67,3 +67,6 @@ void startControllerRCLInfoDisplay();
 void startMclBenchmark(float x=0, float y=0, float theta=270, float autoReset = true);
 void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight);
 void initLog();
+
+// PID Tuner
+void runPIDTuner();
