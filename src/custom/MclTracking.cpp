@@ -711,7 +711,7 @@ float MclTracking::getDTWheelDegrees() {
         return 0.0f;
     }
 
-    // Get average raw encoder ticks
+    // Get average raw rotations
     std::vector<double> leftPos = dt->leftMotors->get_position_all();
     std::vector<double> rightPos = dt->rightMotors->get_position_all();
 
@@ -720,16 +720,15 @@ float MclTracking::getDTWheelDegrees() {
     for (double pos : rightPos) sum += pos;
 
     // 6 wheels, 3 on each side
-    float avgTicks = static_cast<float>(sum) * 0.166666666667f;
+    float avgRotates = static_cast<float>(sum) * 0.166666666667f;
 
     // Calculate Manual Gear Ratio
     // Blue cartridge (11W) = 600 RPM internal
     float gearRatio = dt->rpm * 0.0016666666667f;
 
-    // Convert Ticks to Wheel Degrees
-    // (Ticks * 2.0) converts ticks to motor degrees
-    // Dividing by gearRatio converts motor degrees to wheel degrees
-    float wheelDegrees = avgTicks * gearRatio * 360.0;
+    // Convert Rotations to Wheel Degrees
+    // Multiply by gearRatio converts motor degrees to wheel degrees
+    float wheelDegrees = avgRotates * gearRatio * 360.0;
 
     return wheelDegrees;
 }

@@ -18,6 +18,7 @@ void initialize() {
     chassis.setPose(0, 0, 0);
 
 	initLeverControl();
+	initLog();	// Critical; DO NOT REMOVE
 
 	pros::lcd::initialize();
 	initBrainDisplay();
@@ -39,7 +40,6 @@ void autonomous() {
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	
 	// Ensure descore arms are retracted
-	extendLeftArm();
 	extendLeftArm();
 }
 
