@@ -138,36 +138,50 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
     this->generate_distance_map();
 }
 
-void MclTracking::predict(float current_std_theta) {
+void MclTracking::predict() {
     // Update theta deviation
+    float current_std_theta = vexToStd(chassis->getPose().theta);
+
     float d_theta = current_std_theta - lastTheta;
     while (d_theta > M_PI) d_theta -= 2 * M_PI;
     while (d_theta < -M_PI) d_theta += 2 * M_PI;
     lastTheta = current_std_theta;
 
+    // Arc Approximation
+    float half_d_theta = d_theta * 0.5f;
+    float move_scale;
+
+    // Avoid division by zero when driving straight
+    if (std::abs(d_theta) < 1e-6f) {
+        move_scale = 1.0f;
+    }
+    else {
+        move_scale = std::sinf(half_d_theta) / half_d_theta;
+    }
+
     // Noise variables
-    float drift_variance = std::hypotf(vertical_drift, horizontal_drift)/2.0f;
+    float drift_variance = std::hypotf(vertical_drift, horizontal_drift) * 0.5f;
 
     // Calculate vertical tracking wheel vector
-    float vert_reading = 0.0;
+    float vert_reading = 0.0f;
     // Retrieve reading from verticle tracking wheel
     if (vertical_tracking_wheel != nullptr) {
-        vert_reading = vertical_tracking_wheel->get_position()/100.0f;
+        vert_reading = vertical_tracking_wheel->get_position() * 0.01f;
     }
     // Retrieve readings from drive motors
     else {
         vert_reading = getDTWheelDegrees();
     }
-    float d_vert_raw = (vert_reading-last_vertical_reading)/360.0f * vert_c;
+    float d_vert_raw = (vert_reading-last_vertical_reading) * 0.0027777777777f * vert_c;
     last_vertical_reading = vert_reading;
 
     // Calculate horizontal tracking wheel vector
-    float horiz_reading = 0.0;
+    float horiz_reading = 0.0f;
     // Retrieve reading from horizontal tracking wheel
     if (horizontal_tracking_wheel != nullptr) {
-        horiz_reading = -horizontal_tracking_wheel->get_position()/100.0f;
+        horiz_reading = -horizontal_tracking_wheel->get_position() * 0.01f;
     }
-    float d_horiz_raw = (horiz_reading-last_horizontal_reading)/360.0f * horiz_c;
+    float d_horiz_raw = (horiz_reading-last_horizontal_reading) * 0.0027777777777f * horiz_c;
     last_horizontal_reading = horiz_reading;
 
     // Get raw reading
@@ -177,19 +191,16 @@ void MclTracking::predict(float current_std_theta) {
     this->latest_speed = std::hypotf(d_vert_pure, d_horiz_pure) * INV_MSPT * 1000.0f;
 
     // If horizontal wheel is absent, introduce more variance
-    float horiz_dependent_variance = 0.0;
+    float horiz_dependent_variance = 0.0f;
     if (horizontal_tracking_wheel == nullptr) {
         horiz_dependent_variance = d_vert_pure * HORIZ_DEPENDENT_VARIANCE_PROP;
     }
 
-    // Sync right after tracking wheel calculations to minimize data loss
-    if (autoSync) updateBotPose();
-
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
         auto& p = particles[i];
-        float pCos = FastTrig::cos(p.pose.theta + (d_theta/2));
-        float pSin = FastTrig::sin(p.pose.theta + (d_theta/2));
+        float pCos = FastTrig::cos(p.pose.theta + (half_d_theta));
+        float pSin = FastTrig::sin(p.pose.theta + (half_d_theta));
 
         // Get noise
         float vert_noise = 1.0f + next_noise()*TRACKING_WHEEL_VARIANCE;
@@ -199,9 +210,12 @@ void MclTracking::predict(float current_std_theta) {
         float forward_dist = d_vert_pure * vert_noise + next_noise()*drift_variance;
         float strafe_dist = d_horiz_pure * horiz_noise + next_noise()*drift_variance + next_noise()*horiz_dependent_variance;
 
-        // Update position
-        p.pose.x += forward_dist*pCos + strafe_dist*pSin;
-        p.pose.y += forward_dist*pSin - strafe_dist*pCos;
+        // Update position using Arc Approximation
+        float local_vert = forward_dist * move_scale;
+        float local_horiz = strafe_dist * move_scale;
+
+        p.pose.x += local_vert*pCos + local_horiz*pSin;
+        p.pose.y += local_vert*pSin - local_horiz*pCos;
         p.pose.theta += d_theta + next_noise()*THETA_RESAMPLE_VARIANCE;
 
         while (p.pose.theta > M_PI) p.pose.theta -= 2 * M_PI;
@@ -229,6 +243,9 @@ void MclTracking::update_weights() {
         float sx = rawMcl.x + (sensor_mounts[i].x * botCos - sensor_mounts[i].y * botSin);
         float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
+
+        float scos = FastTrig::cos(ray_ang);
+        float ssin = FastTrig::sin(ray_ang);
 
         if (mclLogType == SDCARD) {
             // Log
@@ -266,7 +283,7 @@ void MclTracking::update_weights() {
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
             for (auto line : *disabling_line_obstacles) {
-                if (intersect_line({sx, sy, ray_ang}, line, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                if (intersect_line({sx, sy, ray_ang}, line, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
@@ -276,7 +293,7 @@ void MclTracking::update_weights() {
 
         if (disabling_circle_obstacles != nullptr) {
             for (auto circle : *disabling_circle_obstacles) {
-                if (intersect_circle({sx, sy, ray_ang}, circle, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                if (intersect_circle({sx, sy, ray_ang}, circle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
@@ -425,7 +442,7 @@ std::pair<Pose, float> MclTracking::get_estimate() {
 
 Pose MclTracking::updateMcl() {
 
-    predict(vexToStd(chassis->getPose().theta));
+    predict();
     update_weights(); // Log sensor
 
     auto estimate = get_estimate(); // Log particles
@@ -443,6 +460,9 @@ Pose MclTracking::updateMcl() {
     }
 
     rawMcl = estimate.first;
+
+    // Sync to chassis
+    if (autoSync) updateBotPose();
 
     return estimate.first;
 }
@@ -509,11 +529,12 @@ void MclTracking::updateBotPose() {
     while (diff < -M_PI) diff += 2 * M_PI;
 
     // Apply weighted difference
-    float newThetaRad = odomRad + (diff * THETA_SYNC_PROP);
+    float thetaUpdate = diff * THETA_SYNC_PROP;
+    float newThetaRad = odomRad + thetaUpdate;
+    this->lastTheta += thetaUpdate;
 
     // Convert back to VEX Degrees for LemLib
     chassis->setPose(newX, newY, stdToVex(newThetaRad));
-    this->lastTheta = newThetaRad;
 }
 
 void MclTracking::startTracking() {
@@ -560,13 +581,15 @@ void MclTracking::logMcl() {
 
     auto& particles = *particles_ptr;
 
-    for (const auto& p : particles) {
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
+        const auto& p = particles[i];
+
         sum_sq_diff_x += (p.pose.x - rawMcl.x)*(p.pose.x - rawMcl.x);
         sum_sq_diff_y += (p.pose.y - rawMcl.y)*(p.pose.y - rawMcl.y);
         
         // Use circular statistics for theta
-        sum_sin += FastTrig::sin(p.pose.theta);
-        sum_cos += FastTrig::cos(p.pose.theta);
+        sum_sin += pTrigs[i].sin_m;
+        sum_cos += pTrigs[i].cos_m;
     }
 
     // Calculate standard deviation
@@ -706,6 +729,14 @@ void MclTracking::startAsyncLogger() {
     }
 }
 
+void MclTracking::stopAsyncLogger() {
+    if (asyncLogTask != nullptr) {
+        asyncLogTask->remove(); 
+        delete asyncLogTask; 
+        asyncLogTask = nullptr; 
+    }
+}
+
 float MclTracking::getDTWheelDegrees() {
     if (dt == nullptr || dt->leftMotors == nullptr || dt->rightMotors == nullptr) {
         return 0.0f;
@@ -733,7 +764,7 @@ float MclTracking::getDTWheelDegrees() {
     return wheelDegrees;
 }
 
-
 MclTracking::~MclTracking() {
     stopTracking();
+    stopAsyncLogger();
 }

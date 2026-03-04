@@ -178,7 +178,7 @@ public:
     MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
 
     // Update particles and pTrigs
-    void predict(float current_std_theta);
+    void predict();
 
     void update_weights();
 
@@ -203,6 +203,8 @@ public:
     void uniform_reset();
 
     void startAsyncLogger();
+
+    void stopAsyncLogger();
 
     void enableSens(int sens);
 
