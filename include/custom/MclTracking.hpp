@@ -31,7 +31,7 @@ private:
     static constexpr float HEADING_SIGMA = 0.04f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
-    static constexpr int CONFIDENCE_THRESHOLD = 50;
+    static constexpr int CONFIDENCE_THRESHOLD = 40;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float FAULT_TOLERANCE = 1e-4f;
     float DIST_SYNC_PROP = 0.1f;
