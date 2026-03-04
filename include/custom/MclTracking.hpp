@@ -40,13 +40,13 @@ private:
 
     static constexpr float MSPT = 15.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 10.0f;
+    static constexpr float MINPAUSE = 8.0f;
 
     // Distance map
     static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
     static constexpr float MAP_SCALE = 2.0f; // samples per inch
     static constexpr float MAP_OFFSET = 72.0f; // field center offset
-    static constexpr float GAUSSIAN_SIGMA = 2.0f; // "Blur" width in inches
+    static constexpr float GAUSSIAN_SIGMA = 1.5f; // "Blur" width in inches
     static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 8.0 inches from an object
     static constexpr float DIST_MULTIPLIER = 90.1561146013f;   // (255.0 / sqrt(DISTANCE_RANGE))
     static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
@@ -58,10 +58,10 @@ private:
 
     // Walls
     static constexpr Line_ walls[4] = {
-        {{-70.5, -70.5,}, { 70.5, -70.5}}, 
-        {{ 70.5, -70.5}, { 70.5,  70.5}}, 
-        {{ 70.5,  70.5}, {-70.5,  70.5}}, 
-        {{-70.5,  70.5}, {-70.5, -70.5}}
+        {{-70.2, -70.2}, { 70.2, -70.2}}, 
+        {{ 70.2, -70.2}, { 70.2,  70.2}}, 
+        {{ 70.2,  70.2}, {-70.2,  70.2}}, 
+        {{-70.2,  70.2}, {-70.2, -70.2}}
     };
 
     // Line obstacles
@@ -86,8 +86,8 @@ private:
 
     // Circle obstacles
     static constexpr Circle circle_obstacles[4] = {
-        {-67.5, 46.5, 2.75},  {-67.5, -46.5, 2.75}, // Match loaders
-        {67.5, 46.5, 2.75},   {67.5, -46.5, 2.75}
+        {-67.635f, 46.765f, 2.00f},  {-67.635f, -46.765f, 2.00f}, // Match loaders
+        {67.635f, 46.765f, 2.00f},   {67.635f, -46.765f, 2.00f}
     };
 
     // Sensor mounts
