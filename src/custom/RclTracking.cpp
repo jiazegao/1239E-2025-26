@@ -25,7 +25,8 @@ Line_Obstacle::Line_Obstacle(float x1, float y1, float x2, float y2, float lifeT
     line.pt1[1] = y1;
     line.pt2[0] = x2;
     line.pt2[1] = y2;
-    line.slope = (y2 - y1) / (x2 - x1);
+    if (std::fabs(x1-x2) < 1e-10) line.slope = (y2 - y1) * 1e10f;
+    else line.slope = (y2 - y1) / (x2 - x1);
     line.yIntercept = y1 - line.slope * x1;
     // Add to collection if space available
     Line_Obstacle::obstacleCollection.add_front(this);
@@ -152,14 +153,6 @@ bool RclSensor::isValid(float distVal) const {
     return true;
 }
 
-void RclSensor::logPos(std::ofstream* targetFile) {
-    // Log
-    while (logging == true) {pros::delay(1);}
-    logging = true;
-    *targetFile << sensor->get() << "," << sp.x << "," << sp.y << "," << vexToStd(sp.heading) << "\n";
-    logging = false;
-}
-
 // Return which coordinate (X or Y) and its value
 std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, float accum) {
 
@@ -209,8 +202,8 @@ std::pair<CoordType, float> RclSensor::getBotCoord(const lemlib::Pose& botPose, 
 
     // Adjust by offset
     float offRad = degToRad(offsetAngle - botPose.theta);
-    if (type == CoordType::X) res -= std::cos(offRad) * offsetDist;
-    else if (type == CoordType::Y) res -= std::sin(offRad) * offsetDist;
+    if (type == CoordType::X) res -= FastTrig::cos(offRad) * offsetDist;
+    else if (type == CoordType::Y) res -= FastTrig::sin(offRad) * offsetDist;
 
     return {type, res};
 }
@@ -313,12 +306,6 @@ void RclTracking::mainUpdate() {
     // Verify that there is at least one sensor
     if (RclSensor::sensorCollection.size() > 0) {
 
-        // Log
-        while (logging == true) {pros::delay(1);}
-        logging = true;
-        *rclLog << rclLogTimer.elapsed(TimeUnit::SECOND) << "\n";
-        logging = false;
-
         // Accumulators
         std::vector<int> accTotal(RclSensor::sensorCollection.size());
         std::vector<int> accCount(RclSensor::sensorCollection.size());
@@ -348,7 +335,6 @@ void RclTracking::mainUpdate() {
 
             float avg = (accCount[i] > 0) ? (1.0 * accTotal[i] / accCount[i]) : NAN;
             auto [type, coord] = sens->getBotCoord(botPose, avg);
-            sens->logPos(rclLog);
 
             // Validate and collect
             if (type == CoordType::X) {
@@ -376,13 +362,6 @@ void RclTracking::mainUpdate() {
                 poseAtLatest.y = chassis->getPose().y;
             }
         }
-
-        // Log
-        auto p = getRclPose();
-        while (logging == true) {pros::delay(1);}
-        logging = true;
-        *rclLog << p.x << "," << p.y << "," << vexToStd(p.theta) << "\n";
-        logging = false;
 
         // Determine if bot position should be automatically updated
         if (updateAfterAccum && std::any_of(accCount.begin(), accCount.end(), [](int c){ return c>0; }))

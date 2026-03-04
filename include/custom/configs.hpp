@@ -39,9 +39,6 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
                               2
 );
 
-// Odometry
-inline pros::Rotation vertSensor(tempPort);
-
 // IMU
 inline pros::Imu imu(tempPort);
 
@@ -53,7 +50,6 @@ inline pros::adi::Potentiometer leverPotent('H');
 inline pros::adi::Pneumatics matchLoadGate('D', false, false);
 inline pros::adi::Pneumatics lift('C', true, false);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
-inline pros::adi::Pneumatics odomLift('F', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
 inline pros::adi::Pneumatics intakeLift('G', false, false);
 
@@ -64,8 +60,6 @@ inline int getLeverPotentReading() {
 }
 
 // Odometry
-inline lemlib::TrackingWheel vertical_tracking_wheel(&vertSensor, lemlib::Omniwheel::NEW_275, -0.5, 1.0);
-
 inline lemlib::OdomSensors sensors( nullptr,
                                     nullptr,
                                     nullptr,
@@ -125,25 +119,41 @@ inline pros::Distance front_dist(tempPort);
 inline pros::Distance left_dist(tempPort);
 inline pros::Distance back_dist(tempPort);
 inline pros::Distance right_dist(tempPort);
+inline pros::Distance fl_dist(tempPort);
+inline pros::Distance bl_dist(tempPort);
+inline pros::Distance br_dist(tempPort);
+inline pros::Distance fr_dist(tempPort);
 
-inline const std::array<pros::Distance*, 6> DISTANCE_COLLECTION = {&front_dist, &left_dist, &back_dist, &right_dist};
+inline std::array<pros::Distance*, 8> DISTANCE_COLLECTION = {&front_dist, &left_dist, &back_dist, &right_dist, &fl_dist, &bl_dist, &br_dist, &fr_dist};
 
 // Rcl setup
 inline RclSensor front_rcl(&front_dist, 5.375, -4.25, 180, 15.0);
 inline RclSensor left_rcl(&left_dist, 4.5, 0.0, 90.0, 15.0);
 inline RclSensor back_rcl(&back_dist, -4.5, 0.0, 270.0, 15.0);
 inline RclSensor right_rcl(&right_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclTracking RclMain(&chassis, 20, true, 0.5, 4.0, 10.0, 6.0, 20);
+inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 200.0, 6.0, 50);
+inline MclTracking MclMain(&chassis, &drivetrain, DISTANCE_COLLECTION, {nullptr, 0.0, 0.0}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
 
-// Mcl setup
-inline MclTracking MclMain(&chassis, &leftMotors, &rightMotors, DISTANCE_COLLECTION, {&vertSensor, 2.75, -0.5}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
+enum MCL_Log_Format {DISABLED, SDCARD, SCREEN};
+inline MCL_Log_Format mclLogType = SDCARD;
+inline std::ofstream* mclLog = nullptr;
+inline Timer mclLogTimer(100000000.0f);
 
-// Logging
-inline bool logging = false;
-inline std::ofstream* mclLog = new std::ofstream("/usd/MCLDefault.1239e");
-inline std::ofstream* rclLog = new std::ofstream("/usd/RCLDefault.1239e");
-inline Timer mclLogTimer(1000000000);
-inline Timer rclLogTimer(1000000000);
+// Mcl obstacles
+inline std::vector<Line_> soloAWP_obstacles = {
+    // Alliance Robot Disable Lines
+    {{-72.0f, 8.0f}, {-46.0f, 8.0f}},
+    {{-46.0f, 8.0f}, {-46.0f, 32.0f}},
+    {{-72.0f, 32.0f}, {-46.0f, 32.0f}},
+    // Middle Line
+    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+};
+inline std::vector<Line_> quadrant_dividers = {
+    // x-axis
+    {{-72.0f, 0.0f}, {72.0f, 0.0f}},
+    // y-axis
+    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+};
 
 // loaders
 inline Circle_Obstacle redUpLoader(-67.5, 46.5, 3);

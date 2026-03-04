@@ -71,6 +71,8 @@ void updatePneumatics() {
         else trapDoor.retract();
         hoodLock = !hoodLock;
     }
+    // Rumble controller if hood lock is activated
+    if (hoodLock) controller.rumble(".");
 }
 
 // Intake management
@@ -206,15 +208,6 @@ void startBrainCoordDisplay() {
     };
 };
 
-void startBrainMotorInfoDisplay() {
-    brainDisplayFunc = [](){
-        for (int i = 0; i < 3; i++) {
-            pros::lcd::print(i, 0, "LMotor%d: %f", i+1, leftMotors.get_position_all()[i]);
-			pros::lcd::print(i+3, 0, "RMotor%d: %f", i+4, rightMotors.get_position_all()[i]);
-        }
-    };
-};
-
 void startBrainFBDisplay() {
     static lv_obj_t* image = lv_image_create(lv_screen_active());
     lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
@@ -260,6 +253,7 @@ void startMclBenchmark(float x, float y, float theta, float autoReset) {
     // Initial Sync
     chassis.setPose(x, y, theta);
     if (autoReset) {
+        RclMain.updateBotPose(&left_rcl);
         RclMain.updateBotPose(&right_rcl);
         RclMain.updateBotPose(&back_rcl);
     }
@@ -293,6 +287,8 @@ void startMclBenchmark(float x, float y, float theta, float autoReset) {
             pros::lcd::print(1, "MclPos: X:%.1f Y:%.1f T:%.1f", rawMcl.x, rawMcl.y, mclTheta);
             pros::lcd::print(2, "OdomPos: X:%.1f Y:%.1f T:%.1f", odomLast.x, odomLast.y, odomLast.theta);
             pros::lcd::print(3, "RclPos: X:%.1f Y:%.1f T:%.1f", RclPose.x, RclPose.y, RclPose.theta);
+            pros::lcd::print(4, "B: %d mm L: %d mm R:%d mm", back_dist.get(), left_dist.get(), right_dist.get());
+            pros::lcd::print(5, "Confs: B:%d L:%d R:%d", back_dist.get_confidence(), left_dist.get_confidence(), right_dist.get_confidence());
             pros::delay(60);
         }
     });
@@ -305,6 +301,7 @@ void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, 
 	RclMain.setRclPose(p);
     
     // Perform RCL Resets
+    if (resetLeft) RclMain.updateBotPose(&left_rcl);
     if (resetBack) RclMain.updateBotPose(&back_rcl);
     if (resetRight) RclMain.updateBotPose(&right_rcl);
 
@@ -316,29 +313,137 @@ void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, 
 }
 
 void initLog() {
-    // Retrive file count
-	int fileCount = 0;
-	std::ifstream dataFileR("/usd/DATA.1239e");
-	// If file exist, read from it
-	if (dataFileR.is_open()) {
-		dataFileR >> fileCount;
-		dataFileR.close();
-	}
-	// (Default is 1)
-	fileCount++;
-	
-	std::string mclFileName = "/usd/mcl_log" + std::to_string(fileCount) + ".1239e";
-	std::string rclFileName = "/usd/rcl_log" + std::to_string(fileCount) + ".1239e";
-	mclLog = new std::ofstream(mclFileName);
-	rclLog = new std::ofstream(rclFileName);
+    if (mclLogType == SDCARD) {
+        // Retrive file count
+        int fileCount = 0;
+        std::ifstream dataFileR("/usd/DATA.1239e");
+        // If file exist, read from it
+        if (dataFileR.is_open()) {
+            dataFileR >> fileCount;
+            dataFileR.close();
+        }
+        // (Default is 1)
+        fileCount++;
+        
+        std::string mclFileName = "/usd/mcl_log" + std::to_string(fileCount) + ".1239e";
+        mclLog = new std::ofstream(mclFileName);
+        
+        std::ofstream dataFileW("/usd/DATA.1239e");
+        dataFileW << fileCount;
+        dataFileW.close();
 
-	std::ofstream dataFileW("/usd/DATA.1239e");
-	dataFileW << fileCount;
-	dataFileW.close();
+        mclLogTimer.hardReset(10000000000);
 
-	rclLogTimer.hardReset(10000000000);
-	mclLogTimer.hardReset(10000000000);
+        // If SD card is absent, rumble controller
+        if (!mclLog->is_open()) {
+            controller.rumble("-.-.");
+            mclLogType = DISABLED;
+        }
+        else {
+            mclLog->precision(8);
+            MclMain.startAsyncLogger();
+        }
+    }
+}
 
-    // If SD card is absent, rumble controller
-    if (!mclLog->is_open()) controller.rumble("-.-.-.-");
+// PID Tuner
+void runPIDTuner() {
+
+    stopBrainDisplay();
+    stopControllerDisplay();
+
+    float forwardAmount = 0.0;
+    float turnAmount = 0.0;
+    bool managingLateral = true;
+
+    while (true) {
+        // General Display
+        pros::lcd::print(0, "Currently Managing: %s", managingLateral ? "LATERAL" : "ANGULAR");
+        pros::lcd::print(2, "Lateral P: %f, I: %f, D: %f", chassis.lateralPID.kP, chassis.lateralPID.kI, chassis.lateralPID.kD);
+        pros::lcd::print(3, "Angular P: %f, I: %f, D: %f", chassis.angularPID.kP, chassis.angularPID.kI, chassis.angularPID.kD);
+        pros::lcd::print(4, "Forward Amount: %f in.", forwardAmount);
+        pros::lcd::print(5, "Turn Amount: %f deg", turnAmount);
+        pros::lcd::print(7, "Ready.");
+
+        // Lateral Movement & PID Adjustment
+        if (managingLateral) {
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+                forwardAmount += 2.0;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+                forwardAmount -= 2.0;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+                chassis.lateralPID.kP += 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+                chassis.lateralPID.kP -= 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+                chassis.lateralPID.kI += 0.05;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                chassis.lateralPID.kI -= 0.05;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+                chassis.lateralPID.kD += 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+                chassis.lateralPID.kD -= 0.1;
+            }
+        }
+        // Angular PID Adjustment
+        else {
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+                turnAmount += 2.0;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+                turnAmount -= 2.0;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+                chassis.angularPID.kP += 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+                chassis.angularPID.kP -= 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+                chassis.angularPID.kI += 0.05;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+                chassis.angularPID.kI -= 0.05;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+                chassis.angularPID.kD += 0.1;
+            }
+            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+                chassis.angularPID.kD -= 0.1;
+            }
+        }
+
+        // Resets & Toggles
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+            pros::lcd::print(7, 0, "Resetting...");
+            chassis.turnToPoint(0, 0, 1500, {}, false);
+            chassis.moveToPoint(0, 0, 3500, {}, false);
+            chassis.turnToHeading(0, 1500, {}, false);
+            chassis.setPose(0, 0, 0);
+        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+            managingLateral = !managingLateral;
+        }
+
+        // Movements
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+            pros::lcd::print(7, 0, "Moving to point...");
+            chassis.setPose(0, 0, 0);
+            chassis.moveToPoint(0, forwardAmount, 5000, {}, false);
+        }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+            pros::lcd::print(7, 0, "Turning to heading...");
+            chassis.setPose(0, 0, 0);
+            chassis.turnToHeading(turnAmount, 3000, {}, false);
+        }
+
+        pros::delay(10);
+    }
 }
