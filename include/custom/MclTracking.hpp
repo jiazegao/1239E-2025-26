@@ -19,9 +19,9 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 2000;
+    static constexpr int PARTICLE_COUNT = 2400;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 500;
+    static constexpr int RESAMPLE_THRESHOLD = 600;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
@@ -31,24 +31,24 @@ private:
     static constexpr float HEADING_SIGMA = 0.04f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
-    static constexpr int CONFIDENCE_THRESHOLD = 40;
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.05f;
+    static constexpr int CONFIDENCE_THRESHOLD = 50;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float FAULT_TOLERANCE = 1e-4f;
     float DIST_SYNC_PROP = 0.1f;
     float THETA_SYNC_PROP = 0.001f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.333333f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.2f;
 
-    static constexpr float MSPT = 20.0f;
+    static constexpr float MSPT = 15.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 5.0f;
+    static constexpr float MINPAUSE = 10.0f;
 
     // Distance map
     static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
     static constexpr float MAP_SCALE = 2.0f; // samples per inch
     static constexpr float MAP_OFFSET = 72.0f; // field center offset
-    static constexpr float GAUSSIAN_SIGMA = 2.5f; // "Blur" width in inches
-    static constexpr float DISTANCE_RANGE = 10.0f; // maximum differentiation of 10.0 inches from an object
-    static constexpr float DIST_MULTIPLIER = 80.6380803343f;   // (255.0 / sqrt(DISTANCE_RANGE))
+    static constexpr float GAUSSIAN_SIGMA = 2.0f; // "Blur" width in inches
+    static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 8.0 inches from an object
+    static constexpr float DIST_MULTIPLIER = 90.1561146013f;   // (255.0 / sqrt(DISTANCE_RANGE))
     static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
 
     struct Particle {
@@ -164,8 +164,6 @@ private:
     float intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin);
 
     float intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy);
-    
-    float getDTWheelDegrees();
 
 public:
     MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
@@ -204,6 +202,8 @@ public:
     void setObstacles(std::vector<Line_>* newLineObstaclesPtr = nullptr, std::vector<Circle>* newCirleObstaclesPtr = nullptr);
 
     void setDrift(float verticalDrift, float horizontalDrift);
+
+    float getDTWheelDegrees();
 
     ~MclTracking();
 };

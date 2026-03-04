@@ -6,6 +6,7 @@
 #include "custom/util_funcs.hpp"
 #include "custom/auton_selector.hpp" // IWYU pragma: keep
 #include "liblvgl/llemu.hpp"
+#include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include "pros/motors.h"
 #include "pros/motors.h"
@@ -62,6 +63,9 @@ void opcontrol() {
 		updateTankDrive();
 		updateIntake();
 		updatePneumatics();
+
+		pros::lcd::print(0, "Drivetrain: %f", MclMain.getDTWheelDegrees());
+		pros::lcd::print(1, "Unit: %d", drivetrain.leftMotors->get_encoder_units());
 
 		pros::delay(20);
 	}

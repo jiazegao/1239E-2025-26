@@ -727,9 +727,9 @@ float MclTracking::getDTWheelDegrees() {
     float gearRatio = dt->rpm * 0.0016666666667f;
 
     // Convert Ticks to Wheel Degrees
-    // (Ticks * 1.2) converts ticks to motor degrees
+    // (Ticks * 2.0) converts ticks to motor degrees
     // Dividing by gearRatio converts motor degrees to wheel degrees
-    float wheelDegrees = (avgTicks * 1.2f) * gearRatio;
+    float wheelDegrees = avgTicks * gearRatio * 360.0;
 
     return wheelDegrees;
 }
