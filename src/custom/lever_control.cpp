@@ -7,6 +7,7 @@
 
 pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
+pros::Task* frontIntakeControlTask = nullptr;
 
 enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
 inline const int RESTING_POS = 910;
@@ -104,6 +105,9 @@ alliance_color getOpticColor() {
 int currTarget = 0;
 int currMaxSpeed = 0;
 bool autoReset = true;
+int currOuttakeSpeed = 127;
+
+Timer intakeSwapTimer(200);
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -206,27 +210,52 @@ void initLeverControl() {
             pros::delay(20);
         }
     });
+
+    // Lower intake controller
+    frontIntakeControlTask = new pros::Task([](){
+        while (true) {
+            // Rudimentary motor control
+            if (currentStage == INTAKING) {
+                frontMotor.move(127);
+                // Anti-stuck; only act if intake has been occuring for a certain amount of time
+                if (std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
+                    frontMotor.move(-127);
+                    pros::delay(150);
+                    frontMotor.move(127);
+                }
+            }
+            else if (currentStage == OUTTAKING) {
+                frontMotor.move(-currOuttakeSpeed);
+            }
+            else {
+                frontMotor.move(0);
+            }
+
+            pros::delay(20);
+        }
+    });
 }
 
 void stopIntake() {
-    frontMotor.move(0);
     if (currentStage != RAISING && currentStage != LOWERING) currentStage = INACTIVE;
     removedFromTop = true;
+    intakeSwapTimer.reset();
 }
 
 void startIntake() {
     if (currentStage != RAISING && currentStage != LOWERING) {
-        frontMotor.move(127);
         currentStage = INTAKING;
         removedFromTop = true;
+        intakeSwapTimer.reset();
     }
 }
 
-void startOuttake() {
+void startOuttake(int speed) {
     if (currentStage != RAISING && currentStage != LOWERING) {
-        frontMotor.move(-127);
         currentStage = OUTTAKING;
         removedFromTop = false;
+        currOuttakeSpeed = std::abs(speed);
+        intakeSwapTimer.reset();
     }
 }
 

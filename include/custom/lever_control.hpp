@@ -47,7 +47,7 @@ void startIntake();
 /*
     - Activates front intake inward
 */
-void startOuttake();
+void startOuttake(int speed = 127);
 /*
     - Activates front intake outward
 */
