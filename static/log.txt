@@ -91,3 +91,9 @@
 2/24/2026
     1) Replaced double with float for optimization
     2) Replaced standard trig calculations with 1D LUT for optimization
+3/5/2026
+    1) Completed octagon
+    2) Replaced linear movement prediction with arc prediction
+    3) Added confidence component to dynamic sigma adjustment
+    4) Added sensor-disabling component; primarily used to account for front sensor blockade during matchload Toggles
+    5) Added intake anti-stuck

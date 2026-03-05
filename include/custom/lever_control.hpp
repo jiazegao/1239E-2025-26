@@ -74,3 +74,9 @@ void resetLever();
 void setAutoReset(bool newConfig);
 
 void startLeverTuningDisplay();
+
+void openGate();
+
+void closeGate();
+
+void toggleGate();

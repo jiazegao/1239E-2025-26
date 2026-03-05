@@ -280,6 +280,20 @@ void closeHood() {
     if (!hoodLock) trapDoor.retract();
 }
 
+void openGate() {
+    matchLoadGate.extend();
+    MclMain.disableSensFor(FRONT, 500);
+}
+void closeGate() {
+    matchLoadGate.retract();
+    MclMain.disableSensFor(FRONT, 500);
+}
+void toggleGate() {
+    matchLoadGate.toggle();
+    MclMain.disableSensFor(FRONT, 500);
+}
+
+
 void score(int timeOut, int count, int maxScoringSpeed) {
     int level = std::min(count, currSize.load()) + (INTAKE_CAPACITY-currSize) - 1;
     stopIntake();

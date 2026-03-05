@@ -6,6 +6,10 @@
 
 // Timer
 enum class TimeUnit { SECOND, MILLISECOND };
+
+static constexpr float INV_PI = 1.0f / M_PI;
+static constexpr float INV_180 = 1.0f / 180.0f;
+
 class Timer {
     public:
         Timer(float timeoutMs_ = 0) : timeoutMs(timeoutMs_), startTime(std::chrono::high_resolution_clock::now()) {};
@@ -30,7 +34,7 @@ class Timer {
 
         float elapsed(TimeUnit unit = TimeUnit::MILLISECOND) const {
             float ms = elapsedMs();
-            return (unit == TimeUnit::SECOND) ? (ms / 1000.0) : ms;
+            return (unit == TimeUnit::SECOND) ? (ms * 0.001f) : ms;
         };
     
     private:
@@ -57,19 +61,19 @@ inline float botToTrig(float ang) {
     return result;
 }
 inline float vexToStd(float vexDegrees) {
-    float rads = (90.0 - vexDegrees) * (M_PI / 180.0);
+    float rads = (90.0 - vexDegrees) * (M_PI * INV_180);
     while (rads > M_PI) rads -= 2 * M_PI;
     while (rads < -M_PI) rads += 2 * M_PI;
     return rads;
 }
 inline float stdToVex(float stdRads) {
-    float deg = 90.0 - (stdRads * 180.0 / M_PI);
+    float deg = 90.0 - (stdRads * 180.0 * INV_PI);
     while (deg < 0) deg += 360;
     while (deg >= 360) deg -= 360;
     return deg;
 }
 
 // Utility conversions
-inline float degToRad(float deg) { return deg * M_PI / 180.0; }
+inline float degToRad(float deg) { return deg * M_PI * INV_180; }
 
 #endif

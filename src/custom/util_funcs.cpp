@@ -14,12 +14,6 @@
 #include "lever_control.hpp"
 
 // Pneumatics functions
-void openGate() {
-    matchLoadGate.extend();
-};
-void closeGate() {
-    matchLoadGate.retract();
-};
 void extendLeftArm() {
     leftDescoreArm.extend();
 };
@@ -54,7 +48,7 @@ void shake(int repeats, int time) {
 void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
-        matchLoadGate.toggle();
+        toggleGate();
     }
     // Button Down - Left descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {

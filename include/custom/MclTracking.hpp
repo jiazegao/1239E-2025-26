@@ -31,7 +31,7 @@ private:
     static constexpr float HEADING_SIGMA = 0.04f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
-    static constexpr int CONFIDENCE_THRESHOLD = 50;
+    static constexpr int CONFIDENCE_THRESHOLD = 32;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float FAULT_TOLERANCE = 1e-4f;
     float DIST_SYNC_PROP = 0.1f;
@@ -84,6 +84,9 @@ private:
         {{20.7f, -47.12f}, {22.288033f, -45.590357f}}
     };
 
+    // Top middle
+    static constexpr Line_ top_middle = {{-7.5f, 7.5f}, {7.5f, -7.5f}};
+
     // Circle obstacles
     static constexpr Circle circle_obstacles[4] = {
         {-67.635f, 46.765f, 2.00f},  {-67.635f, -46.765f, 2.00f}, // Match loaders
@@ -105,6 +108,7 @@ private:
     };
     std::array<pros::Distance*, SENSOR_COUNT> distance_collection = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
     std::array<Trig, SENSOR_COUNT> mountTrigs;
+    std::array<Timer, SENSOR_COUNT> disableTimers;
 
     // Disabling line obstacles
     std::vector<Line_>* disabling_line_obstacles = nullptr;
@@ -202,13 +206,15 @@ public:
 
     void uniform_reset();
 
-    void startAsyncLogger();
-
-    void stopAsyncLogger();
-
     void enableSens(int sens);
 
     void disableSens(int sens);
+
+    void disableSensFor(int sens, int ms);
+
+    void startAsyncLogger();
+
+    void stopAsyncLogger();
 
     void setObstacles(std::vector<Line_>* newLineObstaclesPtr = nullptr, std::vector<Circle>* newCirleObstaclesPtr = nullptr);
 

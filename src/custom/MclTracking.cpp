@@ -134,6 +134,11 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
         noise_pool[i] = dist(gen);
     }
 
+    // Reset timers
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        disableTimers[i] = Timer(0);
+    }
+
     // Generate distance map
     this->generate_distance_map();
 }
@@ -233,6 +238,8 @@ void MclTracking::update_weights() {
     float botCos = FastTrig::cos(rawMcl.theta);
     float botSin = FastTrig::sin(rawMcl.theta);
 
+    float inv_sigmas[SENSOR_COUNT]; // Calculate inv_sigmas along the way
+
     for (int i = 0; i < SENSOR_COUNT; i++) {
         sensor_readings_mm[i] = distance_collection[i]->get();
         sensor_readings_inch[i] = sensor_readings_mm[i] * mmToInch;
@@ -243,6 +250,8 @@ void MclTracking::update_weights() {
         float sx = rawMcl.x + (sensor_mounts[i].x * botCos - sensor_mounts[i].y * botSin);
         float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
+        
+        Pose sray = {sx, sy, ray_ang};
 
         float scos = FastTrig::cos(ray_ang);
         float ssin = FastTrig::sin(ray_ang);
@@ -278,12 +287,19 @@ void MclTracking::update_weights() {
             valid_sensors[i] = false;
             continue;
         }
-        // Case #4: Disqualifying intersection with obstacles
+        // Case #4: Top middle goal lip disabling
+        else if ((i == DISTSENSORS::BACK_LEFT || i == DISTSENSORS::BACK_RIGHT || i == DISTSENSORS::FRONT_LEFT || i == DISTSENSORS::FRONT_RIGHT)) {
+            if (intersect_line(sray, top_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+                valid_sensors[i] = false;
+                break;
+            }
+        }
+        // Case #5: Disqualifying intersection with obstacles
         
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
             for (auto line : *disabling_line_obstacles) {
-                if (intersect_line({sx, sy, ray_ang}, line, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+                if (intersect_line(sray, line, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
@@ -293,19 +309,16 @@ void MclTracking::update_weights() {
 
         if (disabling_circle_obstacles != nullptr) {
             for (auto circle : *disabling_circle_obstacles) {
-                if (intersect_circle({sx, sy, ray_ang}, circle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+                if (intersect_circle(sray, circle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
             }
         }
-    }
 
-    // Calculate sigmas
-    float inv_sigmas[SENSOR_COUNT];
-    for (int i = 0; i < SENSOR_COUNT; i++) {
         // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
         float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
+        sigma *= 63.0f / sensor_confs[i];   // Scale sigma based on confidence
         inv_sigmas[i] = 1.0f / sigma;
     }
 
@@ -442,7 +455,14 @@ std::pair<Pose, float> MclTracking::get_estimate() {
 
 Pose MclTracking::updateMcl() {
 
-    predict();
+    // Update sensor disability
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        auto& t = disableTimers[i];
+        if (t.timeIsUp()) disabled_sensors[i] = false;
+        else disabled_sensors[i] = true;
+    }
+
+    predict();  // Update position
     update_weights(); // Log sensor
 
     auto estimate = get_estimate(); // Log particles
@@ -659,13 +679,18 @@ void MclTracking::generate_distance_map() {
 }
 
 void MclTracking::enableSens(int sens) {
-    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
-    disabled_sensors[filtered] = false;
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(0);
 }
 
 void MclTracking::disableSens(int sens) {
-    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
-    disabled_sensors[filtered] = true;
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(1e20f);
+}
+
+void MclTracking::disableSensFor(int sens, int ms) {
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(ms);
 }
 
 void MclTracking::setObstacles(std::vector<Line_>* newLineObstaclesPtr, std::vector<Circle>* newCirleObstaclesPtr) {

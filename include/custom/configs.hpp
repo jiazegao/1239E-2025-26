@@ -115,6 +115,7 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 inline pros::Distance midDist(tempPort);
 inline pros::Distance topDist(tempPort);
 
+enum DISTSENSORS {FRONT, LEFT, BACK, RIGHT, FRONT_LEFT, BACK_LEFT, BACK_RIGHT, FRONT_RIGHT};
 inline pros::Distance front_dist(1);
 inline pros::Distance left_dist(2);
 inline pros::Distance back_dist(14);
@@ -142,27 +143,17 @@ inline Timer mclLogTimer(100000000.0f);
 // Mcl obstacles
 inline std::vector<Line_> soloAWP_obstacles = {
     // Alliance Robot Disable Lines
-    {{-72.0f, 8.0f}, {-46.0f, 8.0f}},
-    {{-46.0f, 8.0f}, {-46.0f, 32.0f}},
-    {{-72.0f, 32.0f}, {-46.0f, 32.0f}},
+    {{-72.0f, 4.0f}, {-42.0f, 4.0f}},
+    {{-42.0f, 4.0f}, {-42.0f, 36.0f}},
+    {{-72.0f, 36.0f}, {-42.0f, 36.0f}},
     // Middle Line
-    {{0.0f, -72.0f}, {0.0f, 72.0f}},
-    // Middle Goal
-    {{-10.0f, -10.0f}, {-10.0f, 10.0f}},
-    {{-10.0f, 10.0f}, {10.0f, 10.0f}},
-    {{10.0f, 10.0f}, {10.0f, -10.0f}},
-    {{10.0f, -10.0f}, {-10.0f, -10.0f}}
+    {{0.0f, -71.0f}, {0.0f, 71.0f}}
 };
 inline std::vector<Line_> quadrant_dividers = {
     // x-axis
-    {{-72.0f, 0.0f}, {72.0f, 0.0f}},
+    {{-71.0f, 0.0f}, {71.0f, 0.0f}},
     // y-axis
-    {{0.0f, -72.0f}, {0.0f, 72.0f}},
-    // Middle Goal
-    {{-10.0f, -10.0f}, {-10.0f, 10.0f}},
-    {{-10.0f, 10.0f}, {10.0f, 10.0f}},
-    {{10.0f, 10.0f}, {10.0f, -10.0f}},
-    {{10.0f, -10.0f}, {-10.0f, -10.0f}}
+    {{0.0f, -71.0f}, {0.0f, 71.0f}}
 };
 
 // loaders
