@@ -294,13 +294,14 @@ void startMclBenchmark(float x, float y, float theta, float autoReset) {
     });
 }
 
-void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight){
+void startMcl(float x, float y, float vexTheta, bool resetFront, bool resetLeft, bool resetBack, bool resetRight) {
     // Reset Chassis and RCL
     lemlib::Pose p(x,y,vexTheta);
     chassis.setPose(x, y, vexTheta);
 	RclMain.setRclPose(p);
     
     // Perform RCL Resets
+    if (resetFront) RclMain.updateBotPose(&front_rcl);
     if (resetLeft) RclMain.updateBotPose(&left_rcl);
     if (resetBack) RclMain.updateBotPose(&back_rcl);
     if (resetRight) RclMain.updateBotPose(&right_rcl);
@@ -346,23 +347,34 @@ void initLog() {
     }
 }
 
+void savePIDValues() {
+    std::ofstream PID_Write("/usd/PIDValues.1239e");
+    if (PID_Write.is_open()) PID_Write << chassis.lateralPID.kP << " " << chassis.lateralPID.kI << " " << chassis.lateralPID.kD << " " << chassis.angularPID.kP << " " << chassis.angularPID.kI << " " << chassis.angularPID.kD;
+    PID_Write.close();
+}
+
 // PID Tuner
 void runPIDTuner() {
 
-    stopBrainDisplay();
-    stopControllerDisplay();
-
-    float forwardAmount = 0.0;
-    float turnAmount = 0.0;
+    float forwardAmount = 20.0;
+    float turnAmount = 90.0;
     bool managingLateral = true;
+
+    // Retrive file count
+    std::ifstream dataFileR("/usd/PIDValues.1239e");
+    // If file exist, read from it
+    if (dataFileR.is_open()) {
+        dataFileR >> chassis.lateralPID.kP >> chassis.lateralPID.kI >> chassis.lateralPID.kD >> chassis.angularPID.kP >> chassis.angularPID.kI >> chassis.angularPID.kD;
+        dataFileR.close();
+    }
 
     while (true) {
         // General Display
         pros::lcd::print(0, "Currently Managing: %s", managingLateral ? "LATERAL" : "ANGULAR");
-        pros::lcd::print(2, "Lateral P: %f, I: %f, D: %f", chassis.lateralPID.kP, chassis.lateralPID.kI, chassis.lateralPID.kD);
-        pros::lcd::print(3, "Angular P: %f, I: %f, D: %f", chassis.angularPID.kP, chassis.angularPID.kI, chassis.angularPID.kD);
-        pros::lcd::print(4, "Forward Amount: %f in.", forwardAmount);
-        pros::lcd::print(5, "Turn Amount: %f deg", turnAmount);
+        pros::lcd::print(2, "Lateral P: %.2f, I: %.2f, D: %.2f", chassis.lateralPID.kP, chassis.lateralPID.kI, chassis.lateralPID.kD);
+        pros::lcd::print(3, "Angular P: %.2f, I: %.2f, D: %.2f", chassis.angularPID.kP, chassis.angularPID.kI, chassis.angularPID.kD);
+        pros::lcd::print(4, "Forward Amount: %.2f in.", forwardAmount);
+        pros::lcd::print(5, "Turn Amount: %.2f deg", turnAmount);
         pros::lcd::print(7, "Ready.");
 
         // Lateral Movement & PID Adjustment
@@ -373,10 +385,10 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
                 forwardAmount -= 2.0;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
                 chassis.lateralPID.kP += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
                 chassis.lateralPID.kP -= 0.1;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
@@ -385,25 +397,25 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                 chassis.lateralPID.kI -= 0.05;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
                 chassis.lateralPID.kD += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
                 chassis.lateralPID.kD -= 0.1;
             }
         }
         // Angular PID Adjustment
         else {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
-                turnAmount += 2.0;
+                turnAmount += 5.0;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-                turnAmount -= 2.0;
+                turnAmount -= 5.0;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
                 chassis.angularPID.kP += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
                 chassis.angularPID.kP -= 0.1;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
@@ -412,21 +424,20 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                 chassis.angularPID.kI -= 0.05;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
                 chassis.angularPID.kD += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
                 chassis.angularPID.kD -= 0.1;
             }
         }
 
         // Resets & Toggles
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-            pros::lcd::print(7, 0, "Resetting...");
-            chassis.turnToPoint(0, 0, 1500, {}, false);
-            chassis.moveToPoint(0, 0, 3500, {}, false);
-            chassis.turnToHeading(0, 1500, {}, false);
-            chassis.setPose(0, 0, 0);
+            pros::lcd::print(7, "Resetting...");
+            chassis.turnToPoint(0, 0, 1000, {}, false);
+            chassis.moveToPoint(0, 0, 2500, {}, false);
+            chassis.turnToHeading(0, 1000, {}, false);
         }
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             managingLateral = !managingLateral;
@@ -434,16 +445,17 @@ void runPIDTuner() {
 
         // Movements
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
-            pros::lcd::print(7, 0, "Moving to point...");
-            chassis.setPose(0, 0, 0);
-            chassis.moveToPoint(0, forwardAmount, 5000, {}, false);
+            pros::lcd::print(7, "Moving to point...");
+            moveForward(forwardAmount, 2000, 127, 1, false);
+            savePIDValues();
         }
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-            pros::lcd::print(7, 0, "Turning to heading...");
-            chassis.setPose(0, 0, 0);
-            chassis.turnToHeading(turnAmount, 3000, {}, false);
+            pros::lcd::print(7, "Turning to heading...");
+            auto p = chassis.getPose();
+            chassis.turnToHeading(p.theta+turnAmount, 1500, {}, false);
+            savePIDValues();
         }
 
-        pros::delay(10);
+        pros::delay(50);
     }
 }

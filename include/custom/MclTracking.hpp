@@ -19,9 +19,9 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 1800;
+    static constexpr int PARTICLE_COUNT = 2000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 450;
+    static constexpr int RESAMPLE_THRESHOLD = 400;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
@@ -31,7 +31,7 @@ private:
     static constexpr float HEADING_SIGMA = 0.04f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
-    static constexpr int CONFIDENCE_THRESHOLD = 40;
+    static constexpr int CONFIDENCE_THRESHOLD = 50;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float FAULT_TOLERANCE = 1e-4f;
     float DIST_SYNC_PROP = 0.1f;
@@ -46,7 +46,7 @@ private:
     static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
     static constexpr float MAP_SCALE = 2.0f; // samples per inch
     static constexpr float MAP_OFFSET = 72.0f; // field center offset
-    static constexpr float GAUSSIAN_SIGMA = 1.5f; // "Blur" width in inches
+    static constexpr float GAUSSIAN_SIGMA = 2.0f; // "Blur" width in inches
     static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 8.0 inches from an object
     static constexpr float DIST_MULTIPLIER = 90.1561146013f;   // (255.0 / sqrt(DISTANCE_RANGE))
     static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;

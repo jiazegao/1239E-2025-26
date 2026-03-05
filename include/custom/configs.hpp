@@ -40,7 +40,7 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 );
 
 // IMU
-inline pros::Imu imu(tempPort);
+inline pros::Imu imu(15);
 
 // Optical
 inline pros::Optical frontOptic(tempPort);
@@ -48,7 +48,7 @@ inline pros::Optical frontOptic(tempPort);
 // Pneumatics
 inline pros::adi::Potentiometer leverPotent('H');
 inline pros::adi::Pneumatics matchLoadGate('D', false, false);
-inline pros::adi::Pneumatics lift('C', true, false);
+inline pros::adi::Pneumatics lift('C', true, true);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
 inline pros::adi::Pneumatics intakeLift('G', false, false);
@@ -69,26 +69,26 @@ inline lemlib::OdomSensors sensors( nullptr,
 
 // Lateral PID controller
 inline lemlib::ControllerSettings lateral_controller(
-                                              9, // proportional gain (kP)
+                                              7.0, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              50, // derivative gain (kD)
+                                              30.0, // derivative gain (kD)
                                               0, // anti windup
-                                              1, // small error range, in inches
+                                              0.5, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
+                                              1.5, // large error range, in inches
                                               300, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
 // Angular PID controller
-inline lemlib::ControllerSettings angular_controller(3.5, // proportional gain (kP)
+inline lemlib::ControllerSettings angular_controller(4.0, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                              25, // derivative gain (kD)
+                                              37.7, // derivative gain (kD)
                                               0, // anti windup
                                               1, // small error range, in degrees
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in degrees
-                                              300, // large error range timeout, in milliseconds
+                                              200, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
@@ -115,22 +115,22 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 inline pros::Distance midDist(tempPort);
 inline pros::Distance topDist(tempPort);
 
-inline pros::Distance front_dist(tempPort);
-inline pros::Distance left_dist(tempPort);
-inline pros::Distance back_dist(tempPort);
-inline pros::Distance right_dist(tempPort);
-inline pros::Distance fl_dist(tempPort);
-inline pros::Distance bl_dist(tempPort);
-inline pros::Distance br_dist(tempPort);
-inline pros::Distance fr_dist(tempPort);
+inline pros::Distance front_dist(1);
+inline pros::Distance left_dist(2);
+inline pros::Distance back_dist(14);
+inline pros::Distance right_dist(8);
+inline pros::Distance fl_dist(4);
+inline pros::Distance bl_dist(5);
+inline pros::Distance br_dist(6);
+inline pros::Distance fr_dist(7);
 
 inline std::array<pros::Distance*, 8> DISTANCE_COLLECTION = {&front_dist, &left_dist, &back_dist, &right_dist, &fl_dist, &bl_dist, &br_dist, &fr_dist};
 
 // Rcl setup
-inline RclSensor front_rcl(&front_dist, 5.375, -4.25, 180, 15.0);
-inline RclSensor left_rcl(&left_dist, 4.5, 0.0, 90.0, 15.0);
-inline RclSensor back_rcl(&back_dist, -4.5, 0.0, 270.0, 15.0);
-inline RclSensor right_rcl(&right_dist, -4.5, 0.0, 270.0, 15.0);
+inline RclSensor front_rcl(&front_dist, -2.277110, 6.184952, 0, 15.0);
+inline RclSensor left_rcl(&left_dist, -2.674094, -0.733924, 270.0, 15.0);
+inline RclSensor back_rcl(&back_dist, -1.75, -5.374061, 180.0, 15.0);
+inline RclSensor right_rcl(&right_dist, 2.674094, -0.733924, 90.0, 15.0);
 inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 200.0, 6.0, 50);
 inline MclTracking MclMain(&chassis, &drivetrain, DISTANCE_COLLECTION, {nullptr, 0.0, 0.0}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
 
@@ -146,13 +146,23 @@ inline std::vector<Line_> soloAWP_obstacles = {
     {{-46.0f, 8.0f}, {-46.0f, 32.0f}},
     {{-72.0f, 32.0f}, {-46.0f, 32.0f}},
     // Middle Line
-    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+    {{0.0f, -72.0f}, {0.0f, 72.0f}},
+    // Middle Goal
+    {{-10.0f, -10.0f}, {-10.0f, 10.0f}},
+    {{-10.0f, 10.0f}, {10.0f, 10.0f}},
+    {{10.0f, 10.0f}, {10.0f, -10.0f}},
+    {{10.0f, -10.0f}, {-10.0f, -10.0f}}
 };
 inline std::vector<Line_> quadrant_dividers = {
     // x-axis
     {{-72.0f, 0.0f}, {72.0f, 0.0f}},
     // y-axis
-    {{0.0f, -72.0f}, {0.0f, 72.0f}}
+    {{0.0f, -72.0f}, {0.0f, 72.0f}},
+    // Middle Goal
+    {{-10.0f, -10.0f}, {-10.0f, 10.0f}},
+    {{-10.0f, 10.0f}, {10.0f, 10.0f}},
+    {{10.0f, 10.0f}, {10.0f, -10.0f}},
+    {{10.0f, -10.0f}, {-10.0f, -10.0f}}
 };
 
 // loaders

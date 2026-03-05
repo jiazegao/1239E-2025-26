@@ -21,14 +21,14 @@ void initialize() {
 	initLog();	// Critical; DO NOT REMOVE
 
 	pros::lcd::initialize();
-	initBrainDisplay();
-	initControllerDisplay();
+	// initBrainDisplay();
+	// initControllerDisplay();
 
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
 
 	// Motor modes
-	leverMotor.set_brake_mode(pros::MotorBrake::hold);
+	leverMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 }
 
 void disabled() {}
@@ -41,16 +41,19 @@ void autonomous() {
 	
 	// Ensure descore arms are retracted
 	extendLeftArm();
+
+	soloAWP();
 }
 
 void opcontrol() {
 	
+	//chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 
 	// Retract descore arm
 	extendLeftArm();
 	stopIntake();
-
+	
 	while (true) {
 		// Update Controls
 		updateTankDrive();
@@ -59,4 +62,7 @@ void opcontrol() {
 		
 		pros::delay(20);
 	}
+	
+
+	//runPIDTuner();
 }

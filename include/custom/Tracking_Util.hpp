@@ -46,8 +46,8 @@ class Timer {
 // Consts
 constexpr float mmToInch = 0.039370078740157;
 constexpr float MAX_OBSTACLE_DURATION = 1e12;         // ms
-constexpr float FIELD_HALF_LENGTH = 70.5;         // inches
-constexpr float FIELD_NEG_HALF_LENGTH = -70.5;
+constexpr float FIELD_HALF_LENGTH = 70.2;         // inches
+constexpr float FIELD_NEG_HALF_LENGTH = -70.2;
 
 // Util funcs
 inline float botToTrig(float ang) {
