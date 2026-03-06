@@ -19,36 +19,29 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 2400;
+    static constexpr int PARTICLE_COUNT = 1200;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 200;
+    static constexpr int RESAMPLE_THRESHOLD = 300;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float HEADING_SIGMA = 1e-6f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 4.0f;
-    static constexpr float THETA_RESAMPLE_VARIANCE = 1e-6f;
-    static constexpr int CONFIDENCE_THRESHOLD = 45;
+    static constexpr float HEADING_SIGMA = 0.05f;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
+    static constexpr int CONFIDENCE_THRESHOLD = 40;
+    static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
-    static constexpr float FAULT_TOLERANCE = 1e-3f;
+    static constexpr float FAULT_TOLERANCE = 1e-2f;
     float DIST_SYNC_PROP = 0.05f;
-    float THETA_SYNC_PROP = 0.0f;
+    float THETA_SYNC_PROP = 0.001f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
     static constexpr float MINPAUSE = 10.0f;
-
-    // Distance map
-    static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
-    static constexpr float MAP_SCALE = 2.0f; // samples per inch
-    static constexpr float MAP_OFFSET = 72.0f; // field center offset
-    static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 8.0 inches from an object
-    static constexpr float DIST_MULTIPLIER = 90.1561146013f;   // (255.0 / sqrt(DISTANCE_RANGE))
-    static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
     
     struct Particle {
         Pose pose;
@@ -64,7 +57,7 @@ private:
     };
 
     // Line obstacles
-    static constexpr Line_ line_obstacles[10] = {
+    static constexpr Line_ goal_legs[10] = {
         // Middle goal
         {{0.400000f, -2.902659f}, {2.902659f, -0.400000f}},
         {{-2.902659f, 0.400000f}, {-0.400000f, 2.902659f}},
@@ -115,14 +108,8 @@ private:
     // Disabling circle obstacles
     std::vector<Circle>* disabling_circle_obstacles = nullptr;
 
-    // 81KB Map
-    uint8_t distance_map[MAP_RES * MAP_RES];
-
     // Gaussian cheatsheeet for dynamic sigma
-    float gaussian_lut[1024]; 
-
-    void generate_distance_map();
-    float get_dist_to_segment(float px, float py, Line_ seg);
+    float gaussian_lut[1024];
 
     // Particles
     std::array<Particle, PARTICLE_COUNT> particles_array;

@@ -139,8 +139,11 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
         disableTimers[i] = Timer(0);
     }
 
-    // Generate distance map
-    this->generate_distance_map();
+    // Initialize gaussian lut
+    for (int i = 0; i < 1024; i++) {
+        float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
+        gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
+    }
 }
 
 void MclTracking::predict() {
@@ -319,7 +322,7 @@ void MclTracking::update_weights() {
 
         // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
         float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
-        sigma *= 63.0f / sensor_confs[i];   // Scale sigma based on confidence
+        if (sensor_readings_mm[i] > 200) sigma *= CONFIDENCE_SCALING_BASE / sensor_confs[i];   // Scale sigma based on confidence
         inv_sigmas[i] = 1.0f / sigma;
     }
 
@@ -332,7 +335,7 @@ void MclTracking::update_weights() {
 
         // Instant DQ if out of bounds
         if (std::abs(p.pose.x) > FIELD_HALF_LENGTH || std::abs(p.pose.y) > FIELD_HALF_LENGTH) {
-            total_weight = 1e-25;
+            total_weight = 1e-32;
         }
 
         for (int j = 0; j < SENSOR_COUNT; j++) {
@@ -344,18 +347,31 @@ void MclTracking::update_weights() {
             float sx = p.pose.x + (sensor_mounts[j].x * pTrigs[i].cos_m - sensor_mounts[j].y * pTrigs[i].sin_m);
             float sy = p.pose.y + (sensor_mounts[j].x * pTrigs[i].sin_m + sensor_mounts[j].y * pTrigs[i].cos_m);
 
+            Pose sPose = {sx, sy, stheta};
+
             float rayCos = pTrigs[i].cos_m * mountTrigs[j].cos_m - pTrigs[i].sin_m  * mountTrigs[j].sin_m;
             float raySin = pTrigs[i].sin_m * mountTrigs[j].cos_m + pTrigs[i].cos_m  * mountTrigs[j].sin_m;
 
             float p_dist = MAX_RANGE;
 
-            for (const auto& line : line_obstacles) {
-                p_dist = std::min(p_dist, intersect_line({s_x, s_y, stheta}, line, MAX_RANGE, rayCos, raySin));
+            // Check for obstacle intersection first
+            for (const auto& line : goal_legs) {
+                p_dist = std::min(p_dist, intersect_line(sPose, line, MAX_RANGE, rayCos, raySin));
             }
+            // If didn't intersect any legs, check other objects
             if (std::abs(p_dist-MAX_RANGE) < 1e-6) {
-                
-                for (const auto& wall : walls) {
-                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, wall, MAX_RANGE, rayCos, raySin));
+                for (const auto& c : match_loaders) {
+                    p_dist = std::min(p_dist, intersect_circle(sPose, c, MAX_RANGE, rayCos, raySin));
+                }
+                // If didn't intersect matchloaders, check walls
+                if (std::abs(p_dist-MAX_RANGE) < 1e-6) {
+                    for (const auto& wall : walls) {
+                        p_dist = std::min(p_dist, intersect_line(sPose, wall, MAX_RANGE, rayCos, raySin));
+                        // Immediately break if intersect with one of the walls
+                        if (std::abs(p_dist-MAX_RANGE) > 1e-6) {
+                            break;
+                        }
+                    }
                 }
             }
         
@@ -367,7 +383,7 @@ void MclTracking::update_weights() {
             if (lut_idx < 1024) {
                 total_weight *= gaussian_lut[lut_idx];
             } else {
-                total_weight *= FAULT_TOLERANCE; 
+                total_weight *= gaussian_lut[1023] * FAULT_TOLERANCE; 
             }    
         }
         p.weight = total_weight;
@@ -565,14 +581,6 @@ void MclTracking::updateBotPose() {
 void MclTracking::startTracking() {
     if (MclTrackingTask == nullptr) {
 
-        // Log distance map
-        if (mclLogType == SDCARD) {
-            for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
-                *mclLog << static_cast<int>(distance_map[i]) << " ";
-            }
-            *mclLog << static_cast<int>(distance_map[MAP_RES*MAP_RES-1]) << "\n";
-        }
-
         MclTrackingTask = new pros::Task([this](){
             while (true) {
                 this->t.reset();
@@ -646,39 +654,6 @@ void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSe
     this->horizontal_drift = horizontalDriftPerSec / (1000.0f * INV_MSPT);
 }
 
-void MclTracking::generate_distance_map() {
-    // Initialize gaussian lut
-    for (int i = 0; i < 1024; i++) {
-        float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
-        gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
-    }
-
-    // Build the Map
-    for (int y = 0; y < MAP_RES; y++) {
-        for (int x = 0; x < MAP_RES; x++) {
-            // Index to world coordinates (Center of cell)
-            float fx = (x / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
-            float fy = (y / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
-            
-            float min_d = 1e6;
-
-            // Distance to perimeter walls
-            for (const auto& wall : walls) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall));
-
-            // Distance to circular match loaders
-            for (const auto& circle : circle_obstacles) {
-                float d = std::hypot(fx - circle.x, fy - circle.y);
-                min_d = std::min(min_d, std::abs(d - circle.radius));
-            }
-
-            // Store distance to objects
-            float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;
-            distance_map[y * MAP_RES + x] = (uint8_t)std::min(stored_val, 255.0f);
-        }
-    }
-}
-
 void MclTracking::enableSens(int sens) {
     if (sens < 0 || sens > SENSOR_COUNT-1) return;
     disableTimers[sens].hardReset(0);
@@ -697,24 +672,6 @@ void MclTracking::disableSensFor(int sens, float ms) {
 void MclTracking::setObstacles(std::vector<Line_>* newLineObstaclesPtr, std::vector<Circle>* newCirleObstaclesPtr) {
     disabling_line_obstacles = newLineObstaclesPtr;
     disabling_circle_obstacles = newCirleObstaclesPtr;
-}
-
-float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
-    float dx = seg.p2.x - seg.p1.x;
-    float dy = seg.p2.y - seg.p1.y;
-    float l2 = dx*dx + dy*dy;
-    
-    // If the line is actually a point
-    if (l2 == 0.0) return std::hypot(px - seg.p1.x, py - seg.p1.y);
-    
-    // Project point onto line, clamped to [0, 1]
-    float t = ((px - seg.p1.x) * dx + (py - seg.p1.y) * dy) / l2;
-    t = std::max(0.0f, std::min(1.0f, t));
-    
-    float closest_x = seg.p1.x + t * dx;
-    float closest_y = seg.p1.y + t * dy;
-    
-    return std::hypot(px - closest_x, py - closest_y);
 }
 
 void MclTracking::startAsyncLogger() {

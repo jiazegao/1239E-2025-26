@@ -98,3 +98,7 @@
     4) Added sensor-disabling component; primarily used to account for front sensor blockade during matchload Toggles
     5) Added intake anti-stuck
     6) Added special disabling condition for diagonal sensors to account for unexpected top-middle goal detections
+3/6/2026
+    1) Reverted particle weight model from Distance LUT back to standard intersection math
+        - Deleted distance map
+        - All other components remain static
