@@ -637,7 +637,7 @@
     "upload_options": {
       "description": "My PROS Project",
       "icon": "pizza",
-      "after": "none"
+      "after": "run"
     },
     "use_early_access": false
   }

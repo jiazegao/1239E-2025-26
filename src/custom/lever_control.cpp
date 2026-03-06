@@ -107,7 +107,7 @@ int currMaxSpeed = 0;
 bool autoReset = true;
 int currOuttakeSpeed = 127;
 
-Timer intakeSwapTimer(200);
+Timer intakeSwapTimer(500);
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -175,7 +175,7 @@ void initLeverControl() {
                     }
                 }
             }
-            pros::delay(30);
+            pros::delay(50);
         }
     });
 
@@ -207,7 +207,7 @@ void initLeverControl() {
                 }
             }
 
-            pros::delay(20);
+            pros::delay(30);
         }
     });
 
@@ -220,8 +220,9 @@ void initLeverControl() {
                 // Anti-stuck; only act if intake has been occuring for a certain amount of time
                 if (std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
                     frontMotor.move(-127);
-                    pros::delay(150);
+                    pros::delay(300);
                     frontMotor.move(127);
+                    intakeSwapTimer.reset();
                 }
             }
             else if (currentStage == OUTTAKING) {
@@ -231,7 +232,7 @@ void initLeverControl() {
                 frontMotor.move(0);
             }
 
-            pros::delay(20);
+            pros::delay(30);
         }
     });
 }
@@ -246,8 +247,8 @@ void startIntake() {
     if (currentStage != RAISING && currentStage != LOWERING) {
         currentStage = INTAKING;
         removedFromTop = true;
-        intakeSwapTimer.reset();
     }
+    intakeSwapTimer.reset();
 }
 
 void startOuttake(int speed) {
@@ -255,8 +256,8 @@ void startOuttake(int speed) {
         currentStage = OUTTAKING;
         removedFromTop = false;
         currOuttakeSpeed = std::abs(speed);
-        intakeSwapTimer.reset();
     }
+    intakeSwapTimer.reset();
 }
 
 void extendLift() {
@@ -282,15 +283,15 @@ void closeHood() {
 
 void openGate() {
     matchLoadGate.extend();
-    MclMain.disableSensFor(FRONT, 500);
+    // MclMain.disableSensFor(FRONT, 500.0f);
 }
 void closeGate() {
     matchLoadGate.retract();
-    MclMain.disableSensFor(FRONT, 500);
+    // MclMain.disableSensFor(FRONT, 500.0f);
 }
 void toggleGate() {
     matchLoadGate.toggle();
-    MclMain.disableSensFor(FRONT, 500);
+    // MclMain.disableSensFor(FRONT, 500.0f);
 }
 
 

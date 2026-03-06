@@ -283,15 +283,15 @@ void MclTracking::update_weights() {
             continue;
         }
         // Case #3: Invalid confidence
-        else if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
+        if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
             valid_sensors[i] = false;
             continue;
         }
         // Case #4: Top middle goal lip disabling
-        else if ((i == DISTSENSORS::BACK_LEFT || i == DISTSENSORS::BACK_RIGHT || i == DISTSENSORS::FRONT_LEFT || i == DISTSENSORS::FRONT_RIGHT)) {
+        if ((i == DISTSENSORS::BACK_LEFT || i == DISTSENSORS::BACK_RIGHT || i == DISTSENSORS::FRONT_LEFT || i == DISTSENSORS::FRONT_RIGHT)) {
             if (intersect_line(sray, top_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                 valid_sensors[i] = false;
-                break;
+                continue;
             }
         }
         // Case #5: Disqualifying intersection with obstacles
@@ -315,6 +315,7 @@ void MclTracking::update_weights() {
                 }
             }
         }
+        if (!valid_sensors[i]) continue;
 
         // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
         float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
@@ -328,6 +329,11 @@ void MclTracking::update_weights() {
     for (int j = 0; j < PARTICLE_COUNT; j++) {
         float total_weight = 1.0f;
         auto& p = derefP[j];
+
+        // Instant DQ if out of bounds
+        if (std::abs(p.pose.x) > FIELD_HALF_LENGTH || std::abs(p.pose.y) > FIELD_HALF_LENGTH) {
+            total_weight = 1e-25;
+        }
 
         for (int i = 0; i < SENSOR_COUNT; i++) {
             if (!valid_sensors[i]) continue;
@@ -458,7 +464,7 @@ Pose MclTracking::updateMcl() {
     // Update sensor disability
     for (int i = 0; i < SENSOR_COUNT; i++) {
         auto& t = disableTimers[i];
-        if (t.timeIsUp()) disabled_sensors[i] = false;
+        if (t.timeoutMs < 1.0f || t.timeIsUp()) disabled_sensors[i] = false;
         else disabled_sensors[i] = true;
     }
 
@@ -659,17 +665,21 @@ void MclTracking::generate_distance_map() {
 
             // Distance to perimeter walls
             for (const auto& wall : walls) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall));
+                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall)*WALL_DIST_MULTIPLIER);
 
+            /*
             // Distance to diagonal obstacles (the middle bars)
             for (const auto& obs : line_obstacles) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, obs));
+                min_d = std::min(min_d, get_dist_to_segment(fx, fy, obs)*LONG_GOAL_DIST_MULTIPLIER);
+            */
 
+            /*
             // Distance to circular match loaders
             for (const auto& circle : circle_obstacles) {
                 float d = std::hypot(fx - circle.x, fy - circle.y);
-                min_d = std::min(min_d, std::abs(d - circle.radius));
+                min_d = std::min(min_d, std::abs(d - circle.radius)*MATCH_LOADER_DIST_MULTIPLER);
             }
+            */
 
             // Store distance to objects
             float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;
@@ -688,7 +698,7 @@ void MclTracking::disableSens(int sens) {
     disableTimers[sens].hardReset(1e20f);
 }
 
-void MclTracking::disableSensFor(int sens, int ms) {
+void MclTracking::disableSensFor(int sens, float ms) {
     if (sens < 0 || sens > SENSOR_COUNT-1) return;
     disableTimers[sens].hardReset(ms);
 }

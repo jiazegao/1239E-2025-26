@@ -37,7 +37,6 @@ class Timer {
             return (unit == TimeUnit::SECOND) ? (ms * 0.001f) : ms;
         };
     
-    private:
         float timeoutMs;
         std::chrono::high_resolution_clock::time_point startTime;
 

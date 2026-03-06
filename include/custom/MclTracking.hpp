@@ -19,34 +19,33 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 2000;
+    static constexpr int PARTICLE_COUNT = 2400;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 400;
+    static constexpr int RESAMPLE_THRESHOLD = 200;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 300.0f;
-    static constexpr float HEADING_SIGMA = 0.04f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
-    static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
-    static constexpr int CONFIDENCE_THRESHOLD = 32;
+    static constexpr float HEADING_SIGMA = 1e-6f;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 4.0f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 1e-6f;
+    static constexpr int CONFIDENCE_THRESHOLD = 45;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
-    static constexpr float FAULT_TOLERANCE = 1e-4f;
-    float DIST_SYNC_PROP = 0.1f;
-    float THETA_SYNC_PROP = 0.001f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.2f;
+    static constexpr float FAULT_TOLERANCE = 1e-3f;
+    float DIST_SYNC_PROP = 0.05f;
+    float THETA_SYNC_PROP = 0.0f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
 
-    static constexpr float MSPT = 15.0f;
+    static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 8.0f;
+    static constexpr float MINPAUSE = 10.0f;
 
     // Distance map
     static constexpr int MAP_RES = 288; // 144 inches * 2 samples per inch
     static constexpr float MAP_SCALE = 2.0f; // samples per inch
     static constexpr float MAP_OFFSET = 72.0f; // field center offset
-    static constexpr float GAUSSIAN_SIGMA = 2.0f; // "Blur" width in inches
     static constexpr float DISTANCE_RANGE = 8.0f; // maximum differentiation of 8.0 inches from an object
     static constexpr float DIST_MULTIPLIER = 90.1561146013f;   // (255.0 / sqrt(DISTANCE_RANGE))
     static constexpr float INV_DIST_MULTIPLIER = 1 / DIST_MULTIPLIER;
@@ -57,6 +56,7 @@ private:
     };
 
     // Walls
+    static constexpr float WALL_DIST_MULTIPLIER = 1.0f;
     static constexpr Line_ walls[4] = {
         {{-70.2, -70.2}, { 70.2, -70.2}}, 
         {{ 70.2, -70.2}, { 70.2,  70.2}}, 
@@ -65,6 +65,7 @@ private:
     };
 
     // Line obstacles
+    static constexpr float LONG_GOAL_DIST_MULTIPLIER = 0.33f;
     static constexpr Line_ line_obstacles[10] = {
         // Middle goal
         {{0.400000f, -2.902659f}, {2.902659f, -0.400000f}},
@@ -88,6 +89,7 @@ private:
     static constexpr Line_ top_middle = {{-7.5f, 7.5f}, {7.5f, -7.5f}};
 
     // Circle obstacles
+    static constexpr float MATCH_LOADER_DIST_MULTIPLER = 1.0f;
     static constexpr Circle circle_obstacles[4] = {
         {-67.635f, 46.765f, 2.00f},  {-67.635f, -46.765f, 2.00f}, // Match loaders
         {67.635f, 46.765f, 2.00f},   {67.635f, -46.765f, 2.00f}
@@ -210,7 +212,7 @@ public:
 
     void disableSens(int sens);
 
-    void disableSensFor(int sens, int ms);
+    void disableSensFor(int sens, float ms);
 
     void startAsyncLogger();
 

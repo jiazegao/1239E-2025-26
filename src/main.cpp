@@ -21,8 +21,6 @@ void initialize() {
 	initLog();	// Critical; DO NOT REMOVE
 
 	pros::lcd::initialize();
-	// initBrainDisplay();
-	// initControllerDisplay();
 
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
@@ -42,7 +40,7 @@ void autonomous() {
 	// Ensure descore arms are retracted
 	extendLeftArm();
 
-	soloAWP();
+	skills_119();
 }
 
 void opcontrol() {
