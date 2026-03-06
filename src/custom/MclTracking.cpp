@@ -69,8 +69,8 @@ float MclTracking::intersect_circle(Pose ray, Circle c, float max_range, float d
     float discriminant = b * b - 4 * val_c;
     if (discriminant < 0) return max_range;
     discriminant = std::sqrtf(discriminant);
-    float t1 = (-b - discriminant) / 2;
-    float t2 = (-b + discriminant) / 2;
+    float t1 = (-b - discriminant) * 0.5f;
+    float t2 = (-b + discriminant) * 0.5f;
     if (t1 >= 0 && t1 <= max_range) return t1;
     if (t2 >= 0 && t2 <= max_range) return t2;
     return max_range;
@@ -326,50 +326,49 @@ void MclTracking::update_weights() {
     // Process particles
     auto& derefP = *particles_ptr;
 
-    for (int j = 0; j < PARTICLE_COUNT; j++) {
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
         float total_weight = 1.0f;
-        auto& p = derefP[j];
+        auto& p = derefP[i];
 
         // Instant DQ if out of bounds
         if (std::abs(p.pose.x) > FIELD_HALF_LENGTH || std::abs(p.pose.y) > FIELD_HALF_LENGTH) {
             total_weight = 1e-25;
         }
 
-        for (int i = 0; i < SENSOR_COUNT; i++) {
-            if (!valid_sensors[i]) continue;
+        for (int j = 0; j < SENSOR_COUNT; j++) {
+            if (!valid_sensors[j]) continue;
 
             // Transform Sensor Mount to World Space
             // (Standard 2D Rotation: x' = x*cos - y*sin, y' = x*sin + y*cos)
-            float sx = p.pose.x + (sensor_mounts[i].x * pTrigs[j].cos_m - sensor_mounts[i].y * pTrigs[j].sin_m);
-            float sy = p.pose.y + (sensor_mounts[i].x * pTrigs[j].sin_m + sensor_mounts[i].y * pTrigs[j].cos_m);
+            float stheta = p.pose.theta + sensor_mounts[j].theta;
+            float sx = p.pose.x + (sensor_mounts[j].x * pTrigs[i].cos_m - sensor_mounts[j].y * pTrigs[i].sin_m);
+            float sy = p.pose.y + (sensor_mounts[j].x * pTrigs[i].sin_m + sensor_mounts[j].y * pTrigs[i].cos_m);
 
-            // Project Sensor Reading (Hit Point)
-            float hx = sx + (pTrigs[j].cos_m*mountTrigs[i].cos_m - pTrigs[j].sin_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
-            float hy = sy + (pTrigs[j].sin_m*mountTrigs[i].cos_m + pTrigs[j].cos_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
+            float rayCos = pTrigs[i].cos_m * mountTrigs[j].cos_m - pTrigs[i].sin_m  * mountTrigs[j].sin_m;
+            float raySin = pTrigs[i].sin_m * mountTrigs[j].cos_m + pTrigs[i].cos_m  * mountTrigs[j].sin_m;
 
-            // Grid Lookup
-            int gx = (int)((hx + MAP_OFFSET) * MAP_SCALE);
-            int gy = (int)((hy + MAP_OFFSET) * MAP_SCALE);
+            float p_dist = MAX_RANGE;
 
-            if (gx >= 0 && gx < MAP_RES && gy >= 0 && gy < MAP_RES) {
-                // Retrieve d^0.5
-                float d_root = (float)distance_map[gy * MAP_RES + gx] * INV_DIST_MULTIPLIER;
-                
-                // Calculate z = d / sigma
-                // Since d_root is d^0.5, d is (d_root * d_root)
-                float z = (d_root * d_root) * inv_sigmas[i];
-
-                // 4. LUT Lookup (Index = z * 256, because 1024 samples / 4.0 max sigma)
-                int lut_idx = (int)(z * 256.0f);
-
-                if (lut_idx < 1024) {
-                    total_weight *= gaussian_lut[lut_idx];
-                } else {
-                    total_weight *= FAULT_TOLERANCE; 
-                }
-            } else {
-                total_weight *= FAULT_TOLERANCE;
+            for (const auto& line : line_obstacles) {
+                p_dist = std::min(p_dist, intersect_line({s_x, s_y, stheta}, line, MAX_RANGE, rayCos, raySin));
             }
+            if (std::abs(p_dist-MAX_RANGE) < 1e-6) {
+                
+                for (const auto& wall : walls) {
+                    p_dist = std::min(p_dist, intersect_line({s_x, s_y, s_theta}, wall, MAX_RANGE, rayCos, raySin));
+                }
+            }
+        
+            float z = std::abs(sensor_readings_inch[j] - p_dist) * inv_sigmas[j];
+
+            // Gaussian LUT process
+            int lut_idx = (int)(z * 256.0f);
+
+            if (lut_idx < 1024) {
+                total_weight *= gaussian_lut[lut_idx];
+            } else {
+                total_weight *= FAULT_TOLERANCE; 
+            }    
         }
         p.weight = total_weight;
     }
@@ -665,21 +664,13 @@ void MclTracking::generate_distance_map() {
 
             // Distance to perimeter walls
             for (const auto& wall : walls) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall)*WALL_DIST_MULTIPLIER);
+                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall));
 
-            /*
-            // Distance to diagonal obstacles (the middle bars)
-            for (const auto& obs : line_obstacles) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, obs)*LONG_GOAL_DIST_MULTIPLIER);
-            */
-
-            /*
             // Distance to circular match loaders
             for (const auto& circle : circle_obstacles) {
                 float d = std::hypot(fx - circle.x, fy - circle.y);
-                min_d = std::min(min_d, std::abs(d - circle.radius)*MATCH_LOADER_DIST_MULTIPLER);
+                min_d = std::min(min_d, std::abs(d - circle.radius));
             }
-            */
 
             // Store distance to objects
             float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;

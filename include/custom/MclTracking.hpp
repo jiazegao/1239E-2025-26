@@ -27,7 +27,7 @@ private:
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
-    static constexpr float MAX_RANGE = 300.0f;
+    static constexpr float MAX_RANGE = 100.0f;
     static constexpr float HEADING_SIGMA = 1e-6f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 4.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 1e-6f;
@@ -56,7 +56,6 @@ private:
     };
 
     // Walls
-    static constexpr float WALL_DIST_MULTIPLIER = 1.0f;
     static constexpr Line_ walls[4] = {
         {{-70.2, -70.2}, { 70.2, -70.2}}, 
         {{ 70.2, -70.2}, { 70.2,  70.2}}, 
@@ -65,7 +64,6 @@ private:
     };
 
     // Line obstacles
-    static constexpr float LONG_GOAL_DIST_MULTIPLIER = 0.33f;
     static constexpr Line_ line_obstacles[10] = {
         // Middle goal
         {{0.400000f, -2.902659f}, {2.902659f, -0.400000f}},
@@ -88,9 +86,8 @@ private:
     // Top middle
     static constexpr Line_ top_middle = {{-7.5f, 7.5f}, {7.5f, -7.5f}};
 
-    // Circle obstacles
-    static constexpr float MATCH_LOADER_DIST_MULTIPLER = 1.0f;
-    static constexpr Circle circle_obstacles[4] = {
+    // Matchloaders
+    static constexpr Circle match_loaders[4] = {
         {-67.635f, 46.765f, 2.00f},  {-67.635f, -46.765f, 2.00f}, // Match loaders
         {67.635f, 46.765f, 2.00f},   {67.635f, -46.765f, 2.00f}
     };
