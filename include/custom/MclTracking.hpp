@@ -78,6 +78,7 @@ private:
 
     // Top middle
     static constexpr Line_ top_middle = {{-7.5f, 7.5f}, {7.5f, -7.5f}};
+    static constexpr Line_ low_middle = {{-7.5f, -7.5f}, {7.5f, 7.5f}};
 
     // Matchloaders
     static constexpr Circle match_loaders[4] = {

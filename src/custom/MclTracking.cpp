@@ -297,7 +297,14 @@ void MclTracking::update_weights() {
                 continue;
             }
         }
-        // Case #5: Disqualifying intersection with obstacles
+        // Case #5: Lower middle goal disabling
+        if (i == BACK) {
+            if (intersect_line(sray, low_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+                valid_sensors[i] = false;
+                continue;
+            }
+        }
+        // Case #6: Disqualifying intersection with obstacles
         
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
