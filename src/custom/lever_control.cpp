@@ -238,40 +238,38 @@ void initLeverControl() {
 }
 
 void stopIntake() {
-    if (currentStage != RAISING && currentStage != LOWERING) currentStage = INACTIVE;
-    removedFromTop = true;
-    intakeSwapTimer.reset();
+    if (currentStage != RAISING && currentStage != LOWERING && currentStage != INACTIVE) {
+        currentStage = INACTIVE;
+        removedFromTop = true;
+        intakeSwapTimer.reset();
+    }
 }
 
 void startIntake() {
-    if (currentStage != RAISING && currentStage != LOWERING) {
+    if (currentStage != RAISING && currentStage != LOWERING && currentStage != INTAKING) {
         currentStage = INTAKING;
         removedFromTop = true;
+        intakeSwapTimer.reset();
     }
-    intakeSwapTimer.reset();
 }
 
 void startOuttake(int speed) {
-    if (currentStage != RAISING && currentStage != LOWERING) {
+    if (currentStage != RAISING && currentStage != LOWERING && currentStage != OUTTAKING) {
         currentStage = OUTTAKING;
         removedFromTop = false;
         currOuttakeSpeed = std::abs(speed);
+        intakeSwapTimer.reset();
     }
-    intakeSwapTimer.reset();
 }
 
 void extendLift() {
-    if (currentStage != RAISING && currentStage != LOWERING) {
-        lift.extend();
-        positionedForTop = true;
-    }
+    lift.extend();
+    positionedForTop = true;
 }
 
 void retractLift() {
-    if (currentStage != RAISING && currentStage != LOWERING) {
-        lift.retract();
-        positionedForTop = false;
-    }
+    lift.retract();
+    positionedForTop = false;
 }
 
 void openHood() {
@@ -283,15 +281,15 @@ void closeHood() {
 
 void openGate() {
     matchLoadGate.extend();
-    // MclMain.disableSensFor(FRONT, 500.0f);
+    MclMain.disableSensFor(FRONT, 500.0f);
 }
 void closeGate() {
     matchLoadGate.retract();
-    // MclMain.disableSensFor(FRONT, 500.0f);
+    MclMain.disableSensFor(FRONT, 500.0f);
 }
 void toggleGate() {
     matchLoadGate.toggle();
-    // MclMain.disableSensFor(FRONT, 500.0f);
+    MclMain.disableSensFor(FRONT, 500.0f);
 }
 
 

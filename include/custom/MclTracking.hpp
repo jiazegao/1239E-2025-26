@@ -19,24 +19,24 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 1200;
+    static constexpr int PARTICLE_COUNT = 1000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 300;
+    static constexpr int RESAMPLE_THRESHOLD = 200;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float HEADING_SIGMA = 0.05f;
+    static constexpr float HEADING_SIGMA = 1e-6f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
-    static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 1e-6f;
     static constexpr int CONFIDENCE_THRESHOLD = 40;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float FAULT_TOLERANCE = 0.1;
     float DIST_SYNC_PROP = 0.05f;
-    float THETA_SYNC_PROP = 0.001f;
+    float THETA_SYNC_PROP = 0.0f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
 
     static constexpr float MSPT = 20.0f;

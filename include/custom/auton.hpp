@@ -8,6 +8,7 @@ void left();
 void NAAuto();
 void right();
 void soloAWP();
+void counterSAWP();
 void leftControlRush();
 void leftFastRush();
 void rightControlRush();
