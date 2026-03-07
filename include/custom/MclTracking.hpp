@@ -34,7 +34,7 @@ private:
     static constexpr int CONFIDENCE_THRESHOLD = 40;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
-    static constexpr float FAULT_TOLERANCE = 1e-2f;
+    static constexpr float FAULT_TOLERANCE = 0.1;
     float DIST_SYNC_PROP = 0.05f;
     float THETA_SYNC_PROP = 0.001f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
