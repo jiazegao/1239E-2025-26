@@ -74,9 +74,9 @@ inline lemlib::ControllerSettings lateral_controller(
                                               30.0, // derivative gain (kD)
                                               0, // anti windup
                                               0.5, // small error range, in inches
-                                              600, // small error range timeout, in milliseconds
-                                              1.0, // large error range, in inches
-                                              800, // large error range timeout, in milliseconds
+                                              100, // small error range timeout, in milliseconds
+                                              1.5, // large error range, in inches
+                                              200, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
@@ -86,9 +86,9 @@ inline lemlib::ControllerSettings angular_controller(4.0, // proportional gain (
                                               37.7, // derivative gain (kD)
                                               0, // anti windup
                                               1, // small error range, in degrees
-                                              300, // small error range timeout, in milliseconds
-                                              3, // large error range, in degrees
-                                              500, // large error range timeout, in milliseconds
+                                              100, // small error range timeout, in milliseconds
+                                              2, // large error range, in degrees
+                                              200, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 
@@ -136,16 +136,16 @@ inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 200.0, 6.0, 50);
 inline MclTracking MclMain(&chassis, &drivetrain, DISTANCE_COLLECTION, {nullptr, 0.0, 0.0}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
 
 enum MCL_Log_Format {DISABLED, SDCARD, SCREEN};
-inline MCL_Log_Format mclLogType = SCREEN;
+inline MCL_Log_Format mclLogType = DISABLED;
 inline std::ofstream* mclLog = nullptr;
 inline Timer mclLogTimer(100000000.0f);
 
 // Mcl obstacles
 inline std::vector<Line_> soloAWP_obstacles = {
     // Alliance Robot Disable Lines
-    {{-72.0f, 4.0f}, {-42.0f, 4.0f}},
-    {{-42.0f, 4.0f}, {-42.0f, 36.0f}},
-    {{-72.0f, 36.0f}, {-42.0f, 36.0f}},
+    {{-72.0f, 4.0f}, {-36.0f, 4.0f}},
+    {{-36.0f, 4.0f}, {-36.0f, 36.0f}},
+    {{-72.0f, 36.0f}, {-36.0f, 36.0f}},
     // Middle Line
     {{-2.0f, -71.0f}, {-2.0f, 71.0f}}
 };

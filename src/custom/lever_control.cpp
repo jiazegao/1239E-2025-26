@@ -11,8 +11,8 @@ pros::Task* frontIntakeControlTask = nullptr;
 
 enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
 inline const int RESTING_POS = 910;
-inline const int FORCE_TERMINATE_TIMEOUT = 5000;
 LEVER_STAGE currentStage = INACTIVE;
+Timer leverScoringTimeout(4000);
 
 // Circular Array
 const int INTAKE_CAPACITY = 6;
@@ -185,8 +185,12 @@ void initLeverControl() {
             // Raising - Move upward
             if (currentStage == RAISING) {
                 trapDoor.extend();
+                // Timeout
+                if (leverScoringTimeout.timeIsUp()) {
+                    currentStage = LOWERING;
+                }
                 // Haven't reached target, keep going
-                if (getLeverPotentReading() < currTarget) {
+                else if (getLeverPotentReading() < currTarget) {
                     leverMotor.move_velocity(currMaxSpeed);
                 }
                 // Reached target, immediately reverse then move position
@@ -303,6 +307,7 @@ void score(int timeOut, int count, int maxScoringSpeed) {
 
     currentStage = RAISING;
     removedFromTop = true;
+    leverScoringTimeout.reset();
     if (timeOut > 0) pros::delay(timeOut);
 }
 
