@@ -19,6 +19,7 @@ void initialize() {
 
 	initLeverControl();
 	initLog();	// Critical; DO NOT REMOVE
+	resetLever();
 
 	pros::lcd::initialize();
 
@@ -39,8 +40,9 @@ void autonomous() {
 	
 	// Ensure descore arms are retracted
 	extendLeftArm();
+	resetLever();
 
-	skills_119();
+	soloAWP();
 }
 
 void opcontrol() {
