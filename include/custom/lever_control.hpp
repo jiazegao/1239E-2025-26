@@ -47,7 +47,7 @@ void startIntake();
 /*
     - Activates front intake inward
 */
-void startOuttake(int speed = 127);
+void startOuttake(int speed = 600);
 /*
     - Activates front intake outward
 */
@@ -80,3 +80,5 @@ void openGate();
 void closeGate();
 
 void toggleGate();
+
+void intakeLiftLock(bool up);

@@ -105,7 +105,10 @@ alliance_color getOpticColor() {
 int currTarget = 0;
 int currMaxSpeed = 0;
 bool autoReset = true;
-int currOuttakeSpeed = 127;
+int currOuttakeSpeed = 600;
+bool intakeStaged = false;
+
+bool intakeLiftKeptUp = false;
 
 Timer intakeSwapTimer(500);
 
@@ -201,36 +204,33 @@ void initLeverControl() {
                     else currentStage = INACTIVE;
                 }
             }
-            else if (currentStage == LOWERING) {
+            if (currentStage == LOWERING) {
                 closeHood();
                 // Keep reversing until back to resting position
                 if (getLeverPotentReading() > RESTING_POS) leverMotor.move(-127);
                 else {
                     leverMotor.move(0);
                     currentStage = INACTIVE;
+                    if (intakeStaged) startIntake();
                 }
             }
-
-            pros::delay(30);
-        }
-    });
-
-    // Lower intake controller
-    frontIntakeControlTask = new pros::Task([](){
-        while (true) {
             // Rudimentary motor control
             if (currentStage == INTAKING) {
                 frontMotor.move(127);
+                if (!intakeLiftKeptUp) intakeLift.extend();
+                else intakeLift.retract();
                 // Anti-stuck; only act if intake has been occuring for a certain amount of time
                 if (std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
-                    frontMotor.move(-127);
-                    pros::delay(300);
+                    frontMotor.move(-60);
+                    pros::delay(150);
                     frontMotor.move(127);
                     intakeSwapTimer.reset();
                 }
             }
             else if (currentStage == OUTTAKING) {
-                frontMotor.move(-currOuttakeSpeed);
+                if (currOuttakeSpeed < 600 || intakeLiftKeptUp) intakeLift.retract();
+                else intakeLift.extend();
+                frontMotor.move_velocity(-currOuttakeSpeed);
             }
             else {
                 frontMotor.move(0);
@@ -245,15 +245,22 @@ void stopIntake() {
     if (currentStage != RAISING && currentStage != LOWERING && currentStage != INACTIVE) {
         currentStage = INACTIVE;
         removedFromTop = true;
+        intakeStaged = false;
         intakeSwapTimer.reset();
     }
 }
 
 void startIntake() {
-    if (currentStage != RAISING && currentStage != LOWERING && currentStage != INTAKING) {
-        currentStage = INTAKING;
-        removedFromTop = true;
-        intakeSwapTimer.reset();
+    if (currentStage != INTAKING) {
+        if (currentStage != RAISING && currentStage != LOWERING) {
+            currentStage = INTAKING; 
+            removedFromTop = true;
+            intakeStaged = false;
+            intakeSwapTimer.reset();
+        }
+        else {
+            intakeStaged = true;
+        }
     }
 }
 
@@ -261,6 +268,7 @@ void startOuttake(int speed) {
     if (currentStage != RAISING && currentStage != LOWERING && currentStage != OUTTAKING) {
         currentStage = OUTTAKING;
         removedFromTop = false;
+        intakeStaged = false;
         currOuttakeSpeed = std::abs(speed);
         intakeSwapTimer.reset();
     }
@@ -281,6 +289,10 @@ void openHood() {
 }
 void closeHood() {
     if (!hoodLock) trapDoor.retract();
+}
+
+void intakeLiftLock(bool up) {
+    intakeLiftKeptUp = up;
 }
 
 void openGate() {

@@ -11,6 +11,7 @@
 #include "pros/rotation.hpp"
 
 struct Pose { float x, y, theta; };
+struct Coord {float x, y; };
 struct Circle { float x, y, radius; };
 struct Line_ { Pose p1, p2; };
 struct Trig { float cos_m, sin_m; };
@@ -19,24 +20,22 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 1000;
+    static constexpr int PARTICLE_COUNT = 5000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = 200;
+    static constexpr int RESAMPLE_THRESHOLD = 800;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float HEADING_SIGMA = 1e-6f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
-    static constexpr float THETA_RESAMPLE_VARIANCE = 1e-6f;
-    static constexpr int CONFIDENCE_THRESHOLD = 40;
-    static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
-    static constexpr float FAULT_TOLERANCE = 0.1;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 3.0f;
+    static constexpr int CONFIDENCE_THRESHOLD = 30;
+    static constexpr float CONFIDENCE_SCALING_BASE = 40.0f;
+    
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
+    static constexpr float FAULT_TOLERANCE = 0.01;
     float DIST_SYNC_PROP = 0.05f;
-    float THETA_SYNC_PROP = 0.0f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
 
     static constexpr float MSPT = 20.0f;
@@ -44,7 +43,7 @@ private:
     static constexpr float MINPAUSE = 10.0f;
     
     struct Particle {
-        Pose pose;
+        Coord pose;
         float weight;
     };
 
@@ -90,9 +89,9 @@ private:
     static constexpr int SENSOR_COUNT = 8;
     static constexpr Pose sensor_mounts[SENSOR_COUNT] = {
         // x (fwd/back), y (left/right), theta (angle sensor is pointing)
-        {6.184952f, 2.277110f, 0},    // FRONT
+        {6.184952f, 2.277110f, 0.0f},    // FRONT
         {-0.733924f, 2.674094f, std::numbers::pi/2}, // LEFT
-        {-5.374061f, 1.75f, std::numbers::pi},   // BACK
+        {-5.374061f, -1.75f, std::numbers::pi},   // BACK
         {-0.733924f, -2.674094f, std::numbers::pi*3/2},   // RIGHT
         {-4.092471f, 4.526609f, 0.77411928726f},    // FRONT LEFT
         {-4.992970f, -2.989211f, 2.36747336632f},    // BACK LEFT
@@ -117,7 +116,7 @@ private:
     std::array<Particle, PARTICLE_COUNT> new_gen_array;
     std::array<Particle, PARTICLE_COUNT>* particles_ptr = &particles_array;
     std::array<Particle, PARTICLE_COUNT>* new_gen_ptr = &new_gen_array;
-    std::array<Trig, PARTICLE_COUNT> pTrigs = {};
+    Trig currTrig;
     std::mt19937 gen;
     lemlib::Chassis* chassis;
     lemlib::Drivetrain* dt;

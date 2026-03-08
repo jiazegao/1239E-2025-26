@@ -37,10 +37,10 @@ void jiggle(int repeats, int time, float forward, float backward) {
 void shake(int repeats, int time) {
     float orig_theta = chassis.getPose().theta;
     for (int i = 0; i < repeats; i++) {
-        chassis.turnToHeading(orig_theta + 10, time/repeats/4, {.maxSpeed=60}, false);
-        chassis.turnToHeading(orig_theta - 10, time/repeats/4, {.maxSpeed=60}, false);
-        chassis.turnToHeading(orig_theta, time/repeats/4, {.maxSpeed=60}, false);
-        moveForward(8, time/repeats/4, 81, 40, false);
+        chassis.turnToHeading(orig_theta + 15, time/repeats/3, {}, false);
+        chassis.turnToHeading(orig_theta - 15, time/repeats/3, {}, false);
+        chassis.turnToHeading(orig_theta, time/repeats/6, {}, false);
+        moveForward(12, time/repeats/6, 80, 40, false);
     }
 }
 
@@ -82,12 +82,12 @@ void updateIntake() {
     // Button B - Outtake (Hold)
     if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
         extendLift();
-        startOuttake();
+        startOuttake(600);
     }
     // Button A - Slow outtake (Hold)
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
         extendLift();
-        frontMotor.move(-30);
+        startOuttake(100);
     }
     // Button R2 - Top state (Toggle)
     else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {

@@ -51,7 +51,7 @@ inline pros::adi::Pneumatics matchLoadGate('D', false, false);
 inline pros::adi::Pneumatics lift('C', true, true);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
-inline pros::adi::Pneumatics intakeLift('G', false, false);
+inline pros::adi::Pneumatics intakeLift('G', true, true);
 
 
 inline const int potentLimit = 4090;
@@ -130,7 +130,7 @@ inline std::array<pros::Distance*, 8> DISTANCE_COLLECTION = {&front_dist, &left_
 // Rcl setup
 inline RclSensor front_rcl(&front_dist, -2.277110, 6.184952, 0, 15.0);
 inline RclSensor left_rcl(&left_dist, -2.674094, -0.733924, 270.0, 15.0);
-inline RclSensor back_rcl(&back_dist, -1.75, -5.374061, 180.0, 15.0);
+inline RclSensor back_rcl(&back_dist, 1.75, -5.374061, 180.0, 15.0);
 inline RclSensor right_rcl(&right_dist, 2.674094, -0.733924, 90.0, 15.0);
 inline RclTracking RclMain(&chassis, 1, false, 0.5, 4.0, 200.0, 6.0, 50);
 inline MclTracking MclMain(&chassis, &drivetrain, DISTANCE_COLLECTION, {nullptr, 0.0, 0.0}, {nullptr, 0.0, 0.0}, 0, 0, 0, true);
@@ -143,9 +143,10 @@ inline Timer mclLogTimer(100000000.0f);
 // Mcl obstacles
 inline std::vector<Line_> soloAWP_obstacles = {
     // Alliance Robot Disable Lines
-    {{-72.0f, 4.0f}, {-36.0f, 4.0f}},
-    {{-36.0f, 4.0f}, {-36.0f, 36.0f}},
-    {{-72.0f, 36.0f}, {-36.0f, 36.0f}},
+    {{-72.0f, 8.0f}, {-36.0f, 8.0f}},
+    {{-36.0f, 8.0f}, {-36.0f, 32.0f}},
+    {{-72.0f, 32.0f}, {-36.0f, 32.0f}},
+    {{-72.0f, 8.0f}, {-72.0f, 32.0f}},
     // Middle Line
     {{-2.0f, -71.0f}, {-2.0f, 71.0f}}
 };
