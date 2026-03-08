@@ -9,6 +9,9 @@ enum class TimeUnit { SECOND, MILLISECOND };
 
 static constexpr float INV_PI = 1.0f / M_PI;
 static constexpr float INV_180 = 1.0f / 180.0f;
+static constexpr float PIF = M_PI;
+static constexpr float HALF_PIF = M_PI / 2.0;
+static constexpr float QTR_PIF = M_PI / 4.0;
 
 class Timer {
     public:

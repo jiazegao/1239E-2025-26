@@ -234,9 +234,9 @@ void MclTracking::predict() {
 void MclTracking::update_weights() {
 
     // Pre-processing filters
-    float inv_sigmas[SENSOR_COUNT]; // Calculate inv_sigmas along the way
     Coord sensor_offsets[SENSOR_COUNT];
     Trig sensor_trigs[SENSOR_COUNT];
+    float active_sensors = 0.0f;
 
     for (int i = 0; i < SENSOR_COUNT; i++) {
         sensor_readings_mm[i] = distance_collection[i]->get();
@@ -322,17 +322,44 @@ void MclTracking::update_weights() {
         }
         if (!valid_sensors[i]) continue;
 
-        // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
-        float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
-        if (sensor_readings_mm[i] > 200) sigma *= CONFIDENCE_SCALING_BASE / sensor_confs[i];   // Scale sigma based on confidence
-        inv_sigmas[i] = 1.0f / sigma;
-
         // Calculate sensor transformations
         sensor_offsets[i].x = sensor_mounts[i].x * currTrig.cos_m - sensor_mounts[i].y * currTrig.sin_m;
         sensor_offsets[i].y = sensor_mounts[i].x * currTrig.sin_m + sensor_mounts[i].y * currTrig.cos_m;
 
         sensor_trigs[i].cos_m = scos;
         sensor_trigs[i].sin_m = ssin;
+
+        active_sensors += 1.0f; // Increment valid sensors
+    }
+
+    // Calculate sigma
+    float inv_sigmas[SENSOR_COUNT]; // Calculate inv_sigmas along the way
+    float wall_inv_sigmas[SENSOR_COUNT];
+    float sensor_count_multiplier = (active_sensors > 0) ? std::sqrtf(active_sensors * SENSOR_COUNT_SCALING) : 1.0f;
+
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        if (valid_sensors[i]) {
+            float angle_offset = std::fmod(std::abs(rawMcl.theta + sensor_mounts[i].theta), HALF_PIF);
+
+            if (angle_offset > QTR_PIF) {
+                angle_offset = HALF_PIF - angle_offset;
+            }
+
+            float angle_multiplier = 1.0f + angle_offset * RIGHT_ANG_CONST;
+
+            // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
+            float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
+            if (sensor_readings_mm[i] > 200) {
+                sigma *= CONFIDENCE_SCALING_BASE / sensor_confs[i];
+            }
+
+            // Sensor count dynamic scaling
+            sigma *= sensor_count_multiplier;
+
+            // Angle dynamic scaling
+            inv_sigmas[i] = 1.0f / sigma;
+            wall_inv_sigmas[i] = inv_sigmas[i] / angle_multiplier;
+        }
     }
 
     // Process particles
@@ -362,6 +389,7 @@ void MclTracking::update_weights() {
             float raySin = sensor_trigs[j].sin_m;
 
             float p_dist = MAX_RANGE;
+            bool hit_wall = false;
 
             // Check for obstacle intersection first
             for (const auto& line : goal_legs) {
@@ -378,13 +406,21 @@ void MclTracking::update_weights() {
                         p_dist = std::min(p_dist, intersect_line(sPose, wall, MAX_RANGE, rayCos, raySin));
                         // Immediately break if intersect with one of the walls
                         if (std::abs(p_dist-MAX_RANGE) > 1e-6) {
+                            hit_wall = true;
                             break;
                         }
                     }
                 }
             }
         
-            float z = std::abs(sensor_readings_inch[j] - p_dist) * inv_sigmas[j];
+            // Apply angle sigma scaling
+            float z;
+            if (hit_wall) {
+                z = std::abs(sensor_readings_inch[j] - p_dist) * wall_inv_sigmas[j];
+            }
+            else {
+                z = std::abs(sensor_readings_inch[j] - p_dist) * inv_sigmas[j];
+            }
 
             // Gaussian LUT process
             int lut_idx = (int)(z * 256.0f);
