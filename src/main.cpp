@@ -42,7 +42,7 @@ void autonomous() {
 	extendLeftArm();
 	resetLever();
 
-	skills_119();
+	counterSAWP();
 }
 
 void opcontrol() {

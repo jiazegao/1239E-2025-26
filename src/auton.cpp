@@ -102,9 +102,9 @@ void counterSAWP() {
 
     // Score the long goal
     chassis.moveToPoint(-24, -47, 1300, {.forwards=false}, true);
-    pros::delay(800);
+    pros::delay(900);
     closeGate();
-    score(600, 7, 100);
+    score(600, 7, 127);
 
     // Intake 3 balls
     chassis.turnToHeading(0, 500, {.maxSpeed=90}, false);
