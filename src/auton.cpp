@@ -127,17 +127,17 @@ void counterSAWP() {
 
     // Intake 3 balls
     startIntake();
-    chassis.turnToHeading(20, 600, {.maxSpeed=90}, true);
-    chassis.moveToPoint(-22, -23, 1000, {.maxSpeed=40}, true);
+    chassis.turnToHeading(20, 600, {.maxSpeed=90}, false);
+    chassis.moveToPoint(-22, -23, 1000, {.maxSpeed=40}, false);
 
     // Intake 3 other balls
-    chassis.moveToPoint(-23, 23, 600, {.minSpeed=70, .earlyExitRange=3}, true);
+    chassis.moveToPoint(-23, 23, 600, {.minSpeed=70, .earlyExitRange=3}, false);
     chassis.moveToPoint(-24, 23, 400, {.maxSpeed=50}, true);
     pros::delay(200);
     openGate();
 
     // Go to long goal
-    chassis.moveToPoint(-42, 42, 1100, {.maxSpeed=70}, true);    
+    chassis.moveToPoint(-42, 42, 1100, {.maxSpeed=70}, false);    
 
     // Score long goal
     chassis.moveToPoint(-24, 44, 1000, {.forwards=false}, true);
