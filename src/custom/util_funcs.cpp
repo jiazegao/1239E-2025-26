@@ -126,6 +126,7 @@ void updateIntake() {
     // Button L2 - Raise mid + hold intake (Hold)
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
         extendLift();
+        resetLever();
         startIntake();
     }
     // Button L1 - Macro intake
