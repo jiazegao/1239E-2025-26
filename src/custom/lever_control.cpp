@@ -253,6 +253,7 @@ void stopIntake() {
         intakeStaged = false;
         intakeSwapTimer.reset();
     }
+    frontMotor.move(0);
 }
 
 void startIntake() {
