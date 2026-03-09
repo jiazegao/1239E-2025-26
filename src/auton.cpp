@@ -8,20 +8,40 @@
 #include "pros/rtos.hpp"
 #include <cmath>
 
-void leftPush(float x_offset = 0, float y_offset = 0) {
-    chassis.moveToPoint(-40+x_offset, 37.5+y_offset, 900, {}, false);
-    chassis.turnToHeading(90, 600, {}, false);
+void leftPush() {
+    // Push
+    chassis.moveToPoint(-38, 36.5, 900, {}, false);
+    chassis.turnToPoint(0, 37.5, 600, {}, false);
     retractLeftArm();
-    chassis.moveToPoint(-21+x_offset, 37.5+y_offset, 2000, {.minSpeed=127, .earlyExitRange=1}, false);
+    chassis.moveToPoint(-16, 37.5, 2000, {.minSpeed=127}, false);
     chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
 }
 void rightPush(float x_offset = 0, float y_offset = 0) {
-    chassis.moveToPoint(-40+x_offset, -37.5-y_offset, 900, {}, false);
-    chassis.turnToHeading(270, 450, {}, false);
+    // Push
+    chassis.moveToPoint(-38, -36.5, 900, {}, false);
+    chassis.turnToPoint(0, -37.5, 400, {.forwards=false}, false);
     retractLeftArm();
-    chassis.moveToPoint(-24+x_offset, -37.5-y_offset, 2000, {.forwards=false, .minSpeed=127}, false);
+    chassis.moveToPoint(-18, -37.5, 2000, {.minSpeed=127}, false);
 }
-
+void leftMidPush() {
+    // Descore
+    closeGate();
+    chassis.moveToPoint(-27, 30, 700, {}, false);
+    extendLift();
+    chassis.turnToHeading(90, 400, {}, false);
+    retractLeftArm();
+    chassis.moveToPoint(-18, 36, 1000, {.minSpeed=127, .earlyExitRange=3}, false);
+    chassis.turnToHeading(135, 1000, {.minSpeed=127}, false);
+}
+void rightMidPush() {
+    // Descore
+    closeGate();
+    chassis.moveToPoint(-27, -30, 700, {.forwards=false}, false);
+    extendLift();
+    chassis.turnToHeading(270, 400, {}, false);
+    retractLeftArm();
+    chassis.moveToPoint(-18, -36, 1000, {.forwards=false, .minSpeed=127, .earlyExitRange=3}, false);
+}
 
 void soloAWP(){
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
@@ -134,37 +154,14 @@ void counterSAWP() {
     startIntake();
 
     // Score mid
-    chassis.moveToPoint(-10, 10, 1200, {.forwards=false}, false);
+    chassis.moveToPoint(-11, 10, 1200, {.forwards=false}, false);
     retractLift();
     chassis.turnToPoint(0, 0, 300, {.forwards=false}, true);
     score(800, 7, 50);
     resetLever();
     
-    // Descore
-    closeGate();
-    chassis.moveToPoint(-27, 30, 700, {}, false);
-    extendLift();
-    chassis.turnToHeading(90, 400, {}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-18, 36, 1000, {.minSpeed=127, .earlyExitRange=3}, false);
-    chassis.turnToHeading(135, 1000, {.minSpeed=127}, false);
+    leftMidPush();
 }
-void leftControlRush() {
-    
-}
-
-void leftFastRush() {
-    
-}
-
-void rightControlRush() {
-    
-}
-
-void rightFastRush() {
-    
-}
-
 void leftv2() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-48.75, 16.125, 90);
@@ -174,7 +171,7 @@ void leftv2() {
     // Intake three balls
     stopIntake();
     startIntake();
-    chassis.moveToPoint(-19, 24, 800, {.minSpeed = 60, .earlyExitRange = 2, }, true);
+    chassis.moveToPoint(-19, 24, 800, {.minSpeed = 60, .earlyExitRange = 2}, true);
     pros::delay(350);
     openGate();
 
@@ -186,64 +183,90 @@ void leftv2() {
     
     // Head to long goal
     chassis.moveToPose(-36, 45, 140, 2600, {.forwards=false, .minSpeed=90}, false);
-    chassis.turnToPoint(-24, 47, 500, {.forwards=false}, true);
-    pros::delay(250);
-    openGate();
     
-    chassis.moveToPoint(-24, 47, 2300, {.forwards=false, .maxSpeed=100}, true);
-    // Score
-    score(600, 5, 100);
-   
-    // Refill at match loader
-    openGate();
-    chassis.moveToPoint(-72, 47, 1600, {.maxSpeed=75}, true);
-   
-    pros::delay(1350);
+    // Score long goal
+    chassis.moveToPoint(-24, 47, 1000, {.forwards=false}, true);
+    pros::delay(400);
+    score(400, 7, 100);
+    frontMotor.move(-80);
+    pros::delay(200);
+    
+    // Intake from matchloader
+    chassis.moveToPoint(-65, 47, 1600, {.maxSpeed=90}, true);
+    pros::delay(50);
+    resetLever();
+    pros::delay(500);
+    startIntake();
 
-    // Score top mid
-    chassis.turnToPoint(-10, 10, 500, {.forwards=false}, false);
-    chassis.moveToPoint(-10, 10, 1700, {.forwards=false, .maxSpeed = 110}, true);
+    // Score mid
+    chassis.moveToPoint(-11, 10, 1200, {.forwards=false}, false);
     retractLift();
-    score(700, 5, 40);
-    //pros::delay(800); // middle goal score time
-    closeGate();
-    pros::delay(700);
-    extendLift();
+    chassis.turnToPoint(0, 0, 300, {.forwards=false}, true);
+    score(800, 7, 50);
+    resetLever();
 
     // Push
-    chassis.moveToPoint(-38, 36.5, 1200, {}, false);
-    chassis.turnToPoint(0, 37.5, 500, {}, false);
-    retractLeftArm();
-    chassis.moveToPoint(-16, 37.5, 2000, {.minSpeed=127}, false);
-    chassis.turnToHeading(135, 2000, {.minSpeed=127}, false);
+    leftMidPush();
 }
-
 void rightv2() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(-48.75, -16.125, 90);
+    MclMain.setObstacles(&quadrant_dividers, nullptr);
+    startIntake();
+    startMcl(-48.75, -16.125, 90, false, false, true, true);
+    // Intake three balls
+    stopIntake();
+    startIntake();
+    chassis.moveToPoint(-19, -24, 800, {.minSpeed = 60, .earlyExitRange = 2}, true);
+    pros::delay(350);
+    openGate();
 
+    // Intake two balls
+    closeGate();
+    chassis.turnToPoint(-9, -44, 200, {}, true);
+    openGate();
+    chassis.moveToPoint(-9, -44, 900, {.maxSpeed=95}, false);
+    
+    // Head to long goal
+    chassis.moveToPose(-36, -45, 40, 2600, {.forwards=false, .minSpeed=90}, false);
+    
+    // Score long goal
+    chassis.moveToPoint(-24, -47, 1000, {.forwards=false}, true);
+    pros::delay(400);
+    score(400, 7, 100);
+    frontMotor.move(-80);
+    pros::delay(200);
+    
+    // Intake from matchloader
+    chassis.moveToPoint(-65, -47, 1600, {.maxSpeed=90}, true);
+    pros::delay(50);
+    resetLever();
+    pros::delay(500);
+    startIntake();
+
+    // Score mid
+    moveForward(-10, 400);
+    chassis.turnToPoint(-14, -14, 500, {}, false);
+    chassis.moveToPoint(-14, -14, 1200, {}, false);
+    chassis.turnToPoint(0, 0, 300, {}, true);
+    startOuttake(200);
+    pros::delay(1000);
+    stopIntake();
+
+    // Push
+    rightMidPush();
 }
-
-void right() {
-
-}
-
-void NAAuto() {
+void leftControlRush() {
     
 }
-
-void left() {
-
-}
-
-void skills() {
+void rightControlRush() {
     
 }
-// 90+ points
-void skills_v2() {
+void leftFastRush() {
 
 }
+void rightFastRush() {
 
-// 80 points
-void skills_v3() {
 }
 
 // 119 points
@@ -368,3 +391,4 @@ void skills_119() {
     chassis.turnToHeading(0, 600, {}, false);
     chassis.moveToPoint(-63, 4, 1800, {.minSpeed=80}, false);
 }
+

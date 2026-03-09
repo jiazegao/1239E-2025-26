@@ -16,19 +16,20 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
+	pros::lcd::initialize();
+
+	init_auton_selector();
 	initControllerDisplay();
-	startControllerCoordDisplay();
 	initLeverControl();
 	initLog();	// Critical; DO NOT REMOVE
-	resetLever();
-
-	pros::lcd::initialize();
 
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
 
 	// Motor modes
 	leverMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+	
+	resetLever();
 }
 
 void disabled() {}
@@ -43,7 +44,7 @@ void autonomous() {
 	extendLeftArm();
 	resetLever();
 
-	counterSAWP();
+	runAuton();
 }
 
 void opcontrol() {
@@ -54,6 +55,8 @@ void opcontrol() {
 	// Retract descore arm
 	extendLeftArm();
 	stopIntake();
+
+	startBrainFBDisplay();
 	
 	while (true) {
 		// Update Controls
@@ -63,7 +66,4 @@ void opcontrol() {
 		
 		pros::delay(20);
 	}
-	
-
-	//runPIDTuner();
 }

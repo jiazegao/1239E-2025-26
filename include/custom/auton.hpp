@@ -1,22 +1,16 @@
 #pragma once
 
+#include "custom/auton.hpp"
 #include "custom/configs.hpp"
 #include "custom/util_funcs.hpp"
 
 // Autons
-void left();
-void NAAuto();
-void right();
+void leftv2();
+void rightv2();
 void soloAWP();
 void counterSAWP();
 void leftControlRush();
-void leftFastRush();
 void rightControlRush();
+void leftFastRush();
 void rightFastRush();
-void leftv2();
-void rightv2();
-
-void skills();
-void skills_v2();
-void skills_v3();
 void skills_119();
