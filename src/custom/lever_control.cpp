@@ -17,7 +17,7 @@ Timer leverScoringTimeout(4000);
 // Circular Array
 const int INTAKE_CAPACITY = 6;
 std::array<alliance_color, INTAKE_CAPACITY> intake_array;
-std::atomic<int> currSize(0);
+std::atomic<int> currSize(6);
 int head = 0;
 int tail = -1;
 
@@ -34,8 +34,8 @@ float midDistReading = 200.0;
 std::array<float, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2767, 2767, 2767, 2767, 2767, 2767};
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {2767, 2767, 2767, 2767, 2767, 2767};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2700, 2700, 2700, 2700, 2700, 2700};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {2700, 2700, 2700, 2700, 2700, 2700};
 bool positionedForTop = true;
 bool removedFromTop = true;
 
@@ -111,6 +111,7 @@ bool intakeStaged = false;
 bool intakeLiftKeptUp = false;
 
 Timer intakeSwapTimer(500);
+Timer afterScoreHoodCloseTimeout(800);
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -200,12 +201,14 @@ void initLeverControl() {
                 else if (getLeverPotentReading() >= currTarget) {
                     leverMotor.move(0);
                     // If auto reset, move to the next stage
-                    if (autoReset) currentStage = LOWERING;
+                    if (autoReset) {
+                        currentStage = LOWERING;
+                        afterScoreHoodCloseTimeout.reset();
+                    }
                     else currentStage = INACTIVE;
                 }
             }
             if (currentStage == LOWERING) {
-                closeHood();
                 // Keep reversing until back to resting position
                 if (getLeverPotentReading() > RESTING_POS) leverMotor.move(-127);
                 else {
@@ -221,20 +224,22 @@ void initLeverControl() {
                 else intakeLift.retract();
                 // Anti-stuck; only act if intake has been occuring for a certain amount of time
                 if (std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
-                    frontMotor.move(-60);
+                    frontMotor.move(-127);
                     pros::delay(150);
                     frontMotor.move(127);
                     intakeSwapTimer.reset();
                 }
             }
-            else if (currentStage == OUTTAKING) {
+            if (currentStage == OUTTAKING) {
                 if (currOuttakeSpeed < 600 || intakeLiftKeptUp) intakeLift.retract();
                 else intakeLift.extend();
                 frontMotor.move_velocity(-currOuttakeSpeed);
             }
-            else {
+            if (currentStage == INACTIVE) {
                 frontMotor.move(0);
             }
+
+            if (currentStage != RAISING && afterScoreHoodCloseTimeout.timeIsUp()) closeHood();
 
             pros::delay(30);
         }
@@ -317,9 +322,9 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
     currMaxSpeed = maxScoringSpeed;
 
+    leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
-    leverScoringTimeout.reset();
     if (timeOut > 0) pros::delay(timeOut);
 }
 

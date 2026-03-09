@@ -22,16 +22,16 @@ private:
     // --- Configuration Constants ---
     static constexpr int PARTICLE_COUNT = 5000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT * 0.5f;
+    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 2;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 3.0f;
-    static constexpr int CONFIDENCE_THRESHOLD = 30;
-    static constexpr float CONFIDENCE_SCALING_BASE = 40.0f;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.5f;
+    static constexpr int CONFIDENCE_THRESHOLD = 45;
+    static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
     static constexpr float SENSOR_COUNT_SCALING = 0.25f;

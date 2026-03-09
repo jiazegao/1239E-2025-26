@@ -121,8 +121,8 @@ inline pros::Distance left_dist(2);
 inline pros::Distance back_dist(14);
 inline pros::Distance right_dist(8);
 inline pros::Distance fl_dist(4);
-inline pros::Distance bl_dist(5);
-inline pros::Distance br_dist(6);
+inline pros::Distance bl_dist(6);
+inline pros::Distance br_dist(5);
 inline pros::Distance fr_dist(7);
 
 inline std::array<pros::Distance*, 8> DISTANCE_COLLECTION = {&front_dist, &left_dist, &back_dist, &right_dist, &fl_dist, &bl_dist, &br_dist, &fr_dist};

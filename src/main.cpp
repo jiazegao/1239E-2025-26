@@ -16,7 +16,8 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
-
+	initControllerDisplay();
+	startControllerCoordDisplay();
 	initLeverControl();
 	initLog();	// Critical; DO NOT REMOVE
 	resetLever();
