@@ -16,6 +16,7 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
+	// pros::lcd::initialize();
 
 	init_auton_selector();
 	initControllerDisplay();
@@ -44,7 +45,7 @@ void autonomous() {
 	resetLever();
 
 	setMidScoreDelay(0);
-	runAuton();
+	skills_119();
 }
 
 void opcontrol() {

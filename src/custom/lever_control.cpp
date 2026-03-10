@@ -384,23 +384,23 @@ void startLeverTuningDisplay() {
             currHead = (currHead+1)%INTAKE_CAPACITY;
         }
 
-        pros::lcd::print(0, 0, "Intake: %s", intake_info.c_str());
+        pros::lcd::print(0, "Intake: %d, %s", currSize.load(), intake_info.c_str());
 
 
         if (currentStage == INACTIVE) {
-            pros::lcd::print(1, 0, "Current Stage: %s", "INACTIVE");
+            pros::lcd::print(1, "Current Stage: %s", "INACTIVE");
         }
         else if (currentStage == INTAKING) {
-            pros::lcd::print(1, 0, "Current Stage: %s", "INTAKING");
+            pros::lcd::print(1, "Current Stage: %s", "INTAKING");
         }
         else if (currentStage == OUTTAKING) {
-            pros::lcd::print(1, 0, "Current Stage: %s", "OUTTAKING");
+            pros::lcd::print(1, "Current Stage: %s", "OUTTAKING");
         }
         else if (currentStage == RAISING) {
-            pros::lcd::print(1, 0, "Current Stage: %s", "RAISING");
+            pros::lcd::print(1, "Current Stage: %s", "RAISING");
         }
         else if (currentStage == LOWERING) {
-            pros::lcd::print(1, 0, "Current Stage: %s", "LOWERING");
+            pros::lcd::print(1, "Current Stage: %s", "LOWERING");
         }
     };
 }
