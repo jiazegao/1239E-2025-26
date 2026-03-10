@@ -17,7 +17,7 @@ Timer leverScoringTimeout(4000);
 // Circular Array
 const int INTAKE_CAPACITY = 6;
 std::array<alliance_color, INTAKE_CAPACITY> intake_array;
-std::atomic<int> currSize(6);
+std::atomic<int> currSize(0);
 int head = 0;
 int tail = -1;
 
@@ -28,10 +28,10 @@ const int INCREMENT_THRESHOLD = 20;
 const int DECREMENT_THRESHOLD = 30;
 
 // Scoring presets
-std::array<float, 10> midDistCumulative = {200,200,200,200,200,200,200,200,200,200};
+std::array<int, 8> midDistCumulative = {200,200,200,200,200,200,200,200};
 int midDistCumulativeIndex = 0;
 float midDistReading = 200.0;
-std::array<float, 10> topDistCumulative = {250,250,250,250,250,250,250,250,250,250};
+std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
 inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2700, 2700, 2700, 2700, 2700, 2700};
@@ -120,10 +120,8 @@ void initLeverControl() {
     
     ballTrackingTask = new pros::Task([](){
 
-        Timer incrementCoolDown(100);
-        Timer decrementCoolDown(100);
-
-        Timer firstIntakeTimeout(1000);
+        Timer incrementCoolDown(80);
+        Timer decrementCoolDown(80);
 
         alliance_color opticColor = getOpticColor();
 
@@ -143,13 +141,13 @@ void initLeverControl() {
                 opticColor = getOpticColor();
 
                 // Update cumulative values
-                float currMid = midDist.get();
-                midDistReading += (currMid-midDistCumulative[midDistCumulativeIndex])/midDistCumulative.size();
+                int currMid = midDist.get();
+                midDistReading += (float) (currMid-midDistCumulative[midDistCumulativeIndex])/midDistCumulative.size();
                 midDistCumulative[midDistCumulativeIndex] = currMid;
                 midDistCumulativeIndex = (midDistCumulativeIndex+1)%midDistCumulative.size();
                     
-                float currTop = topDist.get();
-                topDistReading += (currTop-topDistCumulative[topDistCumulativeIndex])/topDistCumulative.size();
+                int currTop = topDist.get();
+                topDistReading += (float) (currTop-topDistCumulative[topDistCumulativeIndex])/topDistCumulative.size();
                 topDistCumulative[topDistCumulativeIndex] = currTop;
                 topDistCumulativeIndex = (topDistCumulativeIndex+1)%topDistCumulative.size();
 
@@ -182,7 +180,7 @@ void initLeverControl() {
                     }
                 }
             }
-            pros::delay(50);
+            pros::delay(25);
         }
     });
 
