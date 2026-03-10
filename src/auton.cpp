@@ -172,17 +172,17 @@ void leftv2() {
     
     // Intake three balls
     startIntake();
-    chassis.moveToPoint(-19, 27, 1000, {}, true);
-    pros::delay(400);
+    chassis.moveToPoint(-24, 24, 800, {}, true);
+    pros::delay(500);
     openGate();
-    pros::delay(400);
+    pros::delay(300);
     closeGate();
 
     // Intake two balls
-    chassis.turnToPoint(-5, 47.5, 200, {}, true);
-    chassis.moveToPoint(-5, 47.5, 300, {.minSpeed=60}, true);
-    chassis.moveToPoint(-5, 47.5, 800, {.maxSpeed=50}, true);
-    chassis.swingToHeading(340, lemlib::DriveSide::LEFT, 400, {}, true);
+    chassis.turnToPoint(-4, 47.5, 200, {}, true);
+    chassis.moveToPoint(-4, 47.5, 300, {.minSpeed=60}, true);
+    chassis.moveToPoint(-4, 47.5, 1100, {.maxSpeed=30}, true);
+    pros::delay(800);
     openGate();
     
     // Head to long goal
@@ -225,16 +225,16 @@ void rightv2() {
     
     // Intake three balls
     startIntake();
-    chassis.moveToPoint(-22, -24, 800, {}, true);
+    chassis.moveToPoint(-24, -24, 800, {}, true);
     pros::delay(500);
     openGate();
     pros::delay(300);
     closeGate();
 
     // Intake two balls
-    chassis.turnToPoint(-5, -47.5, 200, {}, true);
-    chassis.moveToPoint(-5, -47.5, 300, {.minSpeed=60}, true);
-    chassis.moveToPoint(-5, -47.5, 1100, {.maxSpeed=30}, true);
+    chassis.turnToPoint(-4, -47.5, 200, {}, true);
+    chassis.moveToPoint(-4, -47.5, 300, {.minSpeed=60}, true);
+    chassis.moveToPoint(-4, -47.5, 1100, {.maxSpeed=30}, true);
     pros::delay(800);
     openGate();
 
