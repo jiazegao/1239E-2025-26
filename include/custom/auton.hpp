@@ -14,3 +14,5 @@ void rightControlRush();
 void leftFastRush();
 void rightFastRush();
 void skills_119();
+
+void setMidScoreDelay(int newDelay);

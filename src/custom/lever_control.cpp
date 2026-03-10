@@ -115,6 +115,9 @@ Timer afterScoreHoodCloseTimeout(800);
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
+
+    leverScoringTimeout.reset();
+    
     ballTrackingTask = new pros::Task([](){
 
         Timer incrementCoolDown(100);
