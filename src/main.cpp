@@ -45,7 +45,7 @@ void autonomous() {
 	resetLever();
 
 	setMidScoreDelay(0);
-	skills_119();
+	leftv2();
 }
 
 void opcontrol() {
