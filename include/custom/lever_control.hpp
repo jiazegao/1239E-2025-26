@@ -22,6 +22,8 @@ void score(int timeOut = 1000, int count = 1, int maxScoringSpeed = FAST_TOP_SCO
     - Scores a certain number of blocks in the intake
     - If count > balls in the intake, score what's in the intake
 */
+void scoreReserve(int timeOut = 1000, int reserving = 1, int maxScoringSpeed = FAST_TOP_SCORE);
+
 void scoreColor(int timeOut = 1000, int maxScoringSpeed = FAST_TOP_SCORE, alliance_color color = allianceColor);
 /*
     - Scores all balls with the target color at the top of the intake

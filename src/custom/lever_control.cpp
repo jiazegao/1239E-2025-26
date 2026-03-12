@@ -10,22 +10,22 @@ pros::Task* leverControlTask = nullptr;
 pros::Task* frontIntakeControlTask = nullptr;
 
 enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
-inline const int RESTING_POS = 910;
+inline const int RESTING_POS = 850;
 LEVER_STAGE currentStage = INACTIVE;
 Timer leverScoringTimeout(4000);
 
 // Circular Array
 const int INTAKE_CAPACITY = 6;
 std::array<alliance_color, INTAKE_CAPACITY> intake_array;
-std::atomic<int> currSize(0);
+int currSize = 0;
 int head = 0;
 int tail = -1;
 
 // Distance Readings
-std::array<int, 3> midDistPresets = {200, 120, 50}; // bottom, top1, top2
-std::array<int, 5> topDistPresets = {250, 170, 90, 20, 0}; // top2/bottom, top3, top4, top5, top6
-const int INCREMENT_THRESHOLD = 20;
-const int DECREMENT_THRESHOLD = 30;
+std::array<int, 3> midDistPresets = {245, 118, 37}; // bottom, top1, top2
+std::array<int, 5> topDistPresets = {280, 280, 195, 110, 20}; // top2/bottom, top3, top4, top5, top6
+const int INCREMENT_THRESHOLD = 60;
+const int DECREMENT_THRESHOLD = 60;
 
 // Scoring presets
 std::array<int, 8> midDistCumulative = {200,200,200,200,200,200,200,200};
@@ -34,10 +34,10 @@ float midDistReading = 200.0;
 std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {2700, 2700, 2700, 2700, 2700, 2700};
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {2700, 2700, 2700, 2700, 2700, 2700};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {1330, 1620, 1900, 2150, 2500, 2850};
+inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {1430, 1720, 2000, 2200, 2500, 2700};
 bool positionedForTop = true;
-bool removedFromTop = true;
+bool removedFromTop = false;
 
 alliance_color topColor() { return currSize > 0 ? intake_array[head] : alliance_color::NONE; }
 alliance_color frontColor() { return currSize > 0 ? intake_array[tail] : alliance_color::NONE; }
@@ -52,13 +52,13 @@ bool intake(alliance_color ballColor) {
     return false;
 }
 void removeTop(int count) {
-    count = std::min(count, currSize.load());
+    count = std::min(count, currSize);
     head += count;
     head %= INTAKE_CAPACITY;
     currSize -= count;
 }
 void removeFront(int count) {
-    count = std::min(count, currSize.load());
+    count = std::min(count, currSize);
     tail -= count;
     tail += INTAKE_CAPACITY;
     tail %= INTAKE_CAPACITY;
@@ -96,8 +96,8 @@ std::pair<alliance_color, int> frontContColor() {
 
 // Color Detection
 alliance_color getOpticColor() {
-    if (330 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
-    else if (170 < frontOptic.get_hue() && frontOptic.get_hue() < 250) return alliance_color::BLUE;
+    if (340 < frontOptic.get_hue() || frontOptic.get_hue() < 30) return alliance_color::RED;
+    else if (20 < frontOptic.get_hue() && frontOptic.get_hue() < 340) return alliance_color::BLUE;
     return alliance_color::NONE;
 }
 
@@ -111,7 +111,8 @@ bool intakeStaged = false;
 bool intakeLiftKeptUp = false;
 
 Timer intakeSwapTimer(500);
-Timer afterScoreHoodCloseTimeout(800);
+Timer afterScoreHoodCloseTimeout(1500);
+Timer sevenOuttakeTimeout(200);
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -120,18 +121,20 @@ void initLeverControl() {
     
     ballTrackingTask = new pros::Task([](){
 
-        Timer incrementCoolDown(80);
-        Timer decrementCoolDown(80);
+        Timer incrementCoolDown(300);
+        Timer decrementCoolDown(300);
 
         alliance_color opticColor = getOpticColor();
 
         auto handleIntake = [&]() {
             intake(opticColor != alliance_color::NONE ? opticColor : allianceColor);
             decrementCoolDown.reset();
+            incrementCoolDown.reset();
         };
         auto handleOuttake = [&]() {
             removedFromTop ? removeTop(1) : removeFront(1);
             incrementCoolDown.reset();
+            decrementCoolDown.reset();
         };
 
         while (true) {
@@ -190,8 +193,11 @@ void initLeverControl() {
             // Raising - Move upward
             if (currentStage == RAISING) {
                 trapDoor.extend();
+                if (!sevenOuttakeTimeout.timeIsUp()) {
+                    frontMotor.move(-127);
+                }
                 // Timeout
-                if (leverScoringTimeout.timeIsUp()) {
+                else if (leverScoringTimeout.timeIsUp()) {
                     currentStage = LOWERING;
                 }
                 // Haven't reached target, keep going
@@ -250,8 +256,8 @@ void initLeverControl() {
 void stopIntake() {
     if (currentStage != RAISING && currentStage != LOWERING && currentStage != INACTIVE) {
         currentStage = INACTIVE;
-        removedFromTop = true;
         intakeStaged = false;
+        removedFromTop = false;
         intakeSwapTimer.reset();
     }
     frontMotor.move(0);
@@ -261,8 +267,8 @@ void startIntake() {
     if (currentStage != INTAKING) {
         if (currentStage != RAISING && currentStage != LOWERING) {
             currentStage = INTAKING; 
-            removedFromTop = true;
             intakeStaged = false;
+            removedFromTop = false;
             intakeSwapTimer.reset();
         }
         else {
@@ -274,8 +280,8 @@ void startIntake() {
 void startOuttake(int speed) {
     if (currentStage != RAISING && currentStage != LOWERING && currentStage != OUTTAKING) {
         currentStage = OUTTAKING;
-        removedFromTop = false;
         intakeStaged = false;
+        removedFromTop = false;
         currOuttakeSpeed = std::abs(speed);
         intakeSwapTimer.reset();
     }
@@ -317,13 +323,30 @@ void toggleGate() {
 
 
 void score(int timeOut, int count, int maxScoringSpeed) {
-    int level = std::min(count, currSize.load()) + (INTAKE_CAPACITY-currSize) - 1;
+    int level = std::min(count, currSize) + (INTAKE_CAPACITY-currSize) - 1;
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
     currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
     currMaxSpeed = maxScoringSpeed;
 
+    if (topDist.get() < 15) sevenOuttakeTimeout.reset();
+    leverScoringTimeout.reset();
+    currentStage = RAISING;
+    removedFromTop = true;
+    if (timeOut > 0) pros::delay(timeOut);
+}
+
+void scoreReserve(int timeOut, int reserving, int maxScoringSpeed) {
+    int level = 5 - reserving;
+    if (level < 1) return;
+    stopIntake();
+    trapDoor.extend();  // open trapdoor
+
+    currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
+    currMaxSpeed = maxScoringSpeed;
+
+    if (topDist.get() < 15) sevenOuttakeTimeout.reset();
     leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
@@ -365,42 +388,51 @@ void setAutoReset(bool newConfig) {
     autoReset = newConfig;
 }
 
+void updateLeverTuningDisplay() {
+    std::string intake_info = "";
+    int currHead = head;
+    
+    // Use a simple for-loop based on the actual number of items
+    for (int i = 0; i < currSize; i++) {
+        if (intake_array[currHead] == alliance_color::RED) {
+            intake_info += "RED ";
+        }
+        else if (intake_array[currHead] == alliance_color::BLUE) {
+            intake_info += "BLUE ";
+        }
+        else {
+            intake_info += "NAN ";
+        }
+        // Move to the next index, wrapping around if necessary
+        currHead = (currHead + 1) % INTAKE_CAPACITY;
+    }
+
+    pros::lcd::print(0, "Intake: %d, %s", currSize, intake_info.c_str());
+
+
+    if (currentStage == INACTIVE) {
+        pros::lcd::print(1, "Current Stage: %s", "INACTIVE");
+    }
+    else if (currentStage == INTAKING) {
+        pros::lcd::print(1, "Current Stage: %s", "INTAKING");
+    }
+    else if (currentStage == OUTTAKING) {
+        pros::lcd::print(1, "Current Stage: %s", "OUTTAKING");
+    }
+    else if (currentStage == RAISING) {
+        pros::lcd::print(1, "Current Stage: %s", "RAISING");
+    }
+    else if (currentStage == LOWERING) {
+        pros::lcd::print(1, "Current Stage: %s", "LOWERING");
+    }
+
+    pros::lcd::print(2, "Hood Sens: %d mm", topDist.get());
+    pros::lcd::print(3, "Intake Sens: %d mm", midDist.get());
+    pros::lcd::print(4, "Optic Hue: %.2f", frontOptic.get_hue());
+    pros::lcd::print(5, "Optic Proximity: %d", frontOptic.get_proximity());
+    pros::lcd::print(6, "Potentiometer: %d", getLeverPotentReading());
+}
+
 void startLeverTuningDisplay() {
-    brainDisplayFunc = [](){
-        std::string intake_info;
-        int currHead = head;
-        int currTail = tail;
-
-        while (currHead <= currTail) {
-            if (intake_array[currHead] == alliance_color::RED) {
-                intake_info += "RED ";
-            }
-            else if (intake_array[currHead] == alliance_color::BLUE) {
-                intake_info += "BLUE ";
-            }
-            else {
-                intake_info += "NAN ";
-            }
-            currHead = (currHead+1)%INTAKE_CAPACITY;
-        }
-
-        pros::lcd::print(0, "Intake: %d, %s", currSize.load(), intake_info.c_str());
-
-
-        if (currentStage == INACTIVE) {
-            pros::lcd::print(1, "Current Stage: %s", "INACTIVE");
-        }
-        else if (currentStage == INTAKING) {
-            pros::lcd::print(1, "Current Stage: %s", "INTAKING");
-        }
-        else if (currentStage == OUTTAKING) {
-            pros::lcd::print(1, "Current Stage: %s", "OUTTAKING");
-        }
-        else if (currentStage == RAISING) {
-            pros::lcd::print(1, "Current Stage: %s", "RAISING");
-        }
-        else if (currentStage == LOWERING) {
-            pros::lcd::print(1, "Current Stage: %s", "LOWERING");
-        }
-    };
+    brainDisplayFunc = updateLeverTuningDisplay;
 }

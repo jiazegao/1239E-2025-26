@@ -103,6 +103,7 @@ void updateIntake() {
         }
         else if (topState == SCOREALL) {
             topState = INACTIVE;
+            midState = INACTIVE;
             resetLever();
         }
     }
@@ -120,11 +121,14 @@ void updateIntake() {
         }
         else if (midState == SCOREALL) {
             midState = INACTIVE;
+            topState = INACTIVE;
             resetLever();
         }
     }
     // Button L2 - Raise mid + hold intake (Hold)
     else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+        midState = INACTIVE;
+        topState = INACTIVE;
         extendLift();
         resetLever();
         startIntake();

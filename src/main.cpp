@@ -16,11 +16,12 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
-	// pros::lcd::initialize();
+	pros::lcd::initialize();
 
-	init_auton_selector();
-	initControllerDisplay();
+	// init_auton_selector();
+	// initControllerDisplay();
 	initLeverControl();
+	initBrainDisplay();
 	initLog();	// Critical; DO NOT REMOVE
 
 	// Set Optical LED
@@ -45,7 +46,7 @@ void autonomous() {
 	resetLever();
 
 	setMidScoreDelay(0);
-	leftv2();
+	runAuton();
 }
 
 void opcontrol() {
@@ -57,7 +58,8 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
+	startLeverTuningDisplay();
 	
 	while (true) {
 		// Update Controls

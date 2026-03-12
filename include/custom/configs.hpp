@@ -43,7 +43,7 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 inline pros::Imu imu(15);
 
 // Optical
-inline pros::Optical frontOptic(tempPort);
+inline pros::Optical frontOptic(3);
 
 // Pneumatics
 inline pros::adi::Potentiometer leverPotent('H');
@@ -112,8 +112,8 @@ inline lemlib::Chassis chassis( drivetrain, // drivetrain settings
 );
 
 // Distance
-inline pros::Distance midDist(tempPort);
-inline pros::Distance topDist(tempPort);
+inline pros::Distance midDist(9);
+inline pros::Distance topDist(10);
 
 enum DISTSENSORS {FRONT, LEFT, BACK, RIGHT, FRONT_LEFT, BACK_LEFT, BACK_RIGHT, FRONT_RIGHT};
 inline pros::Distance front_dist(1);
