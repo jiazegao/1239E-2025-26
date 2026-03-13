@@ -22,7 +22,7 @@ void score(int timeOut = 1000, int count = 1, int maxScoringSpeed = FAST_TOP_SCO
     - Scores a certain number of blocks in the intake
     - If count > balls in the intake, score what's in the intake
 */
-void scoreReserve(int timeOut = 1000, int reserving = 1, int maxScoringSpeed = FAST_TOP_SCORE);
+void scoreReserve(int timeOut = 1000, int reserving = 0, int maxScoringSpeed = FAST_TOP_SCORE);
 
 void scoreColor(int timeOut = 1000, int maxScoringSpeed = FAST_TOP_SCORE, alliance_color color = allianceColor);
 /*
@@ -37,6 +37,7 @@ void intakeFromMatchLoader(alliance_color color = allianceColor);
     - Attempts to intake from matchload
     - Automatically spits out the wrong color balls
 */
+void hardResetLever();
 
 
 // -------------------- Intake Control --------------------
@@ -68,6 +69,7 @@ void retractLift();
 void openHood();
 void closeHood();
 inline bool hoodLock = false;
+inline bool fastOuttake = false;
 
 // ----------------- MISCELLANEOUS --------------------------
 

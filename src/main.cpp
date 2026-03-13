@@ -16,10 +16,10 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
-	pros::lcd::initialize();
+	// pros::lcd::initialize();
 
-	// init_auton_selector();
-	// initControllerDisplay();
+	init_auton_selector();
+	initControllerDisplay();
 	initLeverControl();
 	initBrainDisplay();
 	initLog();	// Critical; DO NOT REMOVE
@@ -29,8 +29,6 @@ void initialize() {
 
 	// Motor modes
 	leverMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-	
-	resetLever();
 }
 
 void disabled() {}
@@ -43,10 +41,10 @@ void autonomous() {
 	
 	// Ensure descore arms are retracted
 	extendLeftArm();
-	resetLever();
+	pros::Task([](){hardResetLever();});
 
 	setMidScoreDelay(0);
-	runAuton();
+	skills_119();
 }
 
 void opcontrol() {
@@ -58,8 +56,8 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	// startBrainFBDisplay();
-	startLeverTuningDisplay();
+	startBrainFBDisplay();
+	// startLeverTuningDisplay();
 	
 	while (true) {
 		// Update Controls

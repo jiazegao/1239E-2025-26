@@ -3,6 +3,7 @@
 #include <atomic>
 #include <queue>
 #include "custom/util_funcs.hpp"
+#include "pros/abstract_motor.hpp"
 #include "string"
 
 pros::Task* ballTrackingTask = nullptr;
@@ -10,7 +11,7 @@ pros::Task* leverControlTask = nullptr;
 pros::Task* frontIntakeControlTask = nullptr;
 
 enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
-inline const int RESTING_POS = 850;
+inline const int RESTING_POS = 0.0;
 LEVER_STAGE currentStage = INACTIVE;
 Timer leverScoringTimeout(4000);
 
@@ -34,8 +35,10 @@ float midDistReading = 200.0;
 std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {1330, 1620, 1900, 2150, 2500, 2850};
-inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {1430, 1720, 2000, 2200, 2500, 2700};
+// inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {1330, 1620, 1900, 2150, 2500, 2850};
+// inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {1430, 1720, 2000, 2200, 2500, 2700};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {42, 65, 86, 106, 133, 180};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {50, 72, 94, 110, 133, 180};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
@@ -111,7 +114,7 @@ bool intakeStaged = false;
 bool intakeLiftKeptUp = false;
 
 Timer intakeSwapTimer(500);
-Timer afterScoreHoodCloseTimeout(1500);
+Timer afterScoreHoodCloseTimeout(500);
 Timer sevenOuttakeTimeout(200);
 
 // --------------------- USER FUNCTIONS --------------------------
@@ -193,31 +196,32 @@ void initLeverControl() {
             // Raising - Move upward
             if (currentStage == RAISING) {
                 trapDoor.extend();
-                if (!sevenOuttakeTimeout.timeIsUp()) {
-                    frontMotor.move(-127);
-                }
                 // Timeout
-                else if (leverScoringTimeout.timeIsUp()) {
+                if (autoReset && leverScoringTimeout.timeIsUp()) {
+                    afterScoreHoodCloseTimeout.reset();
                     currentStage = LOWERING;
                 }
                 // Haven't reached target, keep going
-                else if (getLeverPotentReading() < currTarget) {
+                else if (leverMotor.get_position() < currTarget) {
                     leverMotor.move_velocity(currMaxSpeed);
                 }
                 // Reached target, immediately reverse then move position
-                else if (getLeverPotentReading() >= currTarget) {
+                else if (leverMotor.get_position() >= currTarget) {
                     leverMotor.move(0);
                     // If auto reset, move to the next stage
                     if (autoReset) {
-                        currentStage = LOWERING;
                         afterScoreHoodCloseTimeout.reset();
+                        currentStage = LOWERING;
                     }
-                    else currentStage = INACTIVE;
+                    else {
+                        afterScoreHoodCloseTimeout.reset();
+                        currentStage = INACTIVE;
+                    }
                 }
             }
             if (currentStage == LOWERING) {
                 // Keep reversing until back to resting position
-                if (getLeverPotentReading() > RESTING_POS) leverMotor.move(-127);
+                if (leverMotor.get_position() > RESTING_POS) leverMotor.move(-127);
                 else {
                     leverMotor.move(0);
                     currentStage = INACTIVE;
@@ -238,15 +242,17 @@ void initLeverControl() {
                 }
             }
             if (currentStage == OUTTAKING) {
-                if (currOuttakeSpeed < 600 || intakeLiftKeptUp) intakeLift.retract();
+                if (!fastOuttake || intakeLiftKeptUp) intakeLift.retract();
                 else intakeLift.extend();
-                frontMotor.move_velocity(-currOuttakeSpeed);
+
+                if (!fastOuttake) frontMotor.move_velocity(-currOuttakeSpeed);
+                else frontMotor.move(-currOuttakeSpeed);
             }
             if (currentStage == INACTIVE) {
                 frontMotor.move(0);
             }
 
-            if (currentStage != RAISING && afterScoreHoodCloseTimeout.timeIsUp()) closeHood();
+            if (!hoodLock && currentStage != RAISING && afterScoreHoodCloseTimeout.timeIsUp()) closeHood();
 
             pros::delay(30);
         }
@@ -304,6 +310,16 @@ void closeHood() {
     if (!hoodLock) trapDoor.retract();
 }
 
+void hardResetLever() {
+    leverMotor.move(-127);
+    pros::delay(1000);
+    leverMotor.move(0);
+    pros::delay(500);
+    leverMotor.set_encoder_units(pros::MotorEncoderUnits::degrees);
+    leverMotor.set_zero_position(0.0);
+}
+
+
 void intakeLiftLock(bool up) {
     intakeLiftKeptUp = up;
 }
@@ -330,7 +346,6 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
     currMaxSpeed = maxScoringSpeed;
 
-    if (topDist.get() < 15) sevenOuttakeTimeout.reset();
     leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
@@ -346,7 +361,6 @@ void scoreReserve(int timeOut, int reserving, int maxScoringSpeed) {
     currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
     currMaxSpeed = maxScoringSpeed;
 
-    if (topDist.get() < 15) sevenOuttakeTimeout.reset();
     leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
@@ -381,6 +395,7 @@ void intakeFromMatchLoader(alliance_color color) {
 }
 
 void resetLever() {
+    afterScoreHoodCloseTimeout.reset();
     currentStage = LOWERING;
 }
 
@@ -430,7 +445,7 @@ void updateLeverTuningDisplay() {
     pros::lcd::print(3, "Intake Sens: %d mm", midDist.get());
     pros::lcd::print(4, "Optic Hue: %.2f", frontOptic.get_hue());
     pros::lcd::print(5, "Optic Proximity: %d", frontOptic.get_proximity());
-    pros::lcd::print(6, "Potentiometer: %d", getLeverPotentReading());
+    pros::lcd::print(6, "Lever IME: %f", leverMotor.get_position());
 }
 
 void startLeverTuningDisplay() {

@@ -280,6 +280,14 @@ void MclTracking::update_weights() {
             valid_sensors[i] = false;
             continue;
         }
+        if (sensor_readings_mm[i] < 1) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        if (i == DISTSENSORS::FRONT && sensor_readings_mm[i] < 100) {
+            valid_sensors[i] = false;
+            continue;
+        }
         // Case #3: Invalid confidence
         if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
             valid_sensors[i] = false;
@@ -761,6 +769,10 @@ float MclTracking::getDTWheelDegrees() {
     float wheelDegrees = avgRotates * gearRatio * 360.0;
 
     return wheelDegrees;
+}
+
+Pose MclTracking::getRawMcl() {
+    return rawMcl;
 }
 
 MclTracking::~MclTracking() {

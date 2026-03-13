@@ -46,18 +46,19 @@ inline pros::Imu imu(15);
 inline pros::Optical frontOptic(3);
 
 // Pneumatics
-inline pros::adi::Potentiometer leverPotent('H');
+// inline pros::adi::Potentiometer leverPotent('H');
 inline pros::adi::Pneumatics matchLoadGate('D', false, false);
 inline pros::adi::Pneumatics lift('C', true, true);
 inline pros::adi::Pneumatics leftDescoreArm('A', false, false);
 inline pros::adi::Pneumatics trapDoor('B', false, false);
 inline pros::adi::Pneumatics intakeLift('G', true, true);
 
-
+/*
 inline const int potentLimit = 4090;
 inline int getLeverPotentReading() {
     return (4090 - leverPotent.get_value());
 }
+*/
 
 // Odometry
 inline lemlib::OdomSensors sensors( nullptr,
@@ -144,9 +145,9 @@ inline Timer mclLogTimer(100000000.0f);
 inline std::vector<Line_> soloAWP_obstacles = {
     // Alliance Robot Disable Lines
     {{-72.0f, 8.0f}, {-36.0f, 8.0f}},
-    {{-36.0f, 8.0f}, {-36.0f, 32.0f}},
-    {{-72.0f, 32.0f}, {-36.0f, 32.0f}},
-    {{-72.0f, 8.0f}, {-72.0f, 32.0f}},
+    {{-36.0f, 8.0f}, {-36.0f, 40.0f}},
+    {{-72.0f, 40.0f}, {-36.0f, 40.0f}},
+    {{-72.0f, 8.0f}, {-72.0f, 40.0f}},
     // Middle Line
     {{-2.0f, -71.0f}, {-2.0f, 71.0f}}
 };

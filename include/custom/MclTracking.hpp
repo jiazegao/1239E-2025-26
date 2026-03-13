@@ -20,7 +20,7 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 5000;
+    static constexpr int PARTICLE_COUNT = 4000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
     static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 2;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
@@ -29,8 +29,8 @@ private:
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 2.5f;
-    static constexpr int CONFIDENCE_THRESHOLD = 45;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
+    static constexpr int CONFIDENCE_THRESHOLD = 40;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
@@ -38,7 +38,7 @@ private:
     
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.30f;
     static constexpr float FAULT_TOLERANCE = 0.01;
-    float DIST_SYNC_PROP = 0.20f;
+    float DIST_SYNC_PROP = 0.30f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.30f;
 
     static constexpr float MSPT = 20.0f;
@@ -210,6 +210,8 @@ public:
     void setDrift(float verticalDrift, float horizontalDrift);
 
     float getDTWheelDegrees();
+
+    Pose getRawMcl();
 
     ~MclTracking();
 };
