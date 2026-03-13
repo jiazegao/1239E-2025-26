@@ -37,8 +37,8 @@ int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
 // inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {1330, 1620, 1900, 2150, 2500, 2850};
 // inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {1430, 1720, 2000, 2200, 2500, 2700};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {42, 65, 86, 106, 133, 180};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {50, 72, 94, 110, 133, 180};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {55, 80, 100, 120, 145, 180};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 180};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
