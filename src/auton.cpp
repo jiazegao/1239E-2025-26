@@ -275,8 +275,8 @@ void skills_119() {
     chassis.moveToPoint(-20, 9, 1000, {.forwards=false}, false);
     chassis.swingToHeading(315, lemlib::DriveSide::LEFT, 1200, {.maxSpeed=60}, false);
     chassis.turnToPoint(-23.5, 23.5, 250, {}, false);
-    moveForward(6.5, 800, 30, 1, false);
-    chassis.moveToPoint(-8, 8, 800, {.forwards=false}, false);
+    moveForward(6, 800, 40, 15, false);
+    chassis.moveToPoint(-7, 7, 800, {.forwards=false}, false);
     chassis.turnToPoint(0, 0, 300, {.forwards=false}, true);
     stopIntake();
     retractLift();
@@ -287,7 +287,7 @@ void skills_119() {
     pros::delay(400);
     startIntake();
     pros::delay(400);
-    scoreReserve(1800, 0, 20);
+    scoreReserve(1800, 0, 22);
 
     // Refill at top left
     resetLever();
@@ -327,8 +327,9 @@ void skills_119() {
 
     // Clear Park Zone
     chassis.turnToPoint(39, 0, 600, {}, false);
-    chassis.moveToPoint(39, 4, 1200, {}, false);
-    chassis.turnToPoint(56, 0, 800, {}, false);
+    chassis.moveToPoint(39, 4, 1800, {}, false);
+    chassis.turnToHeading(-270, 1000);
+    //chassis.turnToPoint(56, 0, 1000, {}, false);
     pros::delay(300);
 
     // Clear Park Zone
@@ -345,10 +346,10 @@ void skills_119() {
     // Score bottom  mid
     chassis.turnToPoint(19, 16, 500, {}, false);
     chassis.moveToPoint(19, 16, 1400, {.maxSpeed=60}, true);
-    chassis.turnToPoint(12,12   , 500, {}, true);
-    chassis.moveToPoint(12, 12, 1000, {.maxSpeed = 50}, false);
+    chassis.turnToPoint(11,11   , 500, {}, true);
+    chassis.moveToPoint(11, 11, 1000, {.maxSpeed = 50}, false);
     chassis.turnToPoint(0, 0, 500, {}, true);
-    moveForward(-1, 500, {}, true);
+    //moveForward(-1, 500, {}, true);
     startOuttake(200);
     pros::delay(3000);
 
