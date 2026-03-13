@@ -1,9 +1,11 @@
 #include "custom/auton.hpp"
+#include "custom/MclTracking.hpp"
 #include "custom/RclTracking.hpp"
 #include "custom/configs.hpp"
 #include "custom/util_funcs.hpp"
 #include "custom/lever_control.hpp"
 #include "lemlib/chassis/chassis.hpp"
+#include "lemlib/pose.hpp"
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 #include <cmath>
@@ -255,11 +257,13 @@ void rightFastRush() {
 
 // 119 points
 void skills_119() {
+    antiStuckOn = false;
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
     chassis.setPose(-44, 0, 270);
     startMcl(-44, 0, 270, true, true, false, true);
+    RclMain.setRclPose(chassis.getPose());
 
-    // Clear Park Zone
+  // Clear Park Zone
     startIntake();
     moveForward(-5, 800, 127, 1, true);
     chassis.moveToPoint(-56, 0, 2000, {.maxSpeed=70}, false);
@@ -275,7 +279,7 @@ void skills_119() {
     chassis.moveToPoint(-20, 9, 1000, {.forwards=false}, false);
     chassis.swingToHeading(315, lemlib::DriveSide::LEFT, 1200, {.maxSpeed=60}, false);
     chassis.turnToPoint(-23.5, 23.5, 250, {}, false);
-    moveForward(6, 800, 40, 15, false);
+    moveForward(6.5, 1000, 40, 15, false);
     chassis.moveToPoint(-7, 7, 800, {.forwards=false}, false);
     chassis.turnToPoint(0, 0, 300, {.forwards=false}, true);
     stopIntake();
@@ -298,9 +302,16 @@ void skills_119() {
     hoodLock = false;
     extendLift();
     chassis.turnToHeading(270, 200, {}, true);
+    
     chassis.moveToPoint(-24, 47, 1000, {.forwards=false}, true);
-    pros::delay(800);
+    // Cool tech
+    hoodLock = true; 
+    openHood();
+    pros::delay(600);
     scoreReserve(600, 0, 70);
+    hoodLock = false; 
+    closeHood();
+    // 
     openGate();
     startIntake();
     chassis.moveToPoint(-70, 47, 1000, {.maxSpeed=70}, false);
@@ -313,7 +324,7 @@ void skills_119() {
     chassis.moveToPoint(33, 63, 1200, {.forwards=false}, false);
     chassis.moveToPoint(24, 47, 1000, {.forwards=false}, false);
     chassis.swingToHeading(90, lemlib::DriveSide::LEFT, 500, {.minSpeed=100}, true);
-    scoreReserve(700, 0, 70);
+    scoreReserve(700, 0, 50);
 
     // Refill at top-right loader then score again
     openGate();
@@ -322,15 +333,17 @@ void skills_119() {
     jiggle(3, 2000);
     chassis.moveToPoint(27, 47, 1100, {.forwards=false, .maxSpeed=110}, true);
     pros::delay(800);
-    scoreReserve(1100, 0, 30);
+    scoreReserve(1500, 0, 20);
     closeGate();
-
+    antiStuckOn = false;
+    moveForward(5, 300);
     // Clear Park Zone
-    chassis.turnToPoint(39, 0, 600, {}, false);
-    chassis.moveToPoint(39, 4, 1800, {}, false);
-    chassis.turnToHeading(-270, 1000);
-    //chassis.turnToPoint(56, 0, 1000, {}, false);
-    pros::delay(300);
+
+    chassis.turnToPoint(38.5, 5, 800, {}, false);
+    chassis.moveToPoint(38.5, 5, 1800, {}, false);
+    chassis.turnToHeading(90, 900, {}, false);
+
+    MclMain.set_pose(chassis.getPose().x, RclMain.updateBotPose(&right_rcl).second, chassis.getPose().theta);
 
     // Clear Park Zone
     startIntake();
@@ -342,11 +355,12 @@ void skills_119() {
     shake(6, 2800);
     chassis.turnToHeading(90, 400, {}, false);
     moveForward(-20, 1200, 127, 60, false);
+    antiStuckOn = true;
 
     // Score bottom  mid
     chassis.turnToPoint(19, 16, 500, {}, false);
     chassis.moveToPoint(19, 16, 1400, {.maxSpeed=60}, true);
-    chassis.turnToPoint(11,11   , 500, {}, true);
+    chassis.turnToPoint(11, 11, 500, {}, true);
     chassis.moveToPoint(11, 11, 1000, {.maxSpeed = 50}, false);
     chassis.turnToPoint(0, 0, 500, {}, true);
     //moveForward(-1, 500, {}, true);
@@ -392,7 +406,6 @@ void skills_119() {
     pros::delay(800);
     scoreReserve(1100, 0, 30);
     closeGate();
-
     // Park
     chassis.moveToPoint(-67, -24, 800, {}, false);
     chassis.turnToHeading(0, 400, {}, false);

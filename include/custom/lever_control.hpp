@@ -70,6 +70,7 @@ void openHood();
 void closeHood();
 inline bool hoodLock = false;
 inline bool fastOuttake = false;
+inline bool antiStuckOn = true;
 
 // ----------------- MISCELLANEOUS --------------------------
 

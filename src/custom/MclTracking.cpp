@@ -294,18 +294,14 @@ void MclTracking::update_weights() {
             continue;
         }
         // Case #4: Top middle goal lip disabling
-        if ((i == DISTSENSORS::BACK_LEFT || i == DISTSENSORS::BACK_RIGHT || i == DISTSENSORS::FRONT_LEFT || i == DISTSENSORS::FRONT_RIGHT)) {
-            if (intersect_line(sray, top_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
-                valid_sensors[i] = false;
-                continue;
-            }
+        if (intersect_line(sray, top_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+            valid_sensors[i] = false;
+            continue;
         }
         // Case #5: Lower middle goal disabling
-        if (i == BACK) {
-            if (intersect_line(sray, low_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
-                valid_sensors[i] = false;
-                continue;
-            }
+        if (intersect_line(sray, low_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+            valid_sensors[i] = false;
+            continue;
         }
         // Case #6: Disqualifying intersection with obstacles
         

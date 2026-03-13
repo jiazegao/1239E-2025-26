@@ -34,10 +34,8 @@ float midDistReading = 200.0;
 std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
-// inline std::array<int, INTAKE_CAPACITY> scoringPresetsTop = {1330, 1620, 1900, 2150, 2500, 2850};
-// inline std::array<int, INTAKE_CAPACITY> scoringPresetsMid = {1430, 1720, 2000, 2200, 2500, 2700};
 inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {55, 80, 100, 120, 145, 180};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 180};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 190};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
@@ -220,12 +218,9 @@ void initLeverControl() {
             }
             if (currentStage == LOWERING) {
                 // Keep reversing until back to resting position
-                if (std::abs(leverMotor.get_position()) > 10.0 || std::abs(leverMotor.get_actual_velocity()) > 5) {
-                    leverMotor.move(-127);
-                }
+                if (leverMotor.get_position() > 0.5) leverMotor.move(-127);
                 else {
                     leverMotor.move(0);
-                    leverMotor.set_zero_position(0.0);
                     currentStage = INACTIVE;
                     if (intakeStaged) startIntake();
                 }
@@ -314,11 +309,12 @@ void closeHood() {
 
 void hardResetLever() {
     leverMotor.move(-127);
-    pros::delay(200);
-    while (std::abs(leverMotor.get_actual_velocity()) > 5) {pros::delay(20);}
-    leverMotor.set_encoder_units(pros::MotorEncoderUnits::degrees);
+    pros::delay(1200);
+    leverMotor.move(0);
+    pros::delay(500);
     leverMotor.set_zero_position(0.0);
 }
+
 
 void intakeLiftLock(bool up) {
     intakeLiftKeptUp = up;
