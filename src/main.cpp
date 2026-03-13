@@ -29,6 +29,8 @@ void initialize() {
 
 	// Motor modes
 	leverMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+	leverMotor.set_encoder_units(pros::MotorEncoderUnits::degrees);
+    leverMotor.set_zero_position(0.0);
 }
 
 void disabled() {}
