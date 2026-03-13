@@ -11,7 +11,6 @@ pros::Task* leverControlTask = nullptr;
 pros::Task* frontIntakeControlTask = nullptr;
 
 enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
-inline const int RESTING_POS = 0.0;
 LEVER_STAGE currentStage = INACTIVE;
 Timer leverScoringTimeout(4000);
 
@@ -221,9 +220,12 @@ void initLeverControl() {
             }
             if (currentStage == LOWERING) {
                 // Keep reversing until back to resting position
-                if (leverMotor.get_position() > RESTING_POS) leverMotor.move(-127);
+                if (std::abs(leverMotor.get_position()) > 10.0 || std::abs(leverMotor.get_actual_velocity()) > 5) {
+                    leverMotor.move(-127);
+                }
                 else {
                     leverMotor.move(0);
+                    leverMotor.set_zero_position(0.0);
                     currentStage = INACTIVE;
                     if (intakeStaged) startIntake();
                 }
@@ -312,13 +314,11 @@ void closeHood() {
 
 void hardResetLever() {
     leverMotor.move(-127);
-    pros::delay(1000);
-    leverMotor.move(0);
-    pros::delay(500);
+    pros::delay(200);
+    while (std::abs(leverMotor.get_actual_velocity()) > 5) {pros::delay(20);}
     leverMotor.set_encoder_units(pros::MotorEncoderUnits::degrees);
     leverMotor.set_zero_position(0.0);
 }
-
 
 void intakeLiftLock(bool up) {
     intakeLiftKeptUp = up;
