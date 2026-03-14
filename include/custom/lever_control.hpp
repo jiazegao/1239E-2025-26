@@ -24,15 +24,15 @@ void score(int timeOut = 1000, int count = 1, int maxScoringSpeed = FAST_TOP_SCO
 */
 void scoreReserve(int timeOut = 1000, int reserving = 0, int maxScoringSpeed = FAST_TOP_SCORE);
 
-void scoreColor(int timeOut = 1000, int maxScoringSpeed = FAST_TOP_SCORE, alliance_color color = allianceColor);
+void scoreColor(int timeOut = 1000, int maxScoringSpeed = FAST_TOP_SCORE, alliance_color color = alliance_color::NONE);
 /*
-    - Scores all balls with the target color at the top of the intake
+    - Scores all balls with the target color at the top of the intakes
 */
 void scoreAll(int timeOut = 1000, int maxScoringSpeed = FAST_TOP_SCORE);
 /*
     - Scores all balls in the intake
 */
-void intakeFromMatchLoader(alliance_color color = allianceColor);
+void intakeFromMatchLoader(alliance_color color);
 /*
     - Attempts to intake from matchload
     - Automatically spits out the wrong color balls

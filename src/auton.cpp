@@ -158,7 +158,7 @@ void counterSAWP() {
     // Score mid
     moveForward(-5, 700, 30, 1, true);
     chassis.moveToPoint(-12, 10, 1200, {.forwards=false}, true);
-    pros::delay(300);
+    pros::delay(700);
     retractLift();
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     score(1000, 7, 30);

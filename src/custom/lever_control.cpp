@@ -379,10 +379,10 @@ void intakeFromMatchLoader(alliance_color color) {
         // Get balls with wrong color
         startIntake();
         Timer t(2000);
-        while (frontColor() != color && !t.timeIsUp()) {pros::delay(20);}
+        while (getOpticColor() != color && !t.timeIsUp()) {pros::delay(20);}
         // Discard balls with the wrong color and get balls with the right color
         stopIntake();
-        scoreReserve(1000, 0, FAST_TOP_SCORE);
+        scoreReserve(1000, 1, FAST_TOP_SCORE);
         resetLever();
         while (currentStage == LOWERING) {pros::delay(20);}
         startIntake();

@@ -136,7 +136,7 @@ void updateIntake() {
     }
     // Button L1 - Macro intake
     else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-        intakeFromMatchLoader();
+        intakeFromMatchLoader(allianceColor);
     }
     // If no button is pressed, stop everything
     else {
