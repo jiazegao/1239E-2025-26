@@ -45,20 +45,21 @@ void autonomous() {
 	extendLeftArm();
 	pros::Task([](){hardResetLever();});
 
-	setMidScoreDelay(0);
-	skills_119();
+	setMidScoreDelay(1000);
+	runAuton();
 }
 
 void opcontrol() {
 	
 	//chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
+	chassis.setPose(0, 0, 0);
 
 	// Retract descore arm
 	extendLeftArm();
 	stopIntake();
 
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
 	// startLeverTuningDisplay();
 	
 	while (true) {
@@ -66,7 +67,7 @@ void opcontrol() {
 		updateTankDrive();
 		updatePneumatics();
 		updateIntake();
-		
+
 		pros::delay(20);
 	}
 }

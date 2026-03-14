@@ -284,7 +284,7 @@ void MclTracking::update_weights() {
             valid_sensors[i] = false;
             continue;
         }
-        if (i == DISTSENSORS::FRONT && sensor_readings_mm[i] < 100) {
+        if (i == DISTSENSORS::FRONT && sensor_readings_mm[i] < 60) {
             valid_sensors[i] = false;
             continue;
         }

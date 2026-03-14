@@ -29,8 +29,8 @@ private:
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 1.5f;
-    static constexpr int CONFIDENCE_THRESHOLD = 40;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
+    static constexpr int CONFIDENCE_THRESHOLD = 35;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;

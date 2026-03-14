@@ -35,7 +35,7 @@ std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
 int topDistCumulativeIndex = 0;
 float topDistReading = 250.0;
 inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {55, 80, 100, 120, 145, 180};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 190};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 170};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
@@ -231,7 +231,7 @@ void initLeverControl() {
                 if (!intakeLiftKeptUp) intakeLift.extend();
                 else intakeLift.retract();
                 // Anti-stuck; only act if intake has been occuring for a certain amount of time
-                if (std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
+                if (antiStuckOn && std::abs(frontMotor.get_actual_velocity()) < 20 && intakeSwapTimer.timeIsUp()) {
                     frontMotor.move(-127);
                     pros::delay(150);
                     frontMotor.move(127);
@@ -382,8 +382,9 @@ void intakeFromMatchLoader(alliance_color color) {
         while (frontColor() != color && !t.timeIsUp()) {pros::delay(20);}
         // Discard balls with the wrong color and get balls with the right color
         stopIntake();
-        score(5, std::max(0, currSize-1), FAST_TOP_SCORE);
-        while (currentStage == RAISING || currentStage == LOWERING) {pros::delay(20);}
+        scoreReserve(1000, 0, FAST_TOP_SCORE);
+        resetLever();
+        while (currentStage == LOWERING) {pros::delay(20);}
         startIntake();
         pros::delay(500);
         stopIntake();

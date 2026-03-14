@@ -37,10 +37,11 @@ void jiggle(int repeats, int time, float forward, float backward) {
 void shake(int repeats, int time) {
     float orig_theta = chassis.getPose().theta;
     for (int i = 0; i < repeats; i++) {
-        chassis.turnToHeading(orig_theta + 15, time/repeats/3, {}, false);
-        chassis.turnToHeading(orig_theta - 15, time/repeats/3, {}, false);
-        chassis.turnToHeading(orig_theta, time/repeats/6, {}, false);
-        moveForward(12, time/repeats/6, 80, 40, false);
+        chassis.turnToHeading(orig_theta + 15, time/repeats/5, {}, false);
+        chassis.turnToHeading(orig_theta - 15, time/repeats/5, {}, false);
+        chassis.turnToHeading(orig_theta, time/repeats/5, {}, false);
+        moveForward(-4, time/repeats/5, 80, 40, false);
+        moveForward(4, time/repeats/5, 80, 40, false);
     }
 }
 

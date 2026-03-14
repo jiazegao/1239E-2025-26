@@ -16,6 +16,49 @@
 #include "custom/RclTracking.hpp"
 #include "custom/MclTracking.hpp"
 
+#include <cmath>
+
+class ScaledIMU : public pros::Imu {
+private:
+    double scale_factor;
+
+public:
+    // Constructor: Passes the port to the base pros::Imu class and calculates the scale factor
+    ScaledIMU(uint8_t port, double expected_rotation = 360.0, double actual_reading = 355.0) 
+        : pros::Imu(port) {
+        scale_factor = expected_rotation / actual_reading; 
+    }
+
+    // "Override" the rotation method to return the scaled continuous rotation
+    double get_rotation() const {
+        double raw_rotation = pros::Imu::get_rotation();
+        
+        // Check for PROS error return (usually INFINITY for doubles)
+        if (std::isinf(raw_rotation)) {
+            return raw_rotation; 
+        }
+        
+        return raw_rotation * scale_factor;
+    }
+
+    // "Override" the heading method to return a bounded 0-360 degree value
+    double get_heading() const {
+        double scaled_rotation = this->get_rotation();
+        
+        if (std::isinf(scaled_rotation)) {
+            return scaled_rotation;
+        }
+
+        // Mathematically bound the scaled rotation to 0-360
+        double heading = std::fmod(scaled_rotation, 360.0);
+        if (heading < 0) {
+            heading += 360.0;
+        }
+        
+        return heading;
+    }
+};
+
 const int tempPort = 21;
 
 // Alliance Color
@@ -40,7 +83,7 @@ inline lemlib::Drivetrain drivetrain(&leftMotors,
 );
 
 // IMU
-inline pros::Imu imu(15);
+inline ScaledIMU imu(15, 360.0, 354.25); // Adjust actual_reading based on your IMU's behavior
 
 // Optical
 inline pros::Optical frontOptic(3);
