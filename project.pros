@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "1239E 2025-26",
+    "project_name": "FB20252026",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -637,7 +637,8 @@
     "upload_options": {
       "description": "My PROS Project",
       "icon": "pizza",
-      "after": "run"
+      "after": "none",
+      "slot": 1
     },
     "use_early_access": false
   }

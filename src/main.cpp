@@ -45,7 +45,7 @@ void autonomous() {
 	extendLeftArm();
 	pros::Task([](){hardResetLever();});
 
-	setMidScoreDelay(1000);
+	setMidScoreDelay(2000);
 	runAuton();
 }
 
@@ -59,7 +59,7 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	// startBrainFBDisplay();
+	startBrainFBDisplay();
 	// startLeverTuningDisplay();
 	
 	while (true) {
