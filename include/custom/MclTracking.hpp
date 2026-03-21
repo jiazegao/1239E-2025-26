@@ -20,7 +20,7 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 4000;
+    static constexpr int PARTICLE_COUNT = 2000;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
     static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 2;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
@@ -36,10 +36,10 @@ private:
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
     static constexpr float SENSOR_COUNT_SCALING = 0.25f;
     
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.30f;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.15f;
     static constexpr float FAULT_TOLERANCE = 0.01;
     float DIST_SYNC_PROP = 0.30f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.30f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
@@ -112,7 +112,7 @@ private:
     std::vector<Circle>* disabling_circle_obstacles = nullptr;
 
     // Gaussian cheatsheeet for dynamic sigma
-    float gaussian_lut[1024];
+    alignas(64) float gaussian_lut[1024];
 
     // Particles
     std::array<Particle, PARTICLE_COUNT> particles_array;
@@ -150,13 +150,15 @@ private:
     std::array<int, SENSOR_COUNT> sensor_confs;
     std::array<bool, SENSOR_COUNT> disabled_sensors = {0, 0, 0};
 
-    static constexpr int NOISE_POOL_SIZE = 4001;
-    std::array<float, NOISE_POOL_SIZE> noise_pool;
+    static constexpr int NOISE_POOL_SIZE = 2048;
+    static constexpr int NOISE_MASK = NOISE_POOL_SIZE - 1;
+
+    alignas(64) std::array<float, NOISE_POOL_SIZE> noise_pool;
     int noise_idx = 0;
 
     // Helper to get next noise value
     inline float next_noise() {
-        noise_idx = (noise_idx + 1) % NOISE_POOL_SIZE;
+        noise_idx = (noise_idx + 123) & NOISE_MASK;
         return noise_pool[noise_idx];
     }
 
