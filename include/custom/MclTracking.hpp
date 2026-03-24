@@ -154,12 +154,20 @@ private:
     static constexpr int NOISE_MASK = NOISE_POOL_SIZE - 1;
 
     alignas(64) std::array<float, NOISE_POOL_SIZE> noise_pool;
+    std::normal_distribution<float> dist;
     int noise_idx = 0;
+    int regen_idx = 0;
+    static constexpr int REGEN_PT = 3;
 
     // Helper to get next noise value
     inline float next_noise() {
         noise_idx = (noise_idx + 123) & NOISE_MASK;
         return noise_pool[noise_idx];
+    }
+
+    inline void regen_noise() {
+        noise_pool[regen_idx] = dist(gen);
+        regen_idx = (regen_idx + 1) & NOISE_MASK;
     }
 
     float vertical_drift = 0.0;

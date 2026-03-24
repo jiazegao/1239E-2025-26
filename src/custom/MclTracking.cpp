@@ -126,7 +126,7 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
     }
 
     // Pre-generated noise
-    std::normal_distribution<float> dist(0.0f, 1.0f);
+    dist = std::normal_distribution<float>(0.0f, 1.0f);
     for (int i = 0; i < NOISE_POOL_SIZE; i++) {
         noise_pool[i] = dist(gen);
     }
@@ -550,6 +550,11 @@ Pose MclTracking::updateMcl() {
 
     // Sync to chassis
     if (autoSync) updateBotPose();
+
+    // Regenerate noise pool
+    for (int i = 0; i < REGEN_PT; i++) {
+        regen_noise();
+    }
 
     return estimate.first;
 }
