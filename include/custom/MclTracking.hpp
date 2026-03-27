@@ -20,9 +20,9 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 2000;
+    static constexpr int PARTICLE_COUNT = 1536;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 2;
+    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 3;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
@@ -30,23 +30,27 @@ private:
 
     static constexpr float MAX_RANGE = 100.0f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 0.03f;
+    static constexpr float MAX_THETA_DEVIATION = 0.15f;
     static constexpr int CONFIDENCE_THRESHOLD = 35;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
     static constexpr float SENSOR_COUNT_SCALING = 0.25f;
     
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.15f;
-    static constexpr float FAULT_TOLERANCE = 0.01;
-    float DIST_SYNC_PROP = 0.30f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.15f;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
+    static constexpr float IMU_VARIANCE = 0.015f;
+    static constexpr float FAULT_TOLERANCE = 0.05;
+    float DIST_SYNC_PROP = 0.15f;
+    static constexpr float THETA_SYNC_PROP = 0.01f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
 
-    static constexpr float MSPT = 20.0f;
+    static constexpr float MSPT = 25.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
     static constexpr float MINPAUSE = 10.0f;
     
     struct Particle {
-        Coord pose;
+        Pose pose;
         float weight;
     };
 
@@ -120,13 +124,14 @@ private:
     std::array<Particle, PARTICLE_COUNT>* particles_ptr = &particles_array;
     std::array<Particle, PARTICLE_COUNT>* new_gen_ptr = &new_gen_array;
     Trig currTrig;
+    std::array<Trig, PARTICLE_COUNT> pTrigs = {};
     std::mt19937 gen;
     lemlib::Chassis* chassis;
     lemlib::Drivetrain* dt;
     bool vertical_tracking_mode;
     pros::Task* MclTrackingTask;
     bool autoSync = false;
-    float lastTheta = 0.0;
+    float lastImuTheta = 0.0;
     pros::Rotation* vertical_tracking_wheel = nullptr;
     float vert_c = 0.0;
     float vert_offset = 0.0;
@@ -173,9 +178,9 @@ private:
     float vertical_drift = 0.0;
     float horizontal_drift = 0.0;
 
-    float intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin);
+    float intersect_line(Coord ray, Line_ wall, float max_range, float rayCos, float raySin);
 
-    float intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy);
+    float intersect_circle(Coord ray, Circle c, float max_range, float dx, float dy);
 
 public:
     MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::array<pros::Distance*, SENSOR_COUNT> dist_collection, std::tuple<pros::Rotation*, float, float> vertical_tracking_wheel, std::tuple<pros::Rotation*, float, float> horizontal_tracking_wheel, float start_x, float start_y, float start_vex_theta, bool autoSync_ = true);
