@@ -28,10 +28,10 @@ void rightPush() {
 void leftMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-30, 30, 600, {}, true);
-    chassis.turnToHeading(80, 700, {}, true);
+    chassis.moveToPoint(-32, 30, 600, {}, true);
+    chassis.turnToHeading(80, 600, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-11, 39, 1300, {.forwards=false}, true);
+    chassis.moveToPoint(-12, 34, 1300, {}, true);
     chassis.turnToHeading(110, 5000, {.maxSpeed=50}, false);
 }
 void rightMidPush() {
@@ -115,16 +115,18 @@ void counterSAWP() {
     chassis.moveToPoint(-47, 15, 300, {}, true);
 
     // Head towards the matchloader and intake
-    chassis.moveToPoint(-47, -43, 1400, {.forwards=false}, true);
+    chassis.moveToPoint(-47, -43, 1300, {.forwards=false}, true);
     pros::delay(400);
     openGate();
     chassis.turnToHeading(270, 400, {}, true);
-    chassis.moveToPoint(-65, -47, 1100, {.maxSpeed=80}, true);
+    chassis.moveToPoint(-65, -47, 1000, {.maxSpeed=80}, true);
 
     // Score the long goal
-    chassis.moveToPoint(-24, -47, 1800, {.forwards=false}, true);
-    pros::delay(1100);
+    chassis.moveToPoint(-24, -47, 1200, {.forwards=false}, true);
+    pros::delay(600);
     closeGate();
+    hoodLock = true;
+    openHood();
     score(500, 7, 45);
     frontMotor.move(-127);
     pros::delay(300);
@@ -136,39 +138,41 @@ void counterSAWP() {
     chassis.moveToPoint(-22, -23, 900, {.maxSpeed=50}, true);
     pros::delay(600);
     openGate();
+    hoodLock = false;
+    closeHood();
 
     // Intake 3 other balls
-    chassis.moveToPoint(-22, 23, 600, {.minSpeed=70, .earlyExitRange=3}, true);
+    chassis.moveToPoint(-22, 23, 700, {.minSpeed=70, .earlyExitRange=3}, true);
     closeGate();
     chassis.moveToPoint(-23, 23, 400, {.maxSpeed=50}, true);
     
     // Go to long goal
-    chassis.moveToPoint(-44, 43, 1000, {.maxSpeed=90}, true);
+    chassis.moveToPoint(-44, 43, 800, {.maxSpeed=90}, true);
     openGate();
     chassis.turnToHeading(270, 200, {}, false);    
 
     // Score long goal
-    chassis.moveToPoint(-24, 47, 2000, {.forwards=false}, true);
-    pros::delay(1200);
-    score(800, 7, 45);
+    chassis.moveToPoint(-24, 47, 1000, {.forwards=false}, true);
+    pros::delay(200);
+    score(600, 7, 45);
     resetLever();
     
     // Intake from matchloader
     chassis.moveToPoint(-65, 47, 200, {.minSpeed=80}, false);
-    chassis.moveToPoint(-65, 47, 1500, {.maxSpeed=50}, true);
+    chassis.moveToPoint(-65, 47, 1300, {.maxSpeed=50}, true);
     pros::delay(300);
     startIntake();
 
     // Score mid
-    moveForward(-5, 500, 30, 1, true);
-    chassis.moveToPoint(-12, 10, 1200, {.forwards=false}, true);
-    pros::delay(1000);
+    moveForward(-5, 400, 30, 1, true);
+    chassis.moveToPoint(-12, 10, 1100, {.forwards=false}, true);
+    pros::delay(800);
     retractLift();
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
-    score(1000, 7, 30);
+    score(700, 7, 30);
     resetLever();
     
-    // leftMidPush();
+    leftMidPush();
 }
 void leftv2() {
     chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);

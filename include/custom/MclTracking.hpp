@@ -20,7 +20,7 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 1536;
+    static constexpr int PARTICLE_COUNT = 2048;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
     static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 3;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
@@ -40,12 +40,12 @@ private:
     
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
     static constexpr float IMU_VARIANCE = 0.015f;
-    static constexpr float FAULT_TOLERANCE = 0.05;
+    static constexpr float FAULT_TOLERANCE = 0.05f;
     float DIST_SYNC_PROP = 0.15f;
-    static constexpr float THETA_SYNC_PROP = 0.01f;
+    static constexpr float THETA_SYNC_PROP = 0.005f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
 
-    static constexpr float MSPT = 25.0f;
+    static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
     static constexpr float MINPAUSE = 10.0f;
     
@@ -116,7 +116,8 @@ private:
     std::vector<Circle>* disabling_circle_obstacles = nullptr;
 
     // Gaussian cheatsheeet for dynamic sigma
-    alignas(64) float gaussian_lut[1024];
+    static constexpr int GAUSSIAN_LUT_RES = 1024;
+    alignas(64) float gaussian_lut[GAUSSIAN_LUT_RES];
 
     // Particles
     std::array<Particle, PARTICLE_COUNT> particles_array;

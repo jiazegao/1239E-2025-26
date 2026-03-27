@@ -139,8 +139,8 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
     }
 
     // Initialize gaussian lut
-    for (int i = 0; i < 1024; i++) {
-        float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
+    for (int i = 0; i < GAUSSIAN_LUT_RES; i++) {
+        float x = (i / GAUSSIAN_LUT_RES) * 4.0f; // Map index to 0-4 sigmas
         gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
     }
 }

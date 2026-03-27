@@ -16,9 +16,9 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
-	// pros::lcd::initialize();
+	pros::lcd::initialize();
 
-	init_auton_selector();
+	// init_auton_selector();
 	initControllerDisplay();
 	initLeverControl();
 	initBrainDisplay();
@@ -46,7 +46,7 @@ void autonomous() {
 	pros::Task([](){hardResetLever();});
 
 	setMidScoreDelay(2000);
-	runAuton();
+	counterSAWP();
 }
 
 void opcontrol() {
@@ -59,7 +59,7 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	startBrainFBDisplay();
+	// startBrainFBDisplay();
 	// startLeverTuningDisplay();
 	
 	while (true) {
