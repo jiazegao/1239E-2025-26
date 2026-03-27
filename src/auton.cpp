@@ -147,19 +147,19 @@ void counterSAWP() {
     chassis.moveToPoint(-23, 23, 400, {.maxSpeed=50}, true);
     
     // Go to long goal
-    chassis.moveToPoint(-44, 43, 800, {.maxSpeed=90}, true);
+    chassis.moveToPoint(-44, 43, 850, {}, true);
     openGate();
-    chassis.turnToHeading(270, 200, {}, false);    
+    chassis.turnToHeading(270, 150, {}, false);    
 
     // Score long goal
-    chassis.moveToPoint(-24, 47, 1000, {.forwards=false}, true);
+    chassis.moveToPoint(-24, 47, 900, {.forwards=false}, true);
     pros::delay(200);
     score(600, 7, 45);
     resetLever();
     
     // Intake from matchloader
-    chassis.moveToPoint(-65, 47, 200, {.minSpeed=80}, false);
-    chassis.moveToPoint(-65, 47, 1300, {.maxSpeed=50}, true);
+    chassis.moveToPoint(-65, 47, 300, {.minSpeed=80}, false);
+    chassis.moveToPoint(-65, 47, 1200, {.maxSpeed=50}, true);
     pros::delay(300);
     startIntake();
 
@@ -169,7 +169,7 @@ void counterSAWP() {
     pros::delay(800);
     retractLift();
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
-    score(700, 7, 30);
+    score(600, 7, 35);
     resetLever();
     
     leftMidPush();
