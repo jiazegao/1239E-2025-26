@@ -20,7 +20,7 @@ class MclTracking {
 private:
 
     // --- Configuration Constants ---
-    static constexpr int PARTICLE_COUNT = 2048;
+    static constexpr int PARTICLE_COUNT = 1280;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
     static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 3;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
@@ -30,8 +30,8 @@ private:
 
     static constexpr float MAX_RANGE = 100.0f;
     static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
-    static constexpr float THETA_RESAMPLE_VARIANCE = 0.03f;
-    static constexpr float MAX_THETA_DEVIATION = 0.15f;
+    static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
+    static constexpr float MAX_THETA_DEVIATION = 0.10f;
     static constexpr int CONFIDENCE_THRESHOLD = 35;
     static constexpr float CONFIDENCE_SCALING_BASE = 50.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
@@ -39,15 +39,15 @@ private:
     static constexpr float SENSOR_COUNT_SCALING = 0.25f;
     
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
-    static constexpr float IMU_VARIANCE = 0.015f;
-    static constexpr float FAULT_TOLERANCE = 0.05f;
+    static constexpr float IMU_VARIANCE = 0.01f;
+    static constexpr float FAULT_TOLERANCE = 0.01f;
     float DIST_SYNC_PROP = 0.15f;
-    static constexpr float THETA_SYNC_PROP = 0.005f;
+    static constexpr float THETA_SYNC_PROP = 0.001f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
 
-    static constexpr float MSPT = 20.0f;
+    static constexpr float MSPT = 15.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 10.0f;
+    static constexpr float MINPAUSE = 8.0f;
     
     struct Particle {
         Pose pose;
