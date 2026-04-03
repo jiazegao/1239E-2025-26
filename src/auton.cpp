@@ -12,10 +12,11 @@
 
 void leftPush() {
     // Push
-    chassis.moveToPoint(-38, 36.5, 900, {}, true);
-    chassis.turnToHeading(70, 400, {}, true);
+    chassis.moveToPoint(-35, 35, 900, {}, true);
+    chassis.turnToHeading(70, 500, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-14, 39, 700, {}, true);
+    chassis.moveToPoint(-13, 37, 400, {}, true);
+    chassis.moveToPoint(-13, 37, 500, {.maxSpeed=50}, true);
     chassis.turnToHeading(110, 5000, {.maxSpeed=50}, false);
 }
 void rightPush() {
@@ -122,7 +123,7 @@ void counterSAWP() {
     pros::delay(400);
     openGate();
     chassis.turnToHeading(270, 400, {}, true);
-    chassis.moveToPoint(-70, -47, 1100, {.maxSpeed=45}, true);
+    chassis.moveToPoint(-70, -47, 1100, {.maxSpeed=50}, true);
 
     // Score the long goal
     chassis.moveToPoint(-24, -47, 1400, {.forwards=false}, true);
@@ -172,7 +173,7 @@ void counterSAWP() {
     chassis.moveToPoint(-12, 10, 1100, {.forwards=false}, true);
     pros::delay(700);
     retractLift();
-    score(400, 7, 40);
+    score(400, 7, 35);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(400);
     resetLever();
@@ -271,17 +272,21 @@ void leftFastRush() {
     
     // Intake three balls
     startIntake();
-    chassis.moveToPoint(-23, 23, 1100, {}, true);
+    chassis.moveToPoint(-23, 22, 900, {}, true);
     pros::delay(400);
     openGate();
 
     // Head to long goal
-    chassis.turnToHeading(160, 400, {}, false);
-    moveForward(-20, 800, 127, 1, true);
-    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 800, {.minSpeed=100}, true);
+    chassis.turnToHeading(130, 400, {}, false);
+    leftMotors.move(-127);
+    rightMotors.move(-127);
+    pros::delay(300);
+    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 600, {.minSpeed=127}, true);
     closeGate();
-    moveForward(-10, 700, 127, 1, true);
-    score(700, 7, 45);
+    pros::delay(200);
+    score(200, 7, 45);
+    chassis.moveToPoint(-24, 47, 500, {.forwards=false, .minSpeed=80}, false);
+    resetLever();
 
     leftPush();
 }

@@ -38,12 +38,12 @@ private:
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
     static constexpr float SENSOR_COUNT_SCALING = 0.25f;
     
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.15f;
     static constexpr float IMU_VARIANCE = 0.01f;
     static constexpr float FAULT_TOLERANCE = 0.01f;
-    float DIST_SYNC_PROP = 0.15f;
+    float DIST_SYNC_PROP = 0.20f;
     static constexpr float THETA_SYNC_PROP = 0.001f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.25f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
