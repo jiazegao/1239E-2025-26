@@ -31,7 +31,7 @@ void rightPush() {
 void leftMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-35, 35, 1000, {}, true);
+    chassis.moveToPoint(-35, 32, 1000, {}, true);
     chassis.turnToHeading(80, 400, {}, true);
     retractLeftArm();
     chassis.moveToPoint(-11, 39, 400, {}, true);
