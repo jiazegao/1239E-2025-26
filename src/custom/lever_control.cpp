@@ -10,7 +10,6 @@ pros::Task* ballTrackingTask = nullptr;
 pros::Task* leverControlTask = nullptr;
 pros::Task* frontIntakeControlTask = nullptr;
 
-enum LEVER_STAGE {INACTIVE, INTAKING, OUTTAKING, RAISING, LOWERING};
 LEVER_STAGE currentStage = INACTIVE;
 Timer leverScoringTimeout(4000);
 
@@ -21,21 +20,27 @@ int currSize = 0;
 int head = 0;
 int tail = -1;
 
+LEVER_STAGE getLeverStage() {
+    return currentStage;
+}
+
 // Distance Readings
-std::array<int, 3> midDistPresets = {245, 118, 37}; // bottom, top1, top2
-std::array<int, 5> topDistPresets = {280, 280, 195, 110, 20}; // top2/bottom, top3, top4, top5, top6
+std::array<int, 3> midDistPresets = {313, 116, 34}; // bottom, top1, top2
+std::array<int, 5> topDistPresets = {370, 270, 202, 107, 20}; // top2/bottom, top3, top4, top5, top6
+const int SEVEN_THRESHOLD_MID = 20;
+const int SEVEN_THRESHOLD_TOP = 18;
 const int INCREMENT_THRESHOLD = 60;
 const int DECREMENT_THRESHOLD = 60;
 
 // Scoring presets
-std::array<int, 8> midDistCumulative = {200,200,200,200,200,200,200,200};
+std::array<int, 8> midDistCumulative = {313,313,313,313,313,313,313,313};
 int midDistCumulativeIndex = 0;
-float midDistReading = 200.0;
-std::array<int, 8> topDistCumulative = {250,250,250,250,250,250,250,250};
+float midDistReading = 313.0;
+std::array<int, 8> topDistCumulative = {370,370,370,370,370,370,370,370};
 int topDistCumulativeIndex = 0;
-float topDistReading = 250.0;
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {55, 80, 100, 120, 145, 205};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {65, 85, 110, 125, 145, 205};
+float topDistReading = 370.0;
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {78.0f, 100.0f, 125.0f, 145.0f, 175.0f, 193.0f};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {90.0f, 120.0f, 134.0f, 154.0f, 188.0f, 188.0f};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
@@ -113,6 +118,22 @@ bool intakeLiftKeptUp = false;
 Timer intakeSwapTimer(500);
 Timer afterScoreHoodCloseTimeout(500);
 Timer sevenOuttakeTimeout(200);
+Timer leverAntiStuckTimeout(500);
+
+void startPriming() {
+    if (currSize < INTAKE_CAPACITY) {
+        positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1-currSize] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1-currSize];
+    }
+    else {
+        currTarget = 0.0f;
+    }
+    currentStage = PRIMING;
+}
+void endPriming() {
+    trapDoor.extend();
+    positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1];
+    currentStage = RAISING;
+}
 
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
@@ -138,7 +159,7 @@ void initLeverControl() {
         };
 
         while (true) {
-            if (currentStage != RAISING && currentStage != LOWERING) {
+            if (currentStage != RAISING && currentStage != PRIMING && currentStage != LOWERING && positionedForTop) {
 
                 // Update readings
                 opticColor = getOpticColor();
@@ -190,11 +211,26 @@ void initLeverControl() {
     // Bang-Bang controller
     leverControlTask = new pros::Task([](){
         while (true) {
+            if (currentStage == PRIMING) {
+                // Haven't reached target, keep going
+                if (leverMotor.get_position() < currTarget-3.0f) {
+                    leverMotor.move_velocity(20 + std::abs(leverMotor.get_position()-currTarget));
+                }
+                else if (leverMotor.get_position() > currTarget+3.0f){
+                    leverMotor.move_velocity(-20 - std::abs(leverMotor.get_position()-currTarget));
+                }
+                else {
+                    leverMotor.move(0);
+                }
+            }
             // Raising - Move upward
             if (currentStage == RAISING) {
-                trapDoor.extend();
+                // Lever Anti Stuck
+                if (!leverAntiStuckTimeout.timeIsUp()) {
+                    frontMotor.move(127);
+                }
                 // Timeout
-                if (autoReset && leverScoringTimeout.timeIsUp()) {
+                else if (autoReset && leverScoringTimeout.timeIsUp()) {
                     afterScoreHoodCloseTimeout.reset();
                     currentStage = LOWERING;
                 }
@@ -257,13 +293,13 @@ void initLeverControl() {
 }
 
 void stopIntake() {
-    if (currentStage != RAISING && currentStage != LOWERING && currentStage != INACTIVE) {
+    if (currentStage != RAISING && currentStage != LOWERING && currentStage != PRIMING && currentStage != INACTIVE) {
         currentStage = INACTIVE;
         intakeStaged = false;
         removedFromTop = false;
         intakeSwapTimer.reset();
     }
-    frontMotor.move(0);
+    if (leverAntiStuckTimeout.timeIsUp()) frontMotor.move(0);
 }
 
 void startIntake() {
@@ -339,7 +375,17 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
-    currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
+    // Anti stuck
+    if (lever_antistuck_on && midDist.get() <= SEVEN_THRESHOLD_MID && topDist.get() <= SEVEN_THRESHOLD_TOP) {
+        leverAntiStuckTimeout.reset();
+    }
+
+    if (currentStage != PRIMING) {
+        positionedForTop ? currTarget = scoringPresetsTop[level] : currTarget = scoringPresetsMid[std::max(0, level-2)];
+    }
+    else {
+        positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1];
+    }
     currMaxSpeed = maxScoringSpeed;
 
     leverScoringTimeout.reset();

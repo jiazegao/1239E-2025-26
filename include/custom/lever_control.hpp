@@ -12,6 +12,12 @@ const int MODERATE_MID_SCORE = 40;
 const int SLOW_TOP_SCORE = 50;
 const int SLOW_MID_SCORE = 30;
 
+enum LEVER_STAGE {INACTIVE, PRIMING, INTAKING, OUTTAKING, RAISING, LOWERING};
+inline bool lever_antistuck_on = false;
+void startPriming();
+void endPriming();
+LEVER_STAGE getLeverStage();
+
 void initLeverControl();
 /*
     - Must be called within void initialize()

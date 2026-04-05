@@ -27,6 +27,8 @@ void initialize() {
 	// Set Optical LED
 	frontOptic.set_led_pwm(100);
 
+	lever_antistuck_on = false;
+
 	// Motor modes
 	leverMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
 	leverMotor.set_encoder_units(pros::MotorEncoderUnits::degrees);
@@ -40,6 +42,7 @@ void competition_initialize() {}
 void autonomous() {
 	
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+	lever_antistuck_on = false;
 	
 	// Ensure descore arms are retracted
 	extendLeftArm();
@@ -54,13 +57,16 @@ void opcontrol() {
 	//chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 	chassis.setPose(0, 0, 0);
+	lever_antistuck_on = true;
 
 	// Retract descore arm
 	extendLeftArm();
 	stopIntake();
 
+	hardResetLever();
+
 	// startBrainFBDisplay();
-	// startLeverTuningDisplay();
+	startLeverTuningDisplay();
 	
 	while (true) {
 		// Update Controls

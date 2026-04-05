@@ -80,18 +80,8 @@ void updateIntake() {
 
     setAutoReset(false);
 
-    // Button B - Outtake (Hold)
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-        extendLift();
-        startOuttake(600);
-    }
-    // Button A - Slow outtake (Hold)
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        extendLift();
-        startOuttake(100);
-    }
     // Button R2 - Top state (Toggle)
-    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
         extendLift();
         midState = INACTIVE;
         if (topState == INACTIVE) {
@@ -109,7 +99,7 @@ void updateIntake() {
         }
     }
     // Button R1 - Mid state (Toggle)
-    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
         retractLift();
         topState = INACTIVE;
         if (midState == INACTIVE) {
@@ -126,17 +116,37 @@ void updateIntake() {
             resetLever();
         }
     }
+    // Button L1 - Macro intake
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+        intakeFromMatchLoader(allianceColor);
+    }
+    // Button Right - Priming
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+        startPriming();
+    }
+
     // Button L2 - Raise mid + hold intake (Hold)
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
         midState = INACTIVE;
         topState = INACTIVE;
         extendLift();
-        resetLever();
-        startIntake();
+        if (getLeverStage() != PRIMING) {
+            resetLever();
+            startIntake();
+        }
+        else {
+            frontMotor.move(127);
+        }
     }
-    // Button L1 - Macro intake
-    else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-        intakeFromMatchLoader(allianceColor);
+    // Button B - Outtake (Hold)
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+        extendLift();
+        startOuttake(600);
+    }
+    // Button A - Slow outtake (Hold)
+    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+        extendLift();
+        startOuttake(100);
     }
     // If no button is pressed, stop everything
     else {

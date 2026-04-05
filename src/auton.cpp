@@ -31,21 +31,21 @@ void rightPush() {
 void leftMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-35, 32, 1000, {}, true);
-    chassis.turnToHeading(80, 400, {}, true);
+    chassis.moveToPoint(-31, 34, 1000, {}, true);
+    chassis.turnToHeading(90, 500, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-11, 39, 400, {}, true);
-    chassis.moveToPoint(-11, 39, 1000, {.maxSpeed=40}, true);
+    chassis.moveToPoint(-11, 37, 400, {}, true);
+    chassis.moveToPoint(-11, 37, 1000, {.maxSpeed=40}, true);
     chassis.turnToHeading(120, 12000, {.maxSpeed=30}, false);
 }
 void rightMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-35, -30, 1000, {.forwards=false}, true);
-    chassis.turnToHeading(280, 500, {}, true);
+    chassis.moveToPoint(-31, -32, 1000, {.forwards=false}, true);
+    chassis.turnToHeading(270, 500, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-11, -39, 400, {.forwards=false}, true);
-    chassis.moveToPoint(-11, -39, 1000, {.forwards=false, .maxSpeed=40}, true);
+    chassis.moveToPoint(-11, -37, 400, {.forwards=false}, true);
+    chassis.moveToPoint(-11, -37, 1000, {.forwards=false, .maxSpeed=40}, true);
     chassis.turnToHeading(240, 12000, {.maxSpeed=30}, false);
 }
 
