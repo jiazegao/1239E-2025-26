@@ -39,8 +39,8 @@ float midDistReading = 313.0;
 std::array<int, 8> topDistCumulative = {370,370,370,370,370,370,370,370};
 int topDistCumulativeIndex = 0;
 float topDistReading = 370.0;
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {78.0f, 100.0f, 125.0f, 145.0f, 175.0f, 193.0f};
-inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {90.0f, 120.0f, 134.0f, 154.0f, 188.0f, 188.0f};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsTop = {78.0f, 100.0f, 125.0f, 145.0f, 175.0f, 205.0f};
+inline std::array<float, INTAKE_CAPACITY> scoringPresetsMid = {90.0f, 120.0f, 134.0f, 154.0f, 188.0f, 200.0f};
 bool positionedForTop = true;
 bool removedFromTop = false;
 
@@ -213,11 +213,11 @@ void initLeverControl() {
         while (true) {
             if (currentStage == PRIMING) {
                 // Haven't reached target, keep going
-                if (leverMotor.get_position() < currTarget-3.0f) {
-                    leverMotor.move_velocity(20 + std::abs(leverMotor.get_position()-currTarget));
+                if (leverMotor.get_position() < currTarget-5.0f) {
+                    leverMotor.move_velocity(5 + std::abs(leverMotor.get_position()-currTarget));
                 }
-                else if (leverMotor.get_position() > currTarget+3.0f){
-                    leverMotor.move_velocity(-20 - std::abs(leverMotor.get_position()-currTarget));
+                else if (leverMotor.get_position() > currTarget+5.0f){
+                    leverMotor.move_velocity(-5 - std::abs(leverMotor.get_position()-currTarget));
                 }
                 else {
                     leverMotor.move(0);
@@ -314,6 +314,7 @@ void startIntake() {
             intakeStaged = true;
         }
     }
+    frontMotor.move(127);
 }
 
 void startOuttake(int speed) {
@@ -324,6 +325,7 @@ void startOuttake(int speed) {
         currOuttakeSpeed = std::abs(speed);
         intakeSwapTimer.reset();
     }
+    frontMotor.move(-currOuttakeSpeed);
 }
 
 void extendLift() {
@@ -391,7 +393,9 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
-    if (timeOut > 0) pros::delay(timeOut);
+
+    Timer t(timeOut);
+    while (currentStage == RAISING && !t.timeIsUp()) {pros::delay(20);}
 }
 
 void scoreReserve(int timeOut, int reserving, int maxScoringSpeed) {
@@ -400,13 +404,25 @@ void scoreReserve(int timeOut, int reserving, int maxScoringSpeed) {
     stopIntake();
     trapDoor.extend();  // open trapdoor
 
-    currTarget = (positionedForTop ? scoringPresetsTop[level] : scoringPresetsMid[level]);
+    // Anti stuck
+    if (lever_antistuck_on && midDist.get() <= SEVEN_THRESHOLD_MID && topDist.get() <= SEVEN_THRESHOLD_TOP) {
+        leverAntiStuckTimeout.reset();
+    }
+
+    if (currentStage != PRIMING) {
+        positionedForTop ? currTarget = scoringPresetsTop[level] : currTarget = scoringPresetsMid[std::max(0, level-2)];
+    }
+    else {
+        positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1];
+    }
     currMaxSpeed = maxScoringSpeed;
 
     leverScoringTimeout.reset();
     currentStage = RAISING;
     removedFromTop = true;
-    if (timeOut > 0) pros::delay(timeOut);
+
+    Timer t(timeOut);
+    while (currentStage == RAISING && !t.timeIsUp()) {pros::delay(20);}
 }
 
 void scoreColor(int timeOut, int maxScoringSpeed, alliance_color color) {
@@ -420,21 +436,30 @@ void scoreAll(int timeOut, int maxScoringSpeed) {
     score(timeOut, INTAKE_CAPACITY, maxScoringSpeed);
 }
 
+pros::Task* intakeMacroTask;
 void intakeFromMatchLoader(alliance_color color) {
-    pros::Task ([color](){
+    intakeMacroTask = new pros::Task ([color](){
+        intake_macro_lock= true;
         // Get balls with wrong color
         startIntake();
+
         Timer t(2000);
         while (getOpticColor() != color && !t.timeIsUp()) {pros::delay(20);}
-        // Discard balls with the wrong color and get balls with the right color
-        stopIntake();
-        scoreReserve(1000, 1, FAST_TOP_SCORE);
-        resetLever();
-        while (currentStage == LOWERING) {pros::delay(20);}
+        int discarding_count = currSize;
+
+        t.reset();
+        while (currSize < INTAKE_CAPACITY && !t.timeIsUp()) {pros::delay(20);}
+        scoreReserve(1600, std::min(5, currSize-discarding_count+1), 20);
+        
         startIntake();
-        pros::delay(500);
-        stopIntake();
+        trapDoor.retract();
+        resetLever();
+        intake_macro_lock = false;
     });
+}
+
+void endIntakeMacro() {
+    intakeMacroTask->remove();
 }
 
 void resetLever() {

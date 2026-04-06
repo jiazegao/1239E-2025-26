@@ -17,6 +17,7 @@ inline bool lever_antistuck_on = false;
 void startPriming();
 void endPriming();
 LEVER_STAGE getLeverStage();
+inline bool intake_macro_lock = false;
 
 void initLeverControl();
 /*
@@ -43,6 +44,7 @@ void intakeFromMatchLoader(alliance_color color);
     - Attempts to intake from matchload
     - Automatically spits out the wrong color balls
 */
+void endIntakeMacro();
 void hardResetLever();
 
 

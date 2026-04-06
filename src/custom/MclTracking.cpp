@@ -219,7 +219,7 @@ void MclTracking::predict() {
 
         // Update position using Arc Approximation
         float local_vert = forward_dist * move_scale;
-        float local_horiz = strafe_dist * move_scale;
+        float local_horiz = strafe_dist * move_scale + next_noise()*HORIZ_CONSTANT_NOISE;
 
         // Theta jitter
         p.pose.theta += half_d_theta + next_noise()*IMU_VARIANCE;
@@ -314,7 +314,16 @@ void MclTracking::update_weights() {
             valid_sensors[i] = false;
             continue;
         }
-        // Case #6: Disqualifying intersection with obstacles
+        // Case #6: Goal legs disabling
+        for (auto line : disabling_goal_legs) {
+            if (intersect_line(sCoord, line, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+                valid_sensors[i] = false;
+                break;
+            }
+        }
+        if (!valid_sensors[i]) continue;
+        
+        // Case #7: Disqualifying intersection with obstacles
         
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {

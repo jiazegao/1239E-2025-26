@@ -34,16 +34,17 @@ private:
     static constexpr float MAX_THETA_DEVIATION = 0.10f;
     static constexpr int CONFIDENCE_THRESHOLD = 20;
     static constexpr float CONFIDENCE_SCALING_BASE = 40.0f;
-    static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
+    static constexpr float RIGHT_ANG_MULTIPLIER = 1.5f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
-    static constexpr float SENSOR_COUNT_SCALING = 0.25f;
+    static constexpr float SENSOR_COUNT_SCALING = 0.35f;
     
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.15f;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
     static constexpr float IMU_VARIANCE = 0.01f;
     static constexpr float FAULT_TOLERANCE = 0.01f;
-    float DIST_SYNC_PROP = 0.20f;
+    float DIST_SYNC_PROP = 0.15f;
     static constexpr float THETA_SYNC_PROP = 0.001f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.30f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
+    static constexpr float HORIZ_CONSTANT_NOISE = 0.10f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
@@ -62,7 +63,6 @@ private:
         {{-70.2,  70.2}, {-70.2, -70.2}}
     };
 
-    // Line obstacles
     static constexpr Line_ goal_legs[8] = {
         // Middle goal
         // {{0.400000f, -2.902659f}, {2.902659f, -0.400000f}},
@@ -82,9 +82,26 @@ private:
         {{20.7f, -47.12f}, {22.288033f, -45.590357f}}
     };
 
+    // Line obstacles
+    static constexpr Line_ disabling_goal_legs[8] = {
+        // Long goal legs
+        // Top left
+        {{-27.0f, 43.5f}, {-20.0f, 50.5f}},
+        {{-27.0f, 50.5f}, {-20.0f, 43.5f}},
+        // Top right
+        {{27.0f, 43.5f}, {20.0f, 50.5f}},
+        {{27.0f, 50.5f}, {20.0f, 43.5f}},
+        // Bottom left
+        {{-27.0f, -43.5f}, {-20.0f, -50.5f}},
+        {{-27.0f, -50.5f}, {-20.0f, -43.5f}},
+        // Bottom right
+        {{27.0f, -43.5f}, {20.0f, -50.5f}},
+        {{27.0f, -50.5f}, {20.0f, -43.5f}}
+    };
+
     // Top middle
-    static constexpr Line_ top_middle = {{-10.0f, 10.0f}, {10.0f, -10.0f}};
-    static constexpr Line_ low_middle = {{-10.0f, -10.0f}, {10.0f, 10.0f}};
+    static constexpr Line_ top_middle = {{-14.0f, 14.0f}, {14.0f, -14.0f}};
+    static constexpr Line_ low_middle = {{-14.0f, -14.0f}, {14.0f, 14.0f}};
 
     // Matchloaders
     static constexpr Circle match_loaders[4] = {

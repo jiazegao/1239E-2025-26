@@ -48,8 +48,8 @@ void autonomous() {
 	extendLeftArm();
 	pros::Task([](){hardResetLever();});
 
-	setMidScoreDelay(2000);
-	leftv2();
+	setMidScoreDelay(0);
+	counterSAWP();
 }
 
 void opcontrol() {

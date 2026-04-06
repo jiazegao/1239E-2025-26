@@ -116,42 +116,51 @@ void updateIntake() {
             resetLever();
         }
     }
-    // Button L1 - Macro intake
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-        intakeFromMatchLoader(allianceColor);
-    }
     // Button Right - Priming
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
         startPriming();
     }
 
-    // Button L2 - Raise mid + hold intake (Hold)
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-        midState = INACTIVE;
-        topState = INACTIVE;
-        extendLift();
-        if (getLeverStage() != PRIMING) {
-            resetLever();
-            startIntake();
+    if (!intake_macro_lock) {
+        // Button L1 - Macro intake
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+            intakeFromMatchLoader(allianceColor);
         }
+        // Button L2 - Raise mid + hold intake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            midState = INACTIVE;
+            topState = INACTIVE;
+            extendLift();
+            if (getLeverStage() != PRIMING) {
+                resetLever();
+                startIntake();
+            }
+            else {
+                frontMotor.move(127);
+            }
+        }
+        // Button B - Outtake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+            extendLift();
+            startOuttake(600);
+        }
+        // Button A - Slow outtake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+            extendLift();
+            startOuttake(100);
+        }
+        // If no button is pressed, stop everything
         else {
-            frontMotor.move(127);
+            frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+            stopIntake();
         }
     }
-    // Button B - Outtake (Hold)
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-        extendLift();
-        startOuttake(600);
-    }
-    // Button A - Slow outtake (Hold)
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        extendLift();
-        startOuttake(100);
-    }
-    // If no button is pressed, stop everything
     else {
-        frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-        stopIntake();
+        if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            endIntakeMacro();
+            intake_macro_lock = false;
+            resetLever();
+        }
     }
 }
 
