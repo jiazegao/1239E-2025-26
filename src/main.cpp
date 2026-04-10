@@ -49,7 +49,7 @@ void autonomous() {
 	pros::Task([](){hardResetLever();});
 
 	setMidScoreDelay(0);
-	counterSAWP();
+	leftFastRush();
 }
 
 void opcontrol() {

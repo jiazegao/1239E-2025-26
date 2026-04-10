@@ -21,32 +21,87 @@ void leftPush() {
 }
 void rightPush() {
     // Push
-    chassis.moveToPoint(-35, -39, 500, {}, true);
+    chassis.moveToPoint(-35, -39.5, 500, {}, true);
     chassis.turnToHeading(270, 300, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-11, -40, 400, {.forwards=false}, true);
-    chassis.moveToPoint(-11, -40, 1000, {.forwards=false, .maxSpeed=40}, true);
+    chassis.moveToPoint(-10, -38, 400, {.forwards=false}, true);
+    chassis.moveToPoint(-10, -38, 1000, {.forwards=false, .maxSpeed=40}, true);
     chassis.turnToHeading(240, 12000, {.maxSpeed=30}, false);
 }
 void leftMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-31.5, 34, 1000, {}, false);
-    chassis.turnToHeading(80, 600, {}, false);
+    chassis.moveToPoint(-27, 35, 550, {}, true);
+    chassis.turnToHeading(90, 400, {}, true);
+    MclMain.setDrift(0.0f, -5.0f);
     retractLeftArm();
-    chassis.moveToPoint(-12, 39, 400, {}, true);
-    chassis.moveToPoint(-12, 39, 1000, {.maxSpeed=40}, true);
+    chassis.moveToPoint(-12, 38, 500, {}, true);
+    MclMain.setDrift(0.0f, 0.0f);
+    chassis.moveToPoint(-12, 38, 1000, {.maxSpeed=40}, true);
     chassis.turnToHeading(120, 12000, {.maxSpeed=30}, false);
 }
 void rightMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-28, -36, 1000, {.forwards=false}, false);
-    chassis.turnToHeading(280, 500, {}, false);
+    chassis.moveToPoint(-26, -37, 500, {.forwards=false}, true);
+    chassis.turnToHeading(270, 400, {}, true);
+    MclMain.setDrift(0.0f, -5.0f);
     retractLeftArm();
-    chassis.moveToPoint(-11, -39, 400, {.forwards=false}, true);
-    chassis.moveToPoint(-11, -39, 1000, {.forwards=false, .maxSpeed=40}, true);
+    chassis.moveToPoint(-10, -38, 400, {.forwards=false}, true);
+    MclMain.setDrift(0.0f, 0.0f);
+    chassis.moveToPoint(-10, -38, 1000, {.forwards=false, .maxSpeed=40}, true);
     chassis.turnToHeading(240, 12000, {.maxSpeed=30}, false);
+}
+
+void leftStackStart() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(-48.75, 16.125, 90);
+    MclMain.setObstacles(&quadrant_dividers, nullptr);
+    startMcl(-48.75, 16.125, 90, false, true, true, false);
+    
+    // Intake three balls
+    startIntake();
+    chassis.moveToPoint(-23, 22, 900, {}, true);
+    pros::delay(400);
+    openGate();
+}
+void rightStackStart() {
+    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
+    chassis.setPose(-48.75, -16.125, 90);
+    MclMain.setObstacles(&quadrant_dividers, nullptr);
+    startMcl(-48.75, -16.125, 90, false, false, true, true);
+    
+    // Intake three balls
+    startIntake();
+    chassis.moveToPoint(-23, -22, 900, {}, true);
+    pros::delay(400);
+    openGate();
+}
+void leftStackToGoal() {
+    // Head to long goal
+    chassis.turnToHeading(120, 400, {}, false);
+    leftMotors.move(-127);
+    rightMotors.move(-127);
+    pros::delay(350);
+    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 600, {.minSpeed=127}, true);
+    MclMain.setDrift(0.0f, 5.0f);
+    closeGate();
+    chassis.moveToPoint(-24, 46, 1000, {.forwards=false}, true);
+    MclMain.setDrift(0.0f, 0.0f);
+    pros::delay(200);
+}
+void rightStackToGoal() {
+    // Head to long goal
+    chassis.turnToHeading(60, 400, {}, false);
+    leftMotors.move(-127);
+    rightMotors.move(-127);
+    pros::delay(350);
+    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 600, {.minSpeed=127}, true);
+    MclMain.setDrift(0.0f, -5.0f);
+    closeGate();
+    chassis.moveToPoint(-24, -46, 1000, {.forwards=false}, true);
+    MclMain.setDrift(0.0f, 0.0f);
+    pros::delay(200);
 }
 
 int midScoreDelay = 0;
@@ -130,7 +185,7 @@ void counterSAWP() {
 
     // Score the long goal
     chassis.moveToPoint(-24, -47, 1400, {.forwards=false}, true);
-    pros::delay(700);
+    pros::delay(900);
     closeGate();
     hoodLock = true;
     openHood();
@@ -160,8 +215,8 @@ void counterSAWP() {
     chassis.turnToHeading(270, 150, {}, false);
 
     // Score long goal
-    chassis.moveToPoint(-24, 47, 1100, {.forwards=false}, true);
-    pros::delay(400);
+    chassis.moveToPoint(-24, 47, 1300, {.forwards=false}, true);
+    pros::delay(600);
     score(700, 7, 45);
     
     // Intake from matchloader
@@ -185,26 +240,9 @@ void counterSAWP() {
 }
 // TUNED
 void leftv2() {
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-48.75, 16.125, 90);
-    MclMain.setObstacles(&quadrant_dividers, nullptr);
-    startMcl(-48.75, 16.125, 90, false, true, true, false);
+    leftStackStart();
+    leftStackToGoal();
     
-    // Intake three balls
-    startIntake();
-    chassis.moveToPoint(-23, 22, 900, {}, true);
-    pros::delay(400);
-    openGate();
-
-    // Head to long goal
-    chassis.turnToHeading(130, 400, {}, false);
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(300);
-    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 600, {.minSpeed=127}, true);
-    closeGate();
-    chassis.moveToPoint(-24, 46, 1000, {.forwards=false, .minSpeed=80}, true);
-    pros::delay(200);
     score(800, 7, 45);
     openGate();
     
@@ -229,26 +267,9 @@ void leftv2() {
 }
 // TUNED
 void rightv2() {
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-48.75, -16.125, 90);
-    MclMain.setObstacles(&quadrant_dividers, nullptr);
-    startMcl(-48.75, -16.125, 90, false, false, true, true);
+    rightStackStart();
+    rightStackToGoal();
     
-    // Intake three balls
-    startIntake();
-    chassis.moveToPoint(-23, -23, 900, {}, true);
-    pros::delay(400);
-    openGate();
-
-    // Head to long goal
-    chassis.turnToHeading(50, 400, {}, false);
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(220);
-    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 600, {.minSpeed=127}, true);
-    closeGate();
-    chassis.moveToPoint(-24, -46, 1000, {.forwards=false, .minSpeed=80}, true);
-    pros::delay(200);
     score(800, 7, 45);
     openGate();
     
@@ -287,19 +308,21 @@ void leftControlRush() {
     openGate();
 
     // Head to matchloader
-    chassis.turnToPoint(-53, 43, 300, {}, true);
-    chassis.moveToPoint(-53, 43, 950, {}, true);
+    chassis.turnToPoint(-53, 45, 300, {}, true);
+    chassis.moveToPoint(-53, 45, 900, {}, true);
+    MclMain.setDistSyncProp(0.05f);
     chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 200, {}, true);
+    MclMain.setDistSyncProp(0.15f);
     chassis.moveToPoint(-70, 47, 900, {.maxSpeed=70}, true);
 
     // Score the long goal
     chassis.moveToPoint(-24, 47, 1800, {.forwards=false}, true);
-    pros::delay(600);
+    pros::delay(550);
     closeGate();
     hoodLock = true;
     trapDoor.extend();
     startIntake();
-    pros::delay(500);
+    pros::delay(450);
     score(800, 7, 45);
     hoodLock = false;
 
@@ -316,24 +339,26 @@ void rightControlRush() {
     
     // Intake three balls
     startIntake();
-    chassis.moveToPoint(-23, -23, 900, {}, true);
+    chassis.moveToPoint(-23, -22, 800, {}, true);
     pros::delay(400);
     openGate();
 
     // Head to matchloader
-    chassis.turnToPoint(-53, -43.5, 300, {}, true);
-    chassis.moveToPoint(-53, -43.5, 900, {}, true);
+    chassis.turnToPoint(-53, -45, 300, {}, true);
+    chassis.moveToPoint(-53, -45, 900, {}, true);
+    MclMain.setDistSyncProp(0.05f);
     chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 200, {}, true);
+    MclMain.setDistSyncProp(0.15f);
     chassis.moveToPoint(-70, -47, 900, {.maxSpeed=70}, true);
 
     // Score the long goal
     chassis.moveToPoint(-24, -47, 1800, {.forwards=false}, true);
-    pros::delay(600);
+    pros::delay(550);
     closeGate();
     hoodLock = true;
     trapDoor.extend();
     startIntake();
-    pros::delay(500);
+    pros::delay(450);
     score(800, 7, 45);
     hoodLock = false;
 
@@ -343,53 +368,117 @@ void rightControlRush() {
 }
 // TUNED
 void leftFastRush() {
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-48.75, 16.125, 90);
-    MclMain.setObstacles(&quadrant_dividers, nullptr);
-    startMcl(-48.75, 16.125, 90, false, true, true, false);
-    
-    // Intake three balls
-    startIntake();
-    chassis.moveToPoint(-23, 22, 900, {}, true);
-    pros::delay(400);
-    openGate();
+    leftStackStart();
+    leftStackToGoal();
 
-    // Head to long goal
-    chassis.turnToHeading(130, 400, {}, false);
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(300);
-    chassis.swingToHeading(270, lemlib::DriveSide::LEFT, 600, {.minSpeed=127}, true);
-    closeGate();
-    chassis.moveToPoint(-24, 46, 800, {.forwards=false, .minSpeed=80}, true);
     score(800, 7, 45);
 
     leftPush();
 }
 // TUNED
 void rightFastRush() {
-    chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
-    chassis.setPose(-48.75, -16.125, 90);
-    MclMain.setObstacles(&quadrant_dividers, nullptr);
-    startMcl(-48.75, -16.125, 90, false, false, true, true);
-    
-    // Intake three balls
-    startIntake();
-    chassis.moveToPoint(-23, -23, 900, {}, true);
-    pros::delay(500);
-    openGate();
+    rightStackStart();
+    rightStackToGoal();
 
-    // Head to long goal
-    chassis.turnToHeading(50, 400, {}, false);
-    leftMotors.move(-127);
-    rightMotors.move(-127);
-    pros::delay(220);
-    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 600, {.minSpeed=127}, true);
-    closeGate();
-    chassis.moveToPoint(-24, -46, 800, {.forwards=false, .minSpeed=80}, true);
     score(800, 7, 45);
 
     rightPush();
+}
+void leftDescoreAuto() {
+    leftStackStart();
+
+    // Get two more balls
+    closeGate();
+    chassis.moveToPoint(-9.5, 35.5, 1000, {.maxSpeed=60}, true);
+    chassis.turnToPoint(-6.5, 43.5, 500, {}, true);
+    chassis.moveToPoint(-6.5, 43.5, 1400, {.maxSpeed=30}, true);
+    pros::delay(1000);
+    openGate();
+
+    // Get matchload
+    chassis.moveToPoint(-23, 32, 1000, {.forwards=false}, true);
+    chassis.turnToPoint(-50, 47, 600, {}, true);
+    chassis.moveToPoint(-50, 47, 1400, {}, true);
+    chassis.turnToHeading(270, 400, {}, true);
+    chassis.moveToPoint(-70, 47, 1200, {.maxSpeed=50}, true);
+
+    // Descore
+    chassis.moveToPoint(-32, 56, 1400, {.forwards=false}, true);
+    chassis.turnToHeading(270, 600, {}, true);
+    chassis.moveToPoint(-12, 56, 1000, {.forwards=false}, true);
+    retractLeftArm();
+    chassis.moveToPoint(-36, 56, 1000, {}, true);
+    chassis.swingToPoint(-24, 47, lemlib::DriveSide::LEFT, 500, {.forwards=false}, true);
+    chassis.moveToPoint(-24, 47, 800, {.forwards=false}, true);
+    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 600, {.minSpeed=127}, true);
+    hoodLock = true;
+    trapDoor.extend();
+    chassis.moveToPoint(-20, 47, 1900, {.forwards=false}, true);
+    pros::delay(1200);
+    scoreReserve(700, 3, 100);
+    closeGate();
+
+    // Score bottom mid
+    chassis.turnToHeading(160, 800, {.maxSpeed=60}, true);
+    pros::delay(300);
+    resetLever();
+    hoodLock = false;
+    trapDoor.retract();
+    chassis.moveToPoint(-23, 23, 700, {.maxSpeed=50}, true);
+    chassis.turnToHeading(315, 600, {}, true);
+    chassis.moveToPoint(-10, 10, 800, {.forwards=false}, true);
+    pros::delay(300);
+    retractLift();
+    score(400, 7, 50);
+    chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
+    pros::delay(400);
+}
+void rightDescoreAuto() {
+    rightStackStart();
+
+    // Get two more balls
+    closeGate();
+    chassis.moveToPoint(-9.5, -35.5, 1000, {.maxSpeed=60}, true);
+    chassis.turnToPoint(-6.5, -43.5, 500, {}, true);
+    chassis.moveToPoint(-6.5, -43.5, 1400, {.maxSpeed=30}, true);
+    pros::delay(1000);
+    openGate();
+
+    // Get matchload
+    chassis.moveToPoint(-23, -32, 1000, {.forwards=false}, true);
+    chassis.turnToPoint(-50, -47, 600, {}, true);
+    chassis.moveToPoint(-50, -47, 1400, {}, true);
+    chassis.turnToHeading(270, 400, {}, true);
+    chassis.moveToPoint(-70, -47, 1200, {.maxSpeed=50}, true);
+
+    // Descore
+    chassis.moveToPoint(-32, -38, 1400, {.forwards=false}, true);
+    chassis.turnToHeading(270, 600, {}, true);
+    chassis.moveToPoint(-12, -38, 1000, {.forwards=false}, true);
+    retractLeftArm();
+    chassis.moveToPoint(-36, -38, 1000, {}, true);
+    chassis.swingToPoint(-24, -47, lemlib::DriveSide::LEFT, 500, {.forwards=false}, true);
+    chassis.moveToPoint(-24, -47, 800, {.forwards=false}, true);
+    chassis.swingToHeading(270, lemlib::DriveSide::RIGHT, 600, {.minSpeed=127}, true);
+    hoodLock = true;
+    trapDoor.extend();
+    chassis.moveToPoint(-20, -47, 1900, {.forwards=false}, true);
+    pros::delay(1200);
+    scoreReserve(700, 3, 100);
+    closeGate();
+
+    // Score bottom mid
+    chassis.turnToHeading(20, 800, {.maxSpeed=60}, true);
+    pros::delay(300);
+    resetLever();
+    hoodLock = false;
+    trapDoor.retract();
+    chassis.moveToPoint(-23, -23, 700, {.maxSpeed=50}, true);
+    chassis.turnToHeading(45, 600, {}, true);
+    chassis.moveToPoint(-10, -10, 1000, {.maxSpeed=80}, true);
+    chassis.turnToPoint(0, 0, 300, {}, true);
+    startOuttake(600);
+    jiggle(3, 2000, 1.0, 2.0);
 }
 
 // 119 points

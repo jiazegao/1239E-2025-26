@@ -22,14 +22,14 @@ private:
     // --- Configuration Constants ---
     static constexpr int PARTICLE_COUNT = 2048;
     static constexpr float INV_PARTICLE_COUNT = 1.0f / PARTICLE_COUNT;
-    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 3;
+    static constexpr int RESAMPLE_THRESHOLD = PARTICLE_COUNT / 2;
     static constexpr float MIN_DIST_FROM_RESAMPLE = 5.0f;
     static constexpr float MAX_VELO_RESAMPLE = 100.0f;
     static constexpr int LOG_AMOUNT = 1;
     static constexpr int LOG_RATIO = PARTICLE_COUNT / LOG_AMOUNT;
 
     static constexpr float MAX_RANGE = 100.0f;
-    static constexpr float DIST_RESAMPLE_VARIANCE = 2.5f;
+    static constexpr float DIST_RESAMPLE_VARIANCE = 2.0f;
     static constexpr float THETA_RESAMPLE_VARIANCE = 0.02f;
     static constexpr float MAX_THETA_DEVIATION = 0.10f;
     static constexpr int CONFIDENCE_THRESHOLD = 20;
@@ -38,13 +38,13 @@ private:
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
     static constexpr float SENSOR_COUNT_SCALING = 0.35f;
     
-    static constexpr float TRACKING_WHEEL_VARIANCE = 0.20f;
+    static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float IMU_VARIANCE = 0.01f;
     static constexpr float FAULT_TOLERANCE = 0.01f;
     float DIST_SYNC_PROP = 0.15f;
     static constexpr float THETA_SYNC_PROP = 0.001f;
-    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.20f;
-    static constexpr float HORIZ_CONSTANT_NOISE = 0.10f;
+    static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.10f;
+    static constexpr float HORIZ_CONSTANT_NOISE = 0.05f;
 
     static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
@@ -64,9 +64,6 @@ private:
     };
 
     static constexpr Line_ goal_legs[8] = {
-        // Middle goal
-        // {{0.400000f, -2.902659f}, {2.902659f, -0.400000f}},
-        // {{-2.902659f, 0.400000f}, {-0.400000f, 2.902659f}},
         // Long goal legs
         // Top left
         {{-20.7f, 47.12f}, {-22.288033f, 48.659643f}},
@@ -80,23 +77,6 @@ private:
         // Bottom right
         {{20.7f, -47.12f}, {22.288033f, -48.659643f}},
         {{20.7f, -47.12f}, {22.288033f, -45.590357f}}
-    };
-
-    // Line obstacles
-    static constexpr Line_ disabling_goal_legs[8] = {
-        // Long goal legs
-        // Top left
-        {{-27.0f, 43.5f}, {-20.0f, 50.5f}},
-        {{-27.0f, 50.5f}, {-20.0f, 43.5f}},
-        // Top right
-        {{27.0f, 43.5f}, {20.0f, 50.5f}},
-        {{27.0f, 50.5f}, {20.0f, 43.5f}},
-        // Bottom left
-        {{-27.0f, -43.5f}, {-20.0f, -50.5f}},
-        {{-27.0f, -50.5f}, {-20.0f, -43.5f}},
-        // Bottom right
-        {{27.0f, -43.5f}, {20.0f, -50.5f}},
-        {{27.0f, -50.5f}, {20.0f, -43.5f}}
     };
 
     // Top middle
