@@ -383,7 +383,7 @@ void score(int timeOut, int count, int maxScoringSpeed) {
     }
 
     if (currentStage != PRIMING) {
-        positionedForTop ? currTarget = scoringPresetsTop[level] : currTarget = scoringPresetsMid[std::max(0, level-2)];
+        positionedForTop ? currTarget = scoringPresetsTop[level] : currTarget = scoringPresetsMid[count < INTAKE_CAPACITY ? std::max(0, level-2) : INTAKE_CAPACITY-1];
     }
     else {
         positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1];
