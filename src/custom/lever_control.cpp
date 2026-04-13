@@ -226,7 +226,7 @@ void initLeverControl() {
             // Raising - Move upward
             if (currentStage == RAISING) {
                 // Lever Anti Stuck
-                if (!leverAntiStuckTimeout.timeIsUp()) {
+                if (lever_antistuck_on && !leverAntiStuckTimeout.timeIsUp()) {
                     frontMotor.move(127);
                 }
                 // Timeout

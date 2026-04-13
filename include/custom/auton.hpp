@@ -7,12 +7,19 @@
 // Autons
 void leftv2();
 void rightv2();
+
 void soloAWP();
 void counterSAWP();
+
 void leftControlRush();
 void rightControlRush();
+
 void leftFastRush();
 void rightFastRush();
+
+void leftDescoreAuto();
+void rightDescoreAuto();
+
 void skills_119();
 
 void setMidScoreDelay(int newDelay);

@@ -192,13 +192,29 @@ inline std::vector<Line_> soloAWP_obstacles = {
     {{-72.0f, 40.0f}, {-36.0f, 40.0f}},
     {{-72.0f, 8.0f}, {-72.0f, 40.0f}},
     // Middle Line
-    {{-2.0f, -71.0f}, {-2.0f, 71.0f}}
+    {{-4.0f, -71.0f}, {-4.0f, 71.0f}},
+    // oppennent top
+    {{-4.0f, 71.0f}, {71.0f, 71.0f}},
+    // opponent right
+    {{71.0f, 71.0f}, {71.0f, -71.0f}},
+    // opponent bottom
+    {{-4.0f, -71.0f}, {71.0f, -71.0f}}
 };
-inline std::vector<Line_> quadrant_dividers = {
-    // x-axis
-    {{-71.0f, 0.0f}, {71.0f, 0.0f}},
-    // y-axis
-    {{0.0f, -71.0f}, {0.0f, 71.0f}}
+inline std::vector<Line_> right_dividers = {
+    {{-71.0f, 0.0f}, {-71.0f, 71.0f}},
+    {{-71.0f, 71.0f}, {71.0f, 71.0f}},
+    {{71.0f, 71.0f}, {71.0f, -71.0f}},
+    {{71.0f, -71.0f}, {0.0f, -71.0f}},
+    {{0.0f, -71.0f}, {0.0f, 0.0f}},
+    {{0.0f, 0.0f}, {-71.0f, 0.0f}}
+};
+inline std::vector<Line_> left_dividers = {
+    {{-71.0f, 0.0f}, {-71.0f, -71.0f}},
+    {{-71.0f, -71.0f}, {71.0f, -71.0f}},
+    {{71.0f, -71.0f}, {71.0f, 71.0f}},
+    {{71.0f, 71.0f}, {0.0f, 71.0f}},
+    {{0.0f, 71.0f}, {0.0f, 0.0f}},
+    {{0.0f, 0.0f}, {-71.0f, 0.0f}}
 };
 
 // loaders

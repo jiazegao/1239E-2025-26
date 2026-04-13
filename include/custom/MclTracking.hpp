@@ -41,14 +41,14 @@ private:
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float IMU_VARIANCE = 0.01f;
     static constexpr float FAULT_TOLERANCE = 0.01f;
-    float DIST_SYNC_PROP = 0.15f;
+    float DIST_SYNC_PROP = 0.10f;
     static constexpr float THETA_SYNC_PROP = 0.001f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.10f;
     static constexpr float HORIZ_CONSTANT_NOISE = 0.05f;
 
-    static constexpr float MSPT = 20.0f;
+    static constexpr float MSPT = 18.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
-    static constexpr float MINPAUSE = 10.0f;
+    static constexpr float MINPAUSE = 9.0f;
     
     struct Particle {
         Pose pose;
@@ -63,7 +63,10 @@ private:
         {{-70.2,  70.2}, {-70.2, -70.2}}
     };
 
-    static constexpr Line_ goal_legs[8] = {
+    static constexpr Line_ goal_legs[10] = {
+        // Middle goal
+        {{-5.0f, 5.0f}, {5.0f, -5.0f}},
+        {{-5.0f, -5.0f}, {5.0f, 5.0f}},
         // Long goal legs
         // Top left
         {{-20.7f, 47.12f}, {-22.288033f, 48.659643f}},

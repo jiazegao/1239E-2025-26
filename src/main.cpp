@@ -49,7 +49,7 @@ void autonomous() {
 	pros::Task([](){hardResetLever();});
 
 	setMidScoreDelay(0);
-	leftControlRush();
+	leftDescoreAuto();
 }
 
 void opcontrol() {
@@ -58,6 +58,7 @@ void opcontrol() {
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_COAST);
 	chassis.setPose(0, 0, 0);
 	lever_antistuck_on = true;
+	antiStuckOn = true;
 
 	// Retract descore arm
 	extendLeftArm();
