@@ -75,6 +75,9 @@ void opcontrol() {
 		updatePneumatics();
 		updateIntake();
 
+		pros::lcd::print(0, "Drivetrain: %f", MclMain.getDTWheelDegrees());
+		pros::lcd::print(1, "Unit: %d", drivetrain.leftMotors->get_encoder_units());
+
 		pros::delay(20);
 	}
 }
