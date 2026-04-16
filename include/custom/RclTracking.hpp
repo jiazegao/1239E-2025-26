@@ -322,7 +322,7 @@ public:
     lemlib::Pose getRclPose() const;
     void setRclPose(const lemlib::Pose& p);
     void updateBotPose();
-    void updateBotPose(RclSensor* sens);
+    std::pair<CoordType, float> updateBotPose(RclSensor* sens);
 
     void setMaxSyncPerSec(float _maxSyncPerSec); 
 

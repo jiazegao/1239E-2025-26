@@ -9,22 +9,22 @@
 #include <random>
 #include <queue>
 
-#include "fast_trig.hpp"
 #include "pros/rtos.h"
+#include "fast_trig.hpp"
 
 // --- Async Logging Variables ---
 enum class LogType { PARTICLE, POSE, SENSOR };
 
 struct LogData {
     LogType type;
-    float v1, v2, v3, v4, v5, v6, v7; // Generic payload to hold either pose or particle data
+    float v1, v2, v3, v4, v5, v6; // Generic payload to hold either pose or particle data
 };
 
 std::queue<LogData> log_queue;
 pros::Mutex log_mutex;
 pros::Task* asyncLogTask = nullptr;
 
-float MclTracking::intersect_line(Pose ray, Line_ wall, float max_range, float rayCos, float raySin) {
+float MclTracking::intersect_line(Coord ray, Line_ wall, float max_range, float rayCos, float raySin) {
 
     // Vert wall
     float xMin = std::min(wall.p1.x, wall.p2.x);
@@ -53,7 +53,7 @@ float MclTracking::intersect_line(Pose ray, Line_ wall, float max_range, float r
     return max_range;
 }
 
-float MclTracking::intersect_circle(Pose ray, Circle c, float max_range, float dx, float dy) {
+float MclTracking::intersect_circle(Coord ray, Circle c, float max_range, float dx, float dy) {
     // Bound check
     float x_diff = ray.x - c.x;
     float y_diff = ray.y - c.y;
@@ -69,8 +69,8 @@ float MclTracking::intersect_circle(Pose ray, Circle c, float max_range, float d
     float discriminant = b * b - 4 * val_c;
     if (discriminant < 0) return max_range;
     discriminant = std::sqrtf(discriminant);
-    float t1 = (-b - discriminant) / 2;
-    float t2 = (-b + discriminant) / 2;
+    float t1 = (-b - discriminant) * 0.5f;
+    float t2 = (-b + discriminant) * 0.5f;
     if (t1 >= 0 && t1 <= max_range) return t1;
     if (t2 >= 0 && t2 <= max_range) return t2;
     return max_range;
@@ -109,65 +109,88 @@ MclTracking::MclTracking(lemlib::Chassis* chassis, lemlib::Drivetrain* dt, std::
     std::random_device rd;
     gen = std::mt19937(rd());
     
-    float start_std_theta = vexToStd(start_vex_theta);
-    this->lastTheta = vexToStd(this->chassis->getPose().theta);
+    this->lastImuTheta = vexToStd(this->chassis->getPose().theta);
     std::normal_distribution<float> x_init(start_x, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<float> y_init(start_y, DIST_RESAMPLE_VARIANCE);
-    std::normal_distribution<float> t_init(start_std_theta, THETA_RESAMPLE_VARIANCE);
+    std::normal_distribution<float> t_dist(lastImuTheta, THETA_RESAMPLE_VARIANCE);
 
     particles_ptr = &particles_array;
     new_gen_ptr = &new_gen_array;
 
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
-        particles[i] = {{x_init(gen), y_init(gen), t_init(gen)}, 1.0f};
+        particles[i] = {{x_init(gen), y_init(gen), t_dist(gen)}, 1.0f};
     }
 
     // Mount trig calculation
     for(int i = 0; i < SENSOR_COUNT; i++) {
-        mountTrigs[i] = {FastTrig::cos(sensor_mounts[i].theta), FastTrig::sin(sensor_mounts[i].theta)};
+        mountTrigs[i] = {std::cos(sensor_mounts[i].theta), std::sin(sensor_mounts[i].theta)};
     }
 
     // Pre-generated noise
-    std::normal_distribution<float> dist(0.0f, 1.0f);
+    dist = std::normal_distribution<float>(0.0f, 1.0f);
     for (int i = 0; i < NOISE_POOL_SIZE; i++) {
         noise_pool[i] = dist(gen);
     }
 
-    // Generate distance map
-    this->generate_distance_map();
+    // Reset timers
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        disableTimers[i] = Timer(0);
+    }
+
+    // Initialize gaussian lut
+    for (int i = 0; i < GAUSSIAN_LUT_RES; i++) {
+        float x = (i / GAUSSIAN_LUT_RES) * 4.0f; // Map index to 0-4 sigmas
+        gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
+    }
 }
 
-void MclTracking::predict(float current_std_theta) {
+void MclTracking::predict() {
     // Update theta deviation
-    float d_theta = current_std_theta - lastTheta;
+    float currentImuTheta = vexToStd(chassis->getPose().theta);
+
+    float d_theta = currentImuTheta - lastImuTheta;
     while (d_theta > M_PI) d_theta -= 2 * M_PI;
     while (d_theta < -M_PI) d_theta += 2 * M_PI;
-    lastTheta = current_std_theta;
+
+    // Temporarily estimate rawMcl theta
+    rawMcl.theta += d_theta;
+
+    // Arc Approximation
+    float half_d_theta = d_theta * 0.5f;
+    float move_scale;
+
+    // Avoid division by zero when driving straight
+    if (std::abs(d_theta) < 1e-6f) {
+        move_scale = 1.0f;
+    }
+    else {
+        move_scale = std::sinf(half_d_theta) / half_d_theta;
+    }
 
     // Noise variables
-    float drift_variance = std::hypotf(vertical_drift, horizontal_drift)/2.0f;
+    float drift_variance = std::hypotf(vertical_drift, horizontal_drift) * 0.5f;
 
     // Calculate vertical tracking wheel vector
-    float vert_reading = 0.0;
+    float vert_reading = 0.0f;
     // Retrieve reading from verticle tracking wheel
     if (vertical_tracking_wheel != nullptr) {
-        vert_reading = vertical_tracking_wheel->get_position()/100.0f;
+        vert_reading = vertical_tracking_wheel->get_position() * 0.01f;
     }
     // Retrieve readings from drive motors
     else {
         vert_reading = getDTWheelDegrees();
     }
-    float d_vert_raw = (vert_reading-last_vertical_reading)/360.0f * vert_c;
+    float d_vert_raw = (vert_reading-last_vertical_reading) * 0.0027777777777f * vert_c;
     last_vertical_reading = vert_reading;
 
     // Calculate horizontal tracking wheel vector
-    float horiz_reading = 0.0;
+    float horiz_reading = 0.0f;
     // Retrieve reading from horizontal tracking wheel
     if (horizontal_tracking_wheel != nullptr) {
-        horiz_reading = -horizontal_tracking_wheel->get_position()/100.0f;
+        horiz_reading = -horizontal_tracking_wheel->get_position() * 0.01f;
     }
-    float d_horiz_raw = (horiz_reading-last_horizontal_reading)/360.0f * horiz_c;
+    float d_horiz_raw = (horiz_reading-last_horizontal_reading) * 0.0027777777777f * horiz_c;
     last_horizontal_reading = horiz_reading;
 
     // Get raw reading
@@ -177,19 +200,14 @@ void MclTracking::predict(float current_std_theta) {
     this->latest_speed = std::hypotf(d_vert_pure, d_horiz_pure) * INV_MSPT * 1000.0f;
 
     // If horizontal wheel is absent, introduce more variance
-    float horiz_dependent_variance = 0.0;
+    float horiz_dependent_variance = 0.0f;
     if (horizontal_tracking_wheel == nullptr) {
         horiz_dependent_variance = d_vert_pure * HORIZ_DEPENDENT_VARIANCE_PROP;
     }
 
-    // Sync right after tracking wheel calculations to minimize data loss
-    if (autoSync) updateBotPose();
-
     auto& particles = *particles_ptr;
     for (int i = 0; i < PARTICLE_COUNT; i++) {
         auto& p = particles[i];
-        float pCos = FastTrig::cos(p.pose.theta + (d_theta/2));
-        float pSin = FastTrig::sin(p.pose.theta + (d_theta/2));
 
         // Get noise
         float vert_noise = 1.0f + next_noise()*TRACKING_WHEEL_VARIANCE;
@@ -199,26 +217,38 @@ void MclTracking::predict(float current_std_theta) {
         float forward_dist = d_vert_pure * vert_noise + next_noise()*drift_variance;
         float strafe_dist = d_horiz_pure * horiz_noise + next_noise()*drift_variance + next_noise()*horiz_dependent_variance;
 
-        // Update position
-        p.pose.x += forward_dist*pCos + strafe_dist*pSin;
-        p.pose.y += forward_dist*pSin - strafe_dist*pCos;
-        p.pose.theta += d_theta + next_noise()*THETA_RESAMPLE_VARIANCE;
+        // Update position using Arc Approximation
+        float local_vert = forward_dist * move_scale;
+        float local_horiz = strafe_dist * move_scale + next_noise()*HORIZ_CONSTANT_NOISE;
 
-        while (p.pose.theta > M_PI) p.pose.theta -= 2 * M_PI;
-        while (p.pose.theta < -M_PI) p.pose.theta += 2 * M_PI;
+        // Theta jitter
+        p.pose.theta += half_d_theta + next_noise()*IMU_VARIANCE;
 
-        pTrigs[i] = {FastTrig::cos(p.pose.theta), FastTrig::sin(p.pose.theta)};
+        // Retrieve particle trig
+        float p_cos = FastTrig::cos(p.pose.theta);
+        float p_sin = FastTrig::sin(p.pose.theta);
+
+        p.pose.x += local_vert*p_cos + local_horiz*p_sin;
+        p.pose.y += local_vert*p_sin - local_horiz*p_cos;
+
+        // Add the full angle
+        p.pose.theta = std::clamp(p.pose.theta+half_d_theta, currentImuTheta-MAX_THETA_DEVIATION, currentImuTheta+MAX_THETA_DEVIATION);
     }
+
+    // Full angle trig
+    currTrig.cos_m = std::cos(rawMcl.theta);
+    currTrig.sin_m = std::sin(rawMcl.theta);
+
+    lastImuTheta = currentImuTheta;
 }
 
 void MclTracking::update_weights() {
 
     // Pre-processing filters
+    float active_sensors = 0.0f;
+    Coord sensor_offsets[SENSOR_COUNT];
 
-    // Bot trigs
-    float botCos = FastTrig::cos(rawMcl.theta);
-    float botSin = FastTrig::sin(rawMcl.theta);
-
+    // Use rawMcl location to perform obstacle intersections
     for (int i = 0; i < SENSOR_COUNT; i++) {
         sensor_readings_mm[i] = distance_collection[i]->get();
         sensor_readings_inch[i] = sensor_readings_mm[i] * mmToInch;
@@ -226,9 +256,14 @@ void MclTracking::update_weights() {
         valid_sensors[i] = true;
 
         // Sensor positions
-        float sx = rawMcl.x + (sensor_mounts[i].x * botCos - sensor_mounts[i].y * botSin);
-        float sy = rawMcl.y + (sensor_mounts[i].x * botSin + sensor_mounts[i].y * botCos);
+        float sx = rawMcl.x + (sensor_mounts[i].x * currTrig.cos_m - sensor_mounts[i].y * currTrig.sin_m);
+        float sy = rawMcl.y + (sensor_mounts[i].x * currTrig.sin_m + sensor_mounts[i].y * currTrig.cos_m);
         float ray_ang = rawMcl.theta + sensor_mounts[i].theta;
+        
+        Coord sCoord = {sx, sy};
+
+        float scos = currTrig.cos_m * mountTrigs[i].cos_m - currTrig.sin_m  * mountTrigs[i].sin_m;
+        float ssin = currTrig.sin_m * mountTrigs[i].cos_m + currTrig.cos_m  * mountTrigs[i].sin_m;
 
         if (mclLogType == SDCARD) {
             // Log
@@ -256,17 +291,35 @@ void MclTracking::update_weights() {
             valid_sensors[i] = false;
             continue;
         }
-        // Case #3: Invalid confidence
-        else if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
+        if (sensor_readings_mm[i] < 1) {
             valid_sensors[i] = false;
             continue;
         }
-        // Case #4: Disqualifying intersection with obstacles
+        if (i == DISTSENSORS::FRONT && sensor_readings_mm[i] < 60) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #3: Invalid confidence
+        if (sensor_readings_mm[i] > 200 && sensor_confs[i] < CONFIDENCE_THRESHOLD)  {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #4: Top middle goal lip disabling
+        if (intersect_line(sCoord, top_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #5: Lower middle goal disabling
+        if (intersect_line(sCoord, low_middle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
+            valid_sensors[i] = false;
+            continue;
+        }
+        // Case #6: Disqualifying intersection with obstacles
         
         // Test for intersections
         if (disabling_line_obstacles != nullptr) {
             for (auto line : *disabling_line_obstacles) {
-                if (intersect_line({sx, sy, ray_ang}, line, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                if (intersect_line(sCoord, line, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
@@ -276,64 +329,125 @@ void MclTracking::update_weights() {
 
         if (disabling_circle_obstacles != nullptr) {
             for (auto circle : *disabling_circle_obstacles) {
-                if (intersect_circle({sx, sy, ray_ang}, circle, MAX_RANGE, FastTrig::cos(ray_ang), FastTrig::sin(ray_ang)) < MAX_RANGE) {
+                if (intersect_circle(sCoord, circle, MAX_RANGE, scos, ssin) < MAX_RANGE) {
                     valid_sensors[i] = false;
                     break;
                 }
             }
         }
+        if (!valid_sensors[i]) continue;
+
+        // Calculate sensor transformations
+        sensor_offsets[i].x = sensor_mounts[i].x * currTrig.cos_m - sensor_mounts[i].y * currTrig.sin_m;
+        sensor_offsets[i].y = sensor_mounts[i].x * currTrig.sin_m + sensor_mounts[i].y * currTrig.cos_m;
+
+        active_sensors += 1.0f; // Increment valid sensors
     }
 
-    // Calculate sigmas
-    float inv_sigmas[SENSOR_COUNT];
+    // Calculate sigma
+    float inv_sigmas[SENSOR_COUNT]; // Calculate inv_sigmas along the way
+    float wall_inv_sigmas[SENSOR_COUNT];
+    float sensor_count_multiplier = (active_sensors > 0) ? std::sqrtf(active_sensors * SENSOR_COUNT_SCALING) : 1.0f;
+
     for (int i = 0; i < SENSOR_COUNT; i++) {
-        // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
-        float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
-        inv_sigmas[i] = 1.0f / sigma;
+        if (valid_sensors[i]) {
+            float angle_offset = std::fmod(std::abs(rawMcl.theta + sensor_mounts[i].theta), HALF_PIF);
+
+            if (angle_offset > QTR_PIF) {
+                angle_offset = HALF_PIF - angle_offset;
+            }
+
+            float angle_multiplier = 1.0f + angle_offset * RIGHT_ANG_CONST;
+
+            // Sigma in inches: <= 200mm -> 0.787 inch ; > 200mm -> %5 reading inch
+            float sigma = (sensor_readings_mm[i] <= 200) ? 0.787f : (sensor_readings_inch[i] * 0.05f);
+            if (sensor_readings_mm[i] > 200) {
+                float safe_conf = std::max((float)sensor_confs[i], 1.0f);
+                sigma *= CONFIDENCE_SCALING_BASE / safe_conf;
+            }
+
+            // Sensor count dynamic scaling
+            sigma *= sensor_count_multiplier;
+            
+            // Angle dynamic scaling
+            inv_sigmas[i] = 1.0f / sigma;
+            wall_inv_sigmas[i] = inv_sigmas[i] / angle_multiplier;
+        }
     }
 
     // Process particles
     auto& derefP = *particles_ptr;
 
-    for (int j = 0; j < PARTICLE_COUNT; j++) {
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
         float total_weight = 1.0f;
-        auto& p = derefP[j];
+        auto& p = derefP[i];
 
-        for (int i = 0; i < SENSOR_COUNT; i++) {
-            if (!valid_sensors[i]) continue;
+        // Instant DQ if out of bounds
+        if (std::abs(p.pose.x) > FIELD_HALF_LENGTH || std::abs(p.pose.y) > FIELD_HALF_LENGTH) {
+            p.weight = 1e-35f;
+            continue;
+        }
+
+        // Particle trig calculation
+        float pcos = FastTrig::cos(p.pose.theta);
+        float psin = FastTrig::sin(p.pose.theta);
+
+        for (int j = 0; j < SENSOR_COUNT; j++) {
+            if (!valid_sensors[j]) continue;
+
+            // Sensor trig calculation
+            float scos = pcos* mountTrigs[j].cos_m - psin * mountTrigs[j].sin_m;
+            float ssin = psin * mountTrigs[j].cos_m + pcos * mountTrigs[j].sin_m;
 
             // Transform Sensor Mount to World Space
             // (Standard 2D Rotation: x' = x*cos - y*sin, y' = x*sin + y*cos)
-            float sx = p.pose.x + (sensor_mounts[i].x * pTrigs[j].cos_m - sensor_mounts[i].y * pTrigs[j].sin_m);
-            float sy = p.pose.y + (sensor_mounts[i].x * pTrigs[j].sin_m + sensor_mounts[i].y * pTrigs[j].cos_m);
+            float sx = p.pose.x + sensor_offsets[j].x;
+            float sy = p.pose.y + sensor_offsets[j].y;
 
-            // Project Sensor Reading (Hit Point)
-            float hx = sx + (pTrigs[j].cos_m*mountTrigs[i].cos_m - pTrigs[j].sin_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
-            float hy = sy + (pTrigs[j].sin_m*mountTrigs[i].cos_m + pTrigs[j].cos_m*mountTrigs[i].sin_m) * sensor_readings_inch[i];
+            Coord sCoord = {sx, sy};
 
-            // Grid Lookup
-            int gx = (int)((hx + MAP_OFFSET) * MAP_SCALE);
-            int gy = (int)((hy + MAP_OFFSET) * MAP_SCALE);
+            float p_dist = MAX_RANGE;
+            bool hit_wall = false;
 
-            if (gx >= 0 && gx < MAP_RES && gy >= 0 && gy < MAP_RES) {
-                // Retrieve d^0.5
-                float d_root = (float)distance_map[gy * MAP_RES + gx] * INV_DIST_MULTIPLIER;
-                
-                // Calculate z = d / sigma
-                // Since d_root is d^0.5, d is (d_root * d_root)
-                float z = (d_root * d_root) * inv_sigmas[i];
-
-                // 4. LUT Lookup (Index = z * 256, because 1024 samples / 4.0 max sigma)
-                int lut_idx = (int)(z * 256.0f);
-
-                if (lut_idx < 1024) {
-                    total_weight *= gaussian_lut[lut_idx];
-                } else {
-                    total_weight *= FAULT_TOLERANCE; 
-                }
-            } else {
-                total_weight *= FAULT_TOLERANCE;
+            // Check for obstacle intersection first
+            for (const auto& line : goal_legs) {
+                p_dist = std::min(p_dist, intersect_line(sCoord, line, MAX_RANGE, scos, ssin));
             }
+            // If didn't intersect any legs, check other objects
+            if (std::abs(p_dist-MAX_RANGE) < 1e-6) {
+                for (const auto& c : match_loaders) {
+                    p_dist = std::min(p_dist, intersect_circle(sCoord, c, MAX_RANGE, scos, ssin));
+                }
+                // If didn't intersect matchloaders, check walls
+                if (std::abs(p_dist-MAX_RANGE) < 1e-6) {
+                    for (const auto& wall : walls) {
+                        p_dist = std::min(p_dist, intersect_line(sCoord, wall, MAX_RANGE, scos, ssin));
+                        // Immediately break if intersect with one of the walls
+                        if (std::abs(p_dist-MAX_RANGE) > 1e-6) {
+                            hit_wall = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        
+            // Apply angle sigma scaling
+            float z;
+            if (hit_wall) {
+                z = std::abs(sensor_readings_inch[j] - p_dist) * wall_inv_sigmas[j];
+            }
+            else {
+                z = std::abs(sensor_readings_inch[j] - p_dist) * inv_sigmas[j];
+            }
+
+            // Gaussian LUT process
+            int lut_idx = (int)(z * 256.0f);
+
+            if (lut_idx < 1024) {
+                total_weight *= gaussian_lut[lut_idx];
+            } else {
+                total_weight *= gaussian_lut[1023] * FAULT_TOLERANCE; 
+            }    
         }
         p.weight = total_weight;
     }
@@ -391,9 +505,9 @@ std::pair<Pose, float> MclTracking::get_estimate() {
         // Multiply each coordinate by the particle's weight
         x += p.pose.x * p.weight;
         y += p.pose.y * p.weight;
-        sin_sum += pTrigs[count].sin_m * p.weight;
-        cos_sum += pTrigs[count].cos_m * p.weight;
-        
+        sin_sum += FastTrig::sin(p.pose.theta) * p.weight;
+        cos_sum += FastTrig::cos(p.pose.theta) * p.weight;
+
         total_weight += p.weight;
         weight_sqr_sum += p.weight * p.weight;
 
@@ -425,7 +539,14 @@ std::pair<Pose, float> MclTracking::get_estimate() {
 
 Pose MclTracking::updateMcl() {
 
-    predict(vexToStd(chassis->getPose().theta));
+    // Update sensor disability
+    for (int i = 0; i < SENSOR_COUNT; i++) {
+        auto& t = disableTimers[i];
+        if (t.timeoutMs < 1.0f || t.timeIsUp()) disabled_sensors[i] = false;
+        else disabled_sensors[i] = true;
+    }
+
+    predict();  // Update position
     update_weights(); // Log sensor
 
     auto estimate = get_estimate(); // Log particles
@@ -444,6 +565,14 @@ Pose MclTracking::updateMcl() {
 
     rawMcl = estimate.first;
 
+    // Sync to chassis
+    if (autoSync) updateBotPose();
+
+    // Regenerate noise pool
+    for (int i = 0; i < REGEN_PT; i++) {
+        regen_noise();
+    }
+
     return estimate.first;
 }
 
@@ -453,11 +582,11 @@ void MclTracking::set_pose(float x, float y, float vex_theta) {
     std::normal_distribution<float> y_dist(y, DIST_RESAMPLE_VARIANCE);
     std::normal_distribution<float> t_dist(std_theta, THETA_RESAMPLE_VARIANCE);
 
-    this->lastTheta = vexToStd(this->chassis->getPose().theta);
+    this->lastImuTheta = vexToStd(this->chassis->getPose().theta);
     // Verticle / DT
     this->last_vertical_reading = (vertical_tracking_wheel != nullptr) ? vertical_tracking_wheel->get_position()/100.0f : getDTWheelDegrees();
     // Horizontal / NULL
-    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : this->last_horizontal_reading = 0.0f;
+    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : 0.0f;
     this->latest_speed = 0.0f;
 
     auto& particles = *particles_ptr;
@@ -472,17 +601,18 @@ void MclTracking::set_pose(float x, float y, float vex_theta) {
 void MclTracking::uniform_reset() {
     std::uniform_real_distribution<float> x_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
     std::uniform_real_distribution<float> y_dist(FIELD_NEG_HALF_LENGTH, FIELD_HALF_LENGTH);
+    std::normal_distribution<float> t_dist(0.0, std::numbers::pi);
 
-    this->lastTheta = vexToStd(this->chassis->getPose().theta);
+    this->lastImuTheta = vexToStd(this->chassis->getPose().theta);
     // Verticle / DT
     this->last_vertical_reading = (vertical_tracking_wheel != nullptr) ? vertical_tracking_wheel->get_position()/100.0f : getDTWheelDegrees();
     // Horizontal / NULL
-    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : this->last_horizontal_reading = 0.0f;
+    this->last_horizontal_reading = (horizontal_tracking_wheel != nullptr) ? -horizontal_tracking_wheel->get_position()/100.0f : 0.0f;
     this->latest_speed = 0.0f;
 
     auto& particles = *particles_ptr;
     for (auto& p : particles) {
-        p.pose = {x_dist(gen), y_dist(gen), lastTheta};
+        p.pose = {x_dist(gen), y_dist(gen), t_dist(gen)};
         p.weight = 1.0f;
     }
 
@@ -497,35 +627,22 @@ void MclTracking::updateBotPose() {
     float newX = odomPose.x + DIST_SYNC_PROP * (rawMcl.x - odomPose.x);
     float newY = odomPose.y + DIST_SYNC_PROP * (rawMcl.y - odomPose.y);
 
-    // Circular interpolation for theta
-    // Convert Odom to Std Radians for calculation
-    float odomRad = vexToStd(odomPose.theta);
-    
-    // Calculate shortest difference
-    float diff = rawMcl.theta - odomRad;
-    
-    // Normalize difference to [-PI, PI]
-    while (diff > M_PI) diff -= 2 * M_PI;
-    while (diff < -M_PI) diff += 2 * M_PI;
+    float delta = rawMcl.theta - vexToStd(odomPose.theta);
+    while (delta > M_PI) delta -= 2 * M_PI;
+    while (delta < -M_PI) delta += 2 * M_PI;
+    float d_theta = THETA_SYNC_PROP * delta;
 
-    // Apply weighted difference
-    float newThetaRad = odomRad + (diff * THETA_SYNC_PROP);
+    // Convert just the delta (flip sign for CCW vs CW, multiply by 180/pi)
+    float d_theta_vex = -d_theta * (180.0f / M_PI); 
+    float newTheta = odomPose.theta + d_theta_vex;
 
     // Convert back to VEX Degrees for LemLib
-    chassis->setPose(newX, newY, stdToVex(newThetaRad));
-    this->lastTheta = newThetaRad;
+    chassis->setPose(newX, newY, newTheta);
+    lastImuTheta += d_theta;
 }
 
 void MclTracking::startTracking() {
     if (MclTrackingTask == nullptr) {
-
-        // Log distance map
-        if (mclLogType == SDCARD) {
-            for (int i = 0; i < MAP_RES*MAP_RES-1; i++) {
-                *mclLog << static_cast<int>(distance_map[i]) << " ";
-            }
-            *mclLog << static_cast<int>(distance_map[MAP_RES*MAP_RES-1]) << "\n";
-        }
 
         MclTrackingTask = new pros::Task([this](){
             while (true) {
@@ -556,26 +673,20 @@ void MclTracking::setDistSyncProp(float newDistSyncProp) {
 void MclTracking::logMcl() {
     // Inside step()
     float sum_sq_diff_x = 0, sum_sq_diff_y = 0;
-    float sum_sin = 0, sum_cos = 0;
 
     auto& particles = *particles_ptr;
 
-    for (const auto& p : particles) {
+    for (int i = 0; i < PARTICLE_COUNT; i++) {
+        const auto& p = particles[i];
+
         sum_sq_diff_x += (p.pose.x - rawMcl.x)*(p.pose.x - rawMcl.x);
         sum_sq_diff_y += (p.pose.y - rawMcl.y)*(p.pose.y - rawMcl.y);
         
-        // Use circular statistics for theta
-        sum_sin += FastTrig::sin(p.pose.theta);
-        sum_cos += FastTrig::cos(p.pose.theta);
     }
 
     // Calculate standard deviation
     float std_dev_x = std::sqrtf(sum_sq_diff_x * INV_PARTICLE_COUNT);
     float std_dev_y = std::sqrtf(sum_sq_diff_y * INV_PARTICLE_COUNT);
-
-    // Circular standard deviation for heading
-    float R = std::hypotf(sum_sin * INV_PARTICLE_COUNT, sum_cos * INV_PARTICLE_COUNT);
-    float std_dev_theta = std::sqrtf(-2.0f * std::log(R)); 
 
     // Log to Queue (Zero Blocking)
     LogData pLog;
@@ -586,7 +697,6 @@ void MclTracking::logMcl() {
     pLog.v4 = rawMcl.theta;
     pLog.v5 = std_dev_x;
     pLog.v6 = std_dev_y;
-    pLog.v7 = std_dev_theta;
 
     log_mutex.take();
     log_queue.push(pLog);
@@ -598,74 +708,24 @@ void MclTracking::setDrift(float verticalDriftPerSec, float horizontalDriftPerSe
     this->horizontal_drift = horizontalDriftPerSec / (1000.0f * INV_MSPT);
 }
 
-void MclTracking::generate_distance_map() {
-    // Initialize gaussian lut
-    for (int i = 0; i < 1024; i++) {
-        float x = (i / 1024.0f) * 4.0f; // Map index to 0-4 sigmas
-        gaussian_lut[i] = std::exp(-(x * x) / 2.0f);
-    }
-
-    // Build the Map
-    for (int y = 0; y < MAP_RES; y++) {
-        for (int x = 0; x < MAP_RES; x++) {
-            // Index to world coordinates (Center of cell)
-            float fx = (x / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
-            float fy = (y / MAP_SCALE) - MAP_OFFSET + (0.5f / MAP_SCALE);
-            
-            float min_d = 1e6;
-
-            // Distance to perimeter walls
-            for (const auto& wall : walls) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, wall));
-
-            // Distance to diagonal obstacles (the middle bars)
-            for (const auto& obs : line_obstacles) 
-                min_d = std::min(min_d, get_dist_to_segment(fx, fy, obs));
-
-            // Distance to circular match loaders
-            for (const auto& circle : circle_obstacles) {
-                float d = std::hypot(fx - circle.x, fy - circle.y);
-                min_d = std::min(min_d, std::abs(d - circle.radius));
-            }
-
-            // Store distance to objects
-            float stored_val = std::sqrt(min_d) * DIST_MULTIPLIER;
-            distance_map[y * MAP_RES + x] = (uint8_t)std::min(stored_val, 255.0f);
-        }
-    }
-}
-
 void MclTracking::enableSens(int sens) {
-    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
-    disabled_sensors[filtered] = false;
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(0);
 }
 
 void MclTracking::disableSens(int sens) {
-    int filtered = std::max(std::min(SENSOR_COUNT-1, sens), 0);
-    disabled_sensors[filtered] = true;
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(1e20f);
+}
+
+void MclTracking::disableSensFor(int sens, float ms) {
+    if (sens < 0 || sens > SENSOR_COUNT-1) return;
+    disableTimers[sens].hardReset(ms);
 }
 
 void MclTracking::setObstacles(std::vector<Line_>* newLineObstaclesPtr, std::vector<Circle>* newCirleObstaclesPtr) {
     disabling_line_obstacles = newLineObstaclesPtr;
     disabling_circle_obstacles = newCirleObstaclesPtr;
-}
-
-float MclTracking::get_dist_to_segment(float px, float py, Line_ seg) {
-    float dx = seg.p2.x - seg.p1.x;
-    float dy = seg.p2.y - seg.p1.y;
-    float l2 = dx*dx + dy*dy;
-    
-    // If the line is actually a point
-    if (l2 == 0.0) return std::hypot(px - seg.p1.x, py - seg.p1.y);
-    
-    // Project point onto line, clamped to [0, 1]
-    float t = ((px - seg.p1.x) * dx + (py - seg.p1.y) * dy) / l2;
-    t = std::max(0.0f, std::min(1.0f, t));
-    
-    float closest_x = seg.p1.x + t * dx;
-    float closest_y = seg.p1.y + t * dy;
-    
-    return std::hypot(px - closest_x, py - closest_y);
 }
 
 void MclTracking::startAsyncLogger() {
@@ -692,7 +752,7 @@ void MclTracking::startAsyncLogger() {
                         } else if (data.type == LogType::POSE) {
                             *mclLog << data.v1 << "\n"; 
                             *mclLog << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
-                            *mclLog << data.v5 << "," << data.v6 << "," << data.v7 << "\n"; 
+                            *mclLog << data.v5 << "," << data.v6 << "," << "\n"; 
                         } else if (data.type == LogType::SENSOR ) {
                             *mclLog << data.v1 << "," << data.v2 << "," << data.v3 << "," << data.v4 << "\n"; 
                         }
@@ -706,12 +766,20 @@ void MclTracking::startAsyncLogger() {
     }
 }
 
+void MclTracking::stopAsyncLogger() {
+    if (asyncLogTask != nullptr) {
+        asyncLogTask->remove(); 
+        delete asyncLogTask; 
+        asyncLogTask = nullptr; 
+    }
+}
+
 float MclTracking::getDTWheelDegrees() {
     if (dt == nullptr || dt->leftMotors == nullptr || dt->rightMotors == nullptr) {
         return 0.0f;
     }
 
-    // Get average raw encoder ticks
+    // Get average raw rotations
     std::vector<double> leftPos = dt->leftMotors->get_position_all();
     std::vector<double> rightPos = dt->rightMotors->get_position_all();
 
@@ -720,21 +788,24 @@ float MclTracking::getDTWheelDegrees() {
     for (double pos : rightPos) sum += pos;
 
     // 6 wheels, 3 on each side
-    float avgTicks = static_cast<float>(sum) * 0.166666666667f;
+    float avgRotates = static_cast<float>(sum) * 0.166666666667f;
 
     // Calculate Manual Gear Ratio
     // Blue cartridge (11W) = 600 RPM internal
     float gearRatio = dt->rpm * 0.0016666666667f;
 
-    // Convert Ticks to Wheel Degrees
-    // (Ticks * 2.0) converts ticks to motor degrees
-    // Dividing by gearRatio converts motor degrees to wheel degrees
-    float wheelDegrees = avgTicks * gearRatio * 360.0;
+    // Convert Rotations to Wheel Degrees
+    // Multiply by gearRatio converts motor degrees to wheel degrees
+    float wheelDegrees = avgRotates * gearRatio * 360.0;
 
     return wheelDegrees;
 }
 
+Pose MclTracking::getRawMcl() {
+    return rawMcl;
+}
 
 MclTracking::~MclTracking() {
     stopTracking();
+    stopAsyncLogger();
 }

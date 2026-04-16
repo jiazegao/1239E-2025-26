@@ -82,27 +82,23 @@
 1/19/2026
     1) Merged Meow Branch to Main Branch after Robot Rodeo
     2) Rewrote brain and controller display functions to prevent frequent deletions of pros::Task objects
-2/9/2026
-    1) Finished 119 prog skills draft
-2/10/2026
-    1) Revised MCL logic
+1/20/2026
+    1) Finished lever logic draft
 2/11/2026
-    1) Added theta correction for tracking wheel offsets for MCL
-2/12/2026
-    1) Seperated class function declaration into "MclTracking.hpp" and "MclTracking.cpp"
-    2) Experimented logging RCL Data; works
-    3) Finished automatic log file generation draft
-    4) Adjusted logging logic to record MCL data; ready for testing
+    1) Refined lever control logic
+2/17/2026
+    1) Finished lever MCL structural adjustment
 2/24/2026
-    1) Replaced all double precision floating point numbers with float for optimization
+    1) Replaced double with float for optimization
     2) Replaced standard trig calculations with 1D LUT for optimization
-    3) Partially replaced standard normal distribution noise generation with noise LUT
-2/26/2026
-    1) Replaced per-particle intersection math with likelihood lookup table
-    2) Incorporated dynamic sigma based on sensor reading (+-20mm <200mm; +-5% >200mm)
-2/28/2026
-    1) Incorporated sensor-disabling functionalities to avoid unexpected interference during autonomous (pre-set obtacles + manual disable)
-    2) Revised logging algorithm to speed up MCL main process
-3/3/2026
-    1) Added motor encoder support for lateral movement estimation
-    2) Completed PID Tuner
+3/5/2026
+    1) Completed octagon
+    2) Replaced linear movement prediction with arc prediction
+    3) Added confidence component to dynamic sigma adjustment
+    4) Added sensor-disabling component; primarily used to account for front sensor blockade during matchload Toggles
+    5) Added intake anti-stuck
+    6) Added special disabling condition for diagonal sensors to account for unexpected top-middle goal detections
+3/6/2026
+    1) Reverted particle weight model from Distance LUT back to standard intersection math
+        - Deleted distance map
+        - All other components remain static

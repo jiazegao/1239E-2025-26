@@ -9,70 +9,11 @@
 
 #include "MclTracking.hpp"
 #include "pros/misc.h"
+#include "pros/motors.h"
 #include "pros/rtos.h"
-
-// Indexer control
-void frontIn() {
-    frontMotor.move(127);
-}
-void frontOut() {
-    frontMotor.move(-127);
-}
-void stopFront() {
-    frontMotor.move(0);
-}
-void topIn() {
-    topMotor.move(-127);
-}
-void topOut(int velocity = 127) {
-    topMotor.move(1 * std::abs(velocity));
-}
-void slowTopOut() {
-    topMotor.move(35);
-}
-void stopTop() {
-    topMotor.move(0);
-}
-void lockTop() {
-    topMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-}
-void unlockTop() {
-    topMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-}
-void lockFront() {
-    frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-}
-void unlockFront() {
-    frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-}
-
-bool topOpticIsRed() {
-    return (335 < topOptic.get_hue() || topOptic.get_hue() < 25);
-}
-bool topOpticIsBlue() {
-    return (185 < topOptic.get_hue() && topOptic.get_hue() < 235);
-}
-
+#include "lever_control.hpp"
 
 // Pneumatics functions
-void openGate() {
-    matchLoadGate.extend();
-};
-void closeGate() {
-    matchLoadGate.retract();
-};
-void openMid() {
-    middleMech.retract();
-};
-void closeMid() {
-    middleMech.extend();
-};
-void extendMidDescore() {
-    middleDescore.extend();
-};
-void retractMidDescore() {
-    middleDescore.retract();
-};
 void extendLeftArm() {
     leftDescoreArm.extend();
 };
@@ -96,239 +37,129 @@ void jiggle(int repeats, int time, float forward, float backward) {
 void shake(int repeats, int time) {
     float orig_theta = chassis.getPose().theta;
     for (int i = 0; i < repeats; i++) {
-        chassis.turnToHeading(orig_theta + 10, time/repeats/4, {.maxSpeed=60}, false);
-        chassis.turnToHeading(orig_theta - 10, time/repeats/4, {.maxSpeed=60}, false);
-        chassis.turnToHeading(orig_theta, time/repeats/4, {.maxSpeed=60}, false);
-        moveForward(8, time/repeats/4, 81, 40, false);
-    }
-}
-
-void stopIntake() {
-    middleMech.extend();
-    lockTop();
-    lockFront();
-    stopTop();
-    stopFront();
-};
-void stopTopScore() {
-    if (colorOuttakeTask != nullptr) {
-        outtakeTaskRunning = false;
-        colorOuttakeTask->remove();
-        colorOuttakeTask = nullptr;
-    }
-    stopIntake();
-};
-void stopMidScore() {
-    stopIntake();
-}
-void stopOuttake() {
-    stopIntake();
-}
-void startIntake() {
-    stopIntake();
-    lockTop();
-    stopTop();
-    frontIn();
-};
-void startTopScore(int velocity) {
-    stopIntake();
-    frontIn();
-    topOut(velocity);
-};
-void startTopScore(alliance_color color) {
-    stopTopScore();
-    if (color == alliance_color::RED) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                // General Control
-                if (topOpticIsBlue()) {
-                    startOuttake();
-                }
-                else {
-                    frontIn();
-                    topOut(127);
-                }
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-    else if (color == alliance_color::BLUE) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                // General Control
-                if (topOpticIsRed()) {
-                    startOuttake();
-                }
-                else {
-                    frontIn();
-                    topOut(127);
-                }
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-    else if (color == alliance_color::NONE) {
-        colorOuttakeTask = new pros::Task ([&](){
-            Timer timer(800);
-            outtakeTaskRunning = true;
-            while (outtakeTaskRunning) {
-                frontIn();
-                topOut(127);
-                // Anti stuck
-                if (topOptic.get_proximity() > 200) timer.reset();
-                if (timer.timeIsUp()) {
-                    startOuttake();
-                    pros::delay(100);
-                    frontIn();
-                    topOut(127);
-                    pros::delay(200);
-                    timer.reset();
-                }
-                pros::delay(40);
-            }
-        });
-    }
-}
-void startMidScore() {
-    stopIntake();
-    middleMech.retract();
-    frontIn();
-    slowTopOut();
-}
-void startOuttake() {
-    frontOut();
-    topIn();
-}
-float pivot(float curr_corrd, float pivot_coord) {
-    return curr_corrd+std::abs(curr_corrd-pivot_coord)*std::abs(curr_corrd-pivot_coord)/(curr_corrd-pivot_coord);
-}
-float pivot_x(float pivot_coord) {
-    return pivot(chassis.getPose().x, pivot_coord);
-}
-float pivot_y(float pivot_coord) {
-    return pivot(chassis.getPose().y, pivot_coord);
-}
-
-
-// Function for managing intake controls
-void updateIntake() {
-
-    // Motor Controls ----------------------------------------------------
-
-    // Button B - Outtake
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
-        frontOut();
-        topIn();
-    }
-    // Button A - Slow outtake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
-        frontMotor.move(-30);
-        topIn();
-    }
-    // Button R2 - Score top
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-        frontIn();
-        topOut();
-    }
-    // Button R1 - Score mid
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-        frontIn();
-        slowTopOut();
-    }
-    // Button L2 - Normal intake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-        lockTop();
-        stopTop();
-        frontIn();
-    }
-    // Button L1 - Macro intake
-    else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-        // If matches alliance color, lock top motor
-        if ( (topOpticIsRed() && allianceColor == alliance_color::RED) || (topOpticIsBlue() && allianceColor == alliance_color::BLUE) ) {
-            lockTop();
-            stopTop();
-            frontIn();
-        }
-        // Otherwise, keep intaking
-        else {
-            topOut();
-            frontIn();
-        }
-    }
-    // If no button is pressed, stop everything
-    else {
-        lockTop();
-        lockFront();
-        stopTop();
-        stopFront();
-    }
-
-    // Miscellaneous Controls ---------------------------------------------
-
-    // Button R1 - Pneumatics control
-    if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-        middleMech.retract();
-    }
-    else {
-        middleMech.extend();
+        chassis.turnToHeading(orig_theta + 15, time/repeats/5, {}, false);
+        chassis.turnToHeading(orig_theta - 15, time/repeats/5, {}, false);
+        chassis.turnToHeading(orig_theta, time/repeats/5, {}, false);
+        moveForward(-4, time/repeats/5, 80, 40, false);
+        moveForward(4, time/repeats/5, 80, 40, false);
     }
 }
 
 // Fucntion for managing pneumatics controls
-bool descoreMacroActivated = false;
 void updatePneumatics() {
     // Button X - Match load mech (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
-        matchLoadGate.toggle();
-        retractMidDescore();
+        toggleGate();
     }
-    // Button Down - Right descore arm (Toggle)
+    // Button Down - Left descore arm (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         leftDescoreArm.toggle();
-        descoreMacroActivated = false; // Shutdown macro
     }
-    // Button Right - Descore macro (Toggle)
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-        descoreMacroActivated = !descoreMacroActivated;
-        extendLeftArm();
-    }
-    // Button Y - Middle descore mech (Toggle)
+    // Button Y - Lower lift + Hood down (Toggle)
     if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-        middleDescore.toggle();
-        closeGate();
+        retractLift();
+        closeHood();
+    }
+    // Button Up - Open hood
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+        if (!hoodLock) trapDoor.extend();
+        else trapDoor.retract();
+        hoodLock = !hoodLock;
+    }
+    // Rumble controller if hood lock is activated
+    if (hoodLock) controller.rumble(".");
+}
+
+// Intake management
+void updateIntake() {
+
+    // Motor Controls ----------------------------------------------------
+    enum scoringStates {INACTIVE, SCORE3, SCOREALL};
+    static scoringStates midState = INACTIVE;
+    static scoringStates topState = INACTIVE;
+
+    setAutoReset(false);
+
+    // Button R2 - Top state (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+        extendLift();
+        midState = INACTIVE;
+        if (topState == INACTIVE) {
+            topState = SCORE3;
+            score(0, 3, FAST_TOP_SCORE);
+        }
+        else if (topState == SCORE3) {
+            topState = SCOREALL;
+            score(0, 7, FAST_TOP_SCORE);
+        }
+        else if (topState == SCOREALL) {
+            topState = INACTIVE;
+            midState = INACTIVE;
+            resetLever();
+        }
+    }
+    // Button R1 - Mid state (Toggle)
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+        retractLift();
+        topState = INACTIVE;
+        if (midState == INACTIVE) {
+            midState = SCORE3;
+            score(0, 3, FAST_MID_SCORE);
+        }
+        else if (midState == SCORE3) {
+            midState = SCOREALL;
+            score(0, 7, FAST_MID_SCORE);
+        }
+        else if (midState == SCOREALL) {
+            midState = INACTIVE;
+            topState = INACTIVE;
+            resetLever();
+        }
+    }
+    // Button Right - Priming
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+        startPriming();
     }
 
-    // Descore macro update
-    if (descoreMacroActivated) {
-        controller.rumble(".");
-        // Release descore arm if distance less than 15 cm
-        if (descoreDist.get() < 140) {
-            retractLeftArm();
-            //controller.rumble("-");
+    if (!intake_macro_lock) {
+        // Button L1 - Macro intake
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+            intakeFromMatchLoader(allianceColor);
+        }
+        // Button L2 - Raise mid + hold intake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            midState = INACTIVE;
+            topState = INACTIVE;
+            extendLift();
+            if (getLeverStage() != PRIMING) {
+                resetLever();
+                startIntake();
+            }
+            else {
+                frontMotor.move(127);
+            }
+        }
+        // Button B - Outtake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+            extendLift();
+            startOuttake(600);
+        }
+        // Button A - Slow outtake (Hold)
+        else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
+            extendLift();
+            startOuttake(100);
+        }
+        // If no button is pressed, stop everything
+        else {
+            frontMotor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+            stopIntake();
+        }
+    }
+    else {
+        if (!controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            endIntakeMacro();
+            intake_macro_lock = false;
+            resetLever();
         }
     }
 }
@@ -357,12 +188,14 @@ void initControllerDisplay() {
         });
     }
 };
+
 void stopBrainDisplay() {
     brainDisplayFunc = nullptr;
 }
 void stopControllerDisplay() {
     controllerDisplayFunc = nullptr;
 }
+
 void startControllerCoordDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
@@ -380,20 +213,9 @@ void startControllerAutonSelectorDisplay() {
         pros::delay(50);
         controller.print(0, 0, "Color: %s", allianceColor == alliance_color::RED ? "RED" : "BLUE");
         pros::delay(50);
-        controller.print(1, 0, "Type: %s", autonType == autonTypes::NAAUTO ? "NA_AUTO" : autonType == autonTypes::LEFT ? "LEFT" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::LEFT_FAST ? "LEFT_FAST" : autonType == autonTypes::LEFT_V2 ? "LEFT_V2" : autonType == autonTypes::RIGHT ? "RIGHT" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::RIGHT_FAST ? "RIGHT_FAST" : autonType == autonTypes::RIGHT_V2 ? "RIGHT_V2" : autonType == autonTypes::SOLO_AWP ? "SOLO_AWP" : "NULL");
+        controller.print(1, 0, "Type: %s", autonType == autonTypes::LEFT_V2 ? "LEFT_V2" : autonType == autonTypes::LEFT_RUSH ? "LEFT_RUSH" : autonType == autonTypes::LEFT_FAST ? "LEFT_FAST" : autonType == autonTypes::RIGHT_V2 ? "RIGHT_V2" : autonType == autonTypes::RIGHT_RUSH ? "RIGHT_RUSH" : autonType == autonTypes::RIGHT_FAST ? "RIGHT_FAST" : autonType == autonTypes::CTR_SAWP ? "CTR_SAWP" : "NULL");
         pros::delay(50);
         controller.print(2, 0, "Skills: %s", runningSkills ? "YES" : "NO");
-    };
-};
-void startControllerRclCoordDisplay() {
-    controllerDisplayFunc = [](){
-        controller.clear();
-        pros::delay(50);
-        controller.print(0, 0, "RCL (%.1f, %.1f, %.1f)", RclMain.getRclPose().x, RclMain.getRclPose().y, RclMain.getRclPose().theta);
-        pros::delay(50);
-        controller.print(1, 0, "Sens:(L:%s, B:%s, R:%s)", left_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", back_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y", right_rcl.getBotCoord(chassis.getPose()).first == CoordType::X ? "X" : "Y");
-        pros::delay(50);
-        controller.print(2, 0, "%d, %d, %d", left_rcl.rawReading(), back_rcl.rawReading(), right_rcl.rawReading());
     };
 };
 
@@ -404,6 +226,7 @@ void startBrainCoordDisplay() {
         pros::lcd::print(2, 0, "Heading: %f", chassis.getPose().theta);
     };
 };
+
 void startBrainFBDisplay() {
     static lv_obj_t* image = lv_image_create(lv_screen_active());
     lv_obj_align(image, LV_ALIGN_CENTER, 0, 0);
@@ -411,24 +234,13 @@ void startBrainFBDisplay() {
 };
 
 // Test Functions
-void startControllerDistDataDisplay() {
-    controllerDisplayFunc = [](){
-        controller.clear();
-        pros::delay(50);
-        controller.print(0, 0, "Left Sens: %d", left_dist.get_distance());
-        pros::delay(50);
-        controller.print(1, 0, "Back Sens: %d", back_dist.get_distance());
-        pros::delay(50);
-        controller.print(2, 0, "Right Sens: %d", right_dist.get_distance());
-    };
-};
 void startControllerOpticDisplay() {
     controllerDisplayFunc = [](){
         controller.clear();
         pros::delay(50);
-        controller.print(0, 0, "Hue: %f", topOptic.get_hue());
+        controller.print(0, 0, "Hue: %f", frontOptic.get_hue());
         pros::delay(50);
-        controller.print(1, 0, "Prox: %d", topOptic.get_proximity());
+        controller.print(1, 0, "Prox: %d", frontOptic.get_proximity());
     };
 };
 void startControllerRCLInfoDisplay() {
@@ -442,6 +254,7 @@ void startControllerRCLInfoDisplay() {
         controller.print(2, 0, "Heading: %.1f, %.1f", chassis.getPose().theta, RclMain.getRclPose().theta);
     };
 };
+
 
 // Mcl Benchmark with Heading Conversion for LCD
 inline Pose rawMcl = {0,0,0};
@@ -500,13 +313,14 @@ void startMclBenchmark(float x, float y, float theta, float autoReset) {
     });
 }
 
-void startMcl(float x, float y, float vexTheta, bool resetLeft, bool resetBack, bool resetRight){
+void startMcl(float x, float y, float vexTheta, bool resetFront, bool resetLeft, bool resetBack, bool resetRight) {
     // Reset Chassis and RCL
     lemlib::Pose p(x,y,vexTheta);
     chassis.setPose(x, y, vexTheta);
 	RclMain.setRclPose(p);
     
     // Perform RCL Resets
+    if (resetFront) RclMain.updateBotPose(&front_rcl);
     if (resetLeft) RclMain.updateBotPose(&left_rcl);
     if (resetBack) RclMain.updateBotPose(&back_rcl);
     if (resetRight) RclMain.updateBotPose(&right_rcl);
@@ -552,23 +366,34 @@ void initLog() {
     }
 }
 
+void savePIDValues() {
+    std::ofstream PID_Write("/usd/PIDValues.1239e");
+    if (PID_Write.is_open()) PID_Write << chassis.lateralPID.kP << " " << chassis.lateralPID.kI << " " << chassis.lateralPID.kD << " " << chassis.angularPID.kP << " " << chassis.angularPID.kI << " " << chassis.angularPID.kD;
+    PID_Write.close();
+}
+
 // PID Tuner
 void runPIDTuner() {
 
-    stopBrainDisplay();
-    stopControllerDisplay();
-
-    float forwardAmount = 0.0;
-    float turnAmount = 0.0;
+    float forwardAmount = 20.0;
+    float turnAmount = 90.0;
     bool managingLateral = true;
+
+    // Retrive file count
+    std::ifstream dataFileR("/usd/PIDValues.1239e");
+    // If file exist, read from it
+    if (dataFileR.is_open()) {
+        dataFileR >> chassis.lateralPID.kP >> chassis.lateralPID.kI >> chassis.lateralPID.kD >> chassis.angularPID.kP >> chassis.angularPID.kI >> chassis.angularPID.kD;
+        dataFileR.close();
+    }
 
     while (true) {
         // General Display
         pros::lcd::print(0, "Currently Managing: %s", managingLateral ? "LATERAL" : "ANGULAR");
-        pros::lcd::print(2, "Lateral P: %f, I: %f, D: %f", chassis.lateralPID.kP, chassis.lateralPID.kI, chassis.lateralPID.kD);
-        pros::lcd::print(3, "Angular P: %f, I: %f, D: %f", chassis.angularPID.kP, chassis.angularPID.kI, chassis.angularPID.kD);
-        pros::lcd::print(4, "Forward Amount: %f in.", forwardAmount);
-        pros::lcd::print(5, "Turn Amount: %f deg", turnAmount);
+        pros::lcd::print(2, "Lateral P: %.2f, I: %.2f, D: %.2f", chassis.lateralPID.kP, chassis.lateralPID.kI, chassis.lateralPID.kD);
+        pros::lcd::print(3, "Angular P: %.2f, I: %.2f, D: %.2f", chassis.angularPID.kP, chassis.angularPID.kI, chassis.angularPID.kD);
+        pros::lcd::print(4, "Forward Amount: %.2f in.", forwardAmount);
+        pros::lcd::print(5, "Turn Amount: %.2f deg", turnAmount);
         pros::lcd::print(7, "Ready.");
 
         // Lateral Movement & PID Adjustment
@@ -579,10 +404,10 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
                 forwardAmount -= 2.0;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
                 chassis.lateralPID.kP += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
                 chassis.lateralPID.kP -= 0.1;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
@@ -591,25 +416,25 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                 chassis.lateralPID.kI -= 0.05;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
                 chassis.lateralPID.kD += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
                 chassis.lateralPID.kD -= 0.1;
             }
         }
         // Angular PID Adjustment
         else {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
-                turnAmount += 2.0;
+                turnAmount += 5.0;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-                turnAmount -= 2.0;
+                turnAmount -= 5.0;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
                 chassis.angularPID.kP += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
                 chassis.angularPID.kP -= 0.1;
             }
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
@@ -618,21 +443,20 @@ void runPIDTuner() {
             if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
                 chassis.angularPID.kI -= 0.05;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
                 chassis.angularPID.kD += 0.1;
             }
-            if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
                 chassis.angularPID.kD -= 0.1;
             }
         }
 
         // Resets & Toggles
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-            pros::lcd::print(7, 0, "Resetting...");
-            chassis.turnToPoint(0, 0, 1500, {}, false);
-            chassis.moveToPoint(0, 0, 3500, {}, false);
-            chassis.turnToHeading(0, 1500, {}, false);
-            chassis.setPose(0, 0, 0);
+            pros::lcd::print(7, "Resetting...");
+            chassis.turnToPoint(0, 0, 1000, {}, false);
+            chassis.moveToPoint(0, 0, 2500, {}, false);
+            chassis.turnToHeading(0, 1000, {}, false);
         }
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             managingLateral = !managingLateral;
@@ -640,16 +464,17 @@ void runPIDTuner() {
 
         // Movements
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
-            pros::lcd::print(7, 0, "Moving to point...");
-            chassis.setPose(0, 0, 0);
-            chassis.moveToPoint(0, forwardAmount, 5000, {}, false);
+            pros::lcd::print(7, "Moving to point...");
+            moveForward(forwardAmount, 2000, 127, 1, false);
+            savePIDValues();
         }
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-            pros::lcd::print(7, 0, "Turning to heading...");
-            chassis.setPose(0, 0, 0);
-            chassis.turnToHeading(turnAmount, 3000, {}, false);
+            pros::lcd::print(7, "Turning to heading...");
+            auto p = chassis.getPose();
+            chassis.turnToHeading(p.theta+turnAmount, 1500, {}, false);
+            savePIDValues();
         }
 
-        pros::delay(10);
+        pros::delay(50);
     }
 }

@@ -12,17 +12,13 @@ void toggle_color(lv_event_t* e) {
 
 void toggle_type(lv_event_t* e) {
     switch (autonType) {
-        case autonTypes::LEFT: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
+        case autonTypes::LEFT_V2: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
         case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_FAST; lv_label_set_text(label_type, "LEFT_FAST"); break;
-        case autonTypes::LEFT_FAST: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
-        case autonTypes::LEFT_V2: autonType = autonTypes::NAAUTO; lv_label_set_text(label_type, "NA_AUTO"); break;
-        case autonTypes::NAAUTO: autonType = autonTypes::RIGHT; lv_label_set_text(label_type, "RIGHT"); break;
-        case autonTypes::RIGHT: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
+        case autonTypes::LEFT_FAST: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
+        case autonTypes::RIGHT_V2: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
         case autonTypes::RIGHT_RUSH: autonType = autonTypes::RIGHT_FAST; lv_label_set_text(label_type, "RIGHT_FAST"); break;
-        case autonTypes::RIGHT_FAST: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
-        case autonTypes::RIGHT_V2: autonType = autonTypes::SOLO_AWP; lv_label_set_text(label_type, "SOLO_AWP"); break;
-        case autonTypes::SOLO_AWP: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
-        default: autonType = autonTypes::LEFT; lv_label_set_text(label_type, "LEFT"); break;
+        case autonTypes::RIGHT_FAST: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
+        default: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
     }
 }
 
@@ -73,13 +69,13 @@ void init_auton_selector() {
 void runAuton() {
     // Auton Selection
 	if (runningSkills) {
-		skills();
+		skills_119();
 		return;
 	}
 
     switch (autonType) {
-        case autonTypes::LEFT:
-            left();
+        case autonTypes::LEFT_V2:
+            leftv2();
             return;
         case autonTypes::LEFT_RUSH:
             leftControlRush();
@@ -87,14 +83,8 @@ void runAuton() {
         case autonTypes::LEFT_FAST:
             leftFastRush();
             return;
-        case autonTypes::LEFT_V2:
-            leftv2();
-            return;
-        case autonTypes::NAAUTO:
-            NAAuto();
-            return;
-        case autonTypes::RIGHT:
-            right();
+        case autonTypes::RIGHT_V2:
+            rightv2();
             return;
         case autonTypes::RIGHT_RUSH:
             rightControlRush();
@@ -102,14 +92,11 @@ void runAuton() {
         case autonTypes::RIGHT_FAST:
             rightFastRush();
             return; 
-        case autonTypes::RIGHT_V2:
-            rightv2();
-            return;
-        case autonTypes::SOLO_AWP:
-            soloAWP();
+        case autonTypes::CTR_SAWP:
+            counterSAWP();
             return;
         default:
-            soloAWP();
+            counterSAWP();
             return;
 			
     }
