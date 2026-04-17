@@ -67,6 +67,7 @@ inline alliance_color allianceColor = alliance_color::BLUE;
 
 // Controller
 inline pros::Controller controller(pros::E_CONTROLLER_MASTER);
+inline pros::Controller partner_controller(pros::E_CONTROLLER_PARTNER);
 
 // Motors
 inline pros::MotorGroup leftMotors({-11, -12, 13}, pros::MotorGearset::blue);

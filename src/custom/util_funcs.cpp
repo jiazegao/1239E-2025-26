@@ -77,6 +77,8 @@ void updateIntake() {
     enum scoringStates {INACTIVE, SCORE3, SCOREALL};
     static scoringStates midState = INACTIVE;
     static scoringStates topState = INACTIVE;
+    static int currTopLeverSpeed = 100;
+    static int currMidLeverSpeed = 80;
 
     setAutoReset(false);
 
@@ -86,11 +88,11 @@ void updateIntake() {
         midState = INACTIVE;
         if (topState == INACTIVE) {
             topState = SCORE3;
-            score(0, 3, FAST_TOP_SCORE);
+            score(0, 3, currTopLeverSpeed);
         }
         else if (topState == SCORE3) {
             topState = SCOREALL;
-            score(0, 7, FAST_TOP_SCORE);
+            score(0, 7, currTopLeverSpeed);
         }
         else if (topState == SCOREALL) {
             topState = INACTIVE;
@@ -104,11 +106,11 @@ void updateIntake() {
         topState = INACTIVE;
         if (midState == INACTIVE) {
             midState = SCORE3;
-            score(0, 3, FAST_MID_SCORE);
+            score(0, 3, currMidLeverSpeed);
         }
         else if (midState == SCORE3) {
             midState = SCOREALL;
-            score(0, 7, FAST_MID_SCORE);
+            score(0, 7, currMidLeverSpeed);
         }
         else if (midState == SCOREALL) {
             midState = INACTIVE;
@@ -161,6 +163,20 @@ void updateIntake() {
             intake_macro_lock = false;
             resetLever();
         }
+    }
+
+    // Update scoring speed with secondary controller
+    if (partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) > 90 && partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) > 90) {
+        currTopLeverSpeed = 100;
+        currMidLeverSpeed = 80;
+    }
+    else if (partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) < -90 && partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) < -90) {
+        currTopLeverSpeed = 30;
+        currMidLeverSpeed = 20;
+    }
+    else {
+        currTopLeverSpeed = 70;
+        currMidLeverSpeed = 40;
     }
 }
 

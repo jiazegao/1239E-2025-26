@@ -16,12 +16,12 @@
 void initialize() {
     chassis.calibrate();
     chassis.setPose(0, 0, 0);
-	pros::lcd::initialize();
+	// pros::lcd::initialize();
 
-	// init_auton_selector();
+	init_auton_selector();
 	initControllerDisplay();
 	initLeverControl();
-	initBrainDisplay();
+	// initBrainDisplay();
 	initLog();	// Critical; DO NOT REMOVE
 
 	// Set Optical LED
@@ -64,19 +64,14 @@ void opcontrol() {
 	extendLeftArm();
 	stopIntake();
 
-	hardResetLever();
-
-	// startBrainFBDisplay();
-	startLeverTuningDisplay();
+	startBrainFBDisplay();
+	// startLeverTuningDisplay();
 	
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updatePneumatics();
 		updateIntake();
-
-		pros::lcd::print(0, "Drivetrain: %f", MclMain.getDTWheelDegrees());
-		pros::lcd::print(1, "Unit: %d", drivetrain.leftMotors->get_encoder_units());
 
 		pros::delay(20);
 	}

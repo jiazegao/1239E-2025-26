@@ -138,7 +138,11 @@ void endPriming() {
 // --------------------- USER FUNCTIONS --------------------------
 void initLeverControl() {
 
+    intakeSwapTimer.reset();
     leverScoringTimeout.reset();
+    afterScoreHoodCloseTimeout.reset();
+    sevenOuttakeTimeout.reset();
+    leverAntiStuckTimeout.reset();
     
     ballTrackingTask = new pros::Task([](){
 
@@ -318,14 +322,17 @@ void startIntake() {
 }
 
 void startOuttake(int speed) {
+    currOuttakeSpeed = std::abs(speed);
     if (currentStage != RAISING && currentStage != LOWERING && currentStage != OUTTAKING) {
         currentStage = OUTTAKING;
         intakeStaged = false;
         removedFromTop = false;
-        currOuttakeSpeed = std::abs(speed);
         intakeSwapTimer.reset();
     }
-    frontMotor.move(-currOuttakeSpeed);
+    if (currentStage != OUTTAKING) {
+        if (fastOuttake) frontMotor.move(-currOuttakeSpeed);
+        else frontMotor.move_velocity(-currOuttakeSpeed);
+    }
 }
 
 void extendLift() {
@@ -463,7 +470,7 @@ void endIntakeMacro() {
 }
 
 void resetLever() {
-    afterScoreHoodCloseTimeout.reset();
+    //afterScoreHoodCloseTimeout.reset();
     currentStage = LOWERING;
 }
 
