@@ -240,7 +240,12 @@ void initLeverControl() {
                 }
                 // Haven't reached target, keep going
                 else if (leverMotor.get_position() < currTarget) {
-                    leverMotor.move_velocity(currMaxSpeed);
+                    // Velocity control
+                    if (!fast_lever_score && leverMotor.get_position() < currTarget * 0.5f) {
+                        leverMotor.move_velocity(currMaxSpeed*0.5f);
+                    } else {
+                        leverMotor.move_velocity(currMaxSpeed);
+                    }
                 }
                 // Reached target, immediately reverse then move position
                 else if (leverMotor.get_position() >= currTarget) {
@@ -308,8 +313,8 @@ void stopIntake() {
 
 void startIntake() {
     if (currentStage != INTAKING) {
-        if (currentStage != RAISING && currentStage != LOWERING) {
-            currentStage = INTAKING; 
+        if (currentStage != RAISING && currentStage != PRIMING && currentStage != LOWERING) {
+            currentStage = INTAKING;
             intakeStaged = false;
             removedFromTop = false;
             intakeSwapTimer.reset();
@@ -323,7 +328,7 @@ void startIntake() {
 
 void startOuttake(int speed) {
     currOuttakeSpeed = std::abs(speed);
-    if (currentStage != RAISING && currentStage != LOWERING && currentStage != OUTTAKING) {
+    if (currentStage != RAISING && currentStage != LOWERING && currentStage != PRIMING && currentStage != OUTTAKING) {
         currentStage = OUTTAKING;
         intakeStaged = false;
         removedFromTop = false;

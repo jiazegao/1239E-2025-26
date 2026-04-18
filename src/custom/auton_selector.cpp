@@ -14,10 +14,12 @@ void toggle_type(lv_event_t* e) {
     switch (autonType) {
         case autonTypes::LEFT_V2: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
         case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_FAST; lv_label_set_text(label_type, "LEFT_FAST"); break;
-        case autonTypes::LEFT_FAST: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
+        case autonTypes::LEFT_FAST: autonType = autonTypes::LEFT_DESC; lv_label_set_text(label_type, "LEFT_DESC"); break;
+        case autonTypes::LEFT_DESC: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
         case autonTypes::RIGHT_V2: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
         case autonTypes::RIGHT_RUSH: autonType = autonTypes::RIGHT_FAST; lv_label_set_text(label_type, "RIGHT_FAST"); break;
-        case autonTypes::RIGHT_FAST: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
+        case autonTypes::RIGHT_FAST: autonType = autonTypes::RIGHT_DESC; lv_label_set_text(label_type, "RIGHT_DESC"); break;
+        case autonTypes::RIGHT_DESC: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
         default: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
     }
 }
@@ -83,6 +85,9 @@ void runAuton() {
         case autonTypes::LEFT_FAST:
             leftFastRush();
             return;
+        case autonTypes::LEFT_DESC:
+            leftDescoreAuto();
+            return;
         case autonTypes::RIGHT_V2:
             rightv2();
             return;
@@ -91,7 +96,10 @@ void runAuton() {
             return;
         case autonTypes::RIGHT_FAST:
             rightFastRush();
-            return; 
+            return;
+        case autonTypes::RIGHT_DESC:
+            rightDescoreAuto();
+            return;
         case autonTypes::CTR_SAWP:
             counterSAWP();
             return;

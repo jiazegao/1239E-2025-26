@@ -46,7 +46,7 @@ private:
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.10f;
     static constexpr float HORIZ_CONSTANT_NOISE = 0.04f;
 
-    static constexpr float MSPT = 20.0f;
+    static constexpr float MSPT = 25.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
     static constexpr float MINPAUSE = 10.0f;
     

@@ -166,17 +166,17 @@ void updateIntake() {
     }
 
     // Update scoring speed with secondary controller
-    if (partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) > 90 && partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) > 90) {
+    if (partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
         currTopLeverSpeed = 100;
         currMidLeverSpeed = 80;
     }
-    else if (partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) < -90 && partner_controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) < -90) {
+    else if (partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
         currTopLeverSpeed = 30;
         currMidLeverSpeed = 20;
     }
     else {
-        currTopLeverSpeed = 70;
-        currMidLeverSpeed = 40;
+        currTopLeverSpeed = 50;
+        currMidLeverSpeed = 30;
     }
 }
 
