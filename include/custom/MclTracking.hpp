@@ -36,17 +36,17 @@ private:
     static constexpr float CONFIDENCE_SCALING_BASE = 40.0f;
     static constexpr float RIGHT_ANG_MULTIPLIER = 2.0f;
     static constexpr float RIGHT_ANG_CONST = 2.0 / M_PI * RIGHT_ANG_MULTIPLIER;
-    static constexpr float SENSOR_COUNT_SCALING = 0.30f;
+    static constexpr float SENSOR_COUNT_SCALING = 0.35f;
     
     static constexpr float TRACKING_WHEEL_VARIANCE = 0.10f;
     static constexpr float IMU_VARIANCE = 0.01f;
     static constexpr float FAULT_TOLERANCE = 0.01f;
-    float DIST_SYNC_PROP = 0.10f;
+    float DIST_SYNC_PROP = 0.15f;
     static constexpr float THETA_SYNC_PROP = 0.001f;
     static constexpr float HORIZ_DEPENDENT_VARIANCE_PROP = 0.10f;
-    static constexpr float HORIZ_CONSTANT_NOISE = 0.04f;
+    static constexpr float HORIZ_CONSTANT_NOISE = 0.05f;
 
-    static constexpr float MSPT = 25.0f;
+    static constexpr float MSPT = 20.0f;
     static constexpr float INV_MSPT = 1.0f / MSPT;
     static constexpr float MINPAUSE = 10.0f;
     
