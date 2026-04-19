@@ -20,6 +20,9 @@ void rightFastRush();
 void leftDescoreAuto();
 void rightDescoreAuto();
 
+void leftSixBall();
+void rightSixBall();
+
 void skills_119();
 
 void setMidScoreDelay(int newDelay);

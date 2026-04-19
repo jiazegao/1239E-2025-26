@@ -15,11 +15,13 @@ void toggle_type(lv_event_t* e) {
         case autonTypes::LEFT_V2: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
         case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_FAST; lv_label_set_text(label_type, "LEFT_FAST"); break;
         case autonTypes::LEFT_FAST: autonType = autonTypes::LEFT_DESC; lv_label_set_text(label_type, "LEFT_DESC"); break;
-        case autonTypes::LEFT_DESC: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
+        case autonTypes::LEFT_DESC: autonType = autonTypes::LEFT_6; lv_label_set_text(label_type, "LEFT_6"); break;
+        case autonTypes::LEFT_6: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
         case autonTypes::RIGHT_V2: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
         case autonTypes::RIGHT_RUSH: autonType = autonTypes::RIGHT_FAST; lv_label_set_text(label_type, "RIGHT_FAST"); break;
         case autonTypes::RIGHT_FAST: autonType = autonTypes::RIGHT_DESC; lv_label_set_text(label_type, "RIGHT_DESC"); break;
-        case autonTypes::RIGHT_DESC: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
+        case autonTypes::RIGHT_DESC: autonType = autonTypes::RIGHT_6; lv_label_set_text(label_type, "RIGHT_6"); break;
+        case autonTypes::RIGHT_6: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
         default: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
     }
 }
@@ -88,6 +90,9 @@ void runAuton() {
         case autonTypes::LEFT_DESC:
             leftDescoreAuto();
             return;
+        case autonTypes::LEFT_6:
+            leftSixBall();
+            return;
         case autonTypes::RIGHT_V2:
             rightv2();
             return;
@@ -99,6 +104,9 @@ void runAuton() {
             return;
         case autonTypes::RIGHT_DESC:
             rightDescoreAuto();
+            return;
+        case autonTypes::RIGHT_6:
+            rightSixBall();
             return;
         case autonTypes::CTR_SAWP:
             counterSAWP();
