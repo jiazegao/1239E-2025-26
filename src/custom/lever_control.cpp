@@ -120,6 +120,7 @@ Timer afterScoreHoodCloseTimeout(500);
 Timer sevenOuttakeTimeout(200);
 Timer leverAntiStuckTimeout(500);
 
+bool postPriming = false;
 void startPriming() {
     if (currSize < INTAKE_CAPACITY) {
         positionedForTop ? currTarget = scoringPresetsTop[INTAKE_CAPACITY-1-currSize] : currTarget = scoringPresetsMid[INTAKE_CAPACITY-1-currSize];
@@ -128,6 +129,7 @@ void startPriming() {
         currTarget = 0.0f;
     }
     currentStage = PRIMING;
+    postPriming = true;
 }
 void endPriming() {
     trapDoor.extend();
@@ -230,7 +232,7 @@ void initLeverControl() {
             // Raising - Move upward
             if (currentStage == RAISING) {
                 // Lever Anti Stuck
-                if (lever_antistuck_on && !leverAntiStuckTimeout.timeIsUp()) {
+                if (!postPriming && lever_antistuck_on && !leverAntiStuckTimeout.timeIsUp()) {
                     frontMotor.move(127);
                 }
                 // Timeout
@@ -264,6 +266,7 @@ void initLeverControl() {
                     currentStage = INACTIVE;
                     if (intakeStaged) startIntake();
                 }
+                postPriming = false;
             }
             // Rudimentary motor control
             if (currentStage == INTAKING) {
