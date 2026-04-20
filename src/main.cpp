@@ -44,7 +44,6 @@ void autonomous() {
 	
 	chassis.setBrakeMode(pros::E_MOTOR_BRAKE_HOLD);
 	lever_antistuck_on = false;
-	fast_lever_score = true;
 	
 	// Ensure descore arms are retracted
 	extendLeftArm();
@@ -61,7 +60,7 @@ void opcontrol() {
 	chassis.setPose(0, 0, 0);
 	lever_antistuck_on = true;
 	antiStuckOn = true;
-	fast_lever_score = false;
+	
 
 	// Retract descore arm
 	extendLeftArm();
