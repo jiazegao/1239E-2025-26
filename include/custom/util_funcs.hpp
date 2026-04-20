@@ -32,7 +32,7 @@ inline int controllerDisplayDelay = 100;
 
 void initControllerDisplay();
 void initBrainDisplay();
-
+void partnercontrollervibrate();
 void startControllerCoordDisplay();
 void startControllerAutonSelectorDisplay();
 

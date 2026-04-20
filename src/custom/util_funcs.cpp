@@ -494,3 +494,26 @@ void runPIDTuner() {
         pros::delay(50);
     }
 }
+void partnerControllerVibrate() {
+
+    static bool vibrated60 = false;
+    static bool vibrated30 = false;
+    static bool vibrated20 = false;
+
+    double matchTime = 105 - (pros::millis() / 1000);
+
+    if (matchTime <= 60 && !vibrated60) {
+        partner_controller.rumble(".");
+        vibrated60 = true;
+    }
+
+    if (matchTime <= 30 && !vibrated30) {
+        partner_controller.rumble(". .");
+        vibrated30 = true;
+    }
+
+    if (matchTime <= 20 && !vibrated20) {
+        partner_controller.rumble(". . .");
+        vibrated20 = true;
+    }
+}

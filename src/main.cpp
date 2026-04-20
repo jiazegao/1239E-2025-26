@@ -76,7 +76,7 @@ void opcontrol() {
 		updateTankDrive();
 		updatePneumatics();
 		updateIntake();
-
+		
 		pros::delay(20);
 	}
 }
