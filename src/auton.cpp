@@ -368,7 +368,6 @@ void SAWPLeft() {
     startOuttake(200);
     chassis.turnToPoint(0, 0, 300, {}, true);
     if (midScoreDelay > 0) pros::delay(midScoreDelay);
-    jiggle(3, 3000, 2.5, 2.0);
 }
 // TUNED
 void leftv2() {
@@ -418,7 +417,7 @@ void rightv2() {
     startOuttake(200);
     chassis.turnToPoint(0, 0, 300, {}, true);
     if (midScoreDelay > 0) pros::delay(midScoreDelay);
-    jiggle(2, 2000, 2.5, 2.0);
+    pros::delay(2000);
 
     // Push
     rightMidPush();
@@ -674,8 +673,6 @@ void rightDescoreAuto() {
     pros::delay(600);
     startOuttake(200);
     chassis.turnToPoint(0, 0, 300, {}, true);
-    jiggle(2, 1200, 2.5, 2.0);
-    moveForward(4, 300, 40, 1, true);
 }
 
 // 119 points
