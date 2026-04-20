@@ -189,12 +189,27 @@ inline std::ofstream* mclLog = nullptr;
 inline Timer mclLogTimer(100000000.0f);
 
 // Mcl obstacles
-inline std::vector<Line_> soloAWP_obstacles = {
+inline std::vector<Line_> soloAWP_obstacles_right = {
     // Alliance Robot Disable Lines
     {{-72.0f, 8.0f}, {-36.0f, 8.0f}},
     {{-36.0f, 8.0f}, {-36.0f, 40.0f}},
     {{-72.0f, 40.0f}, {-36.0f, 40.0f}},
     {{-72.0f, 8.0f}, {-72.0f, 40.0f}},
+    // Middle Line
+    {{-4.0f, -71.0f}, {-4.0f, 71.0f}},
+    // oppennent top
+    {{-4.0f, 71.0f}, {71.0f, 71.0f}},
+    // opponent right
+    {{71.0f, 71.0f}, {71.0f, -71.0f}},
+    // opponent bottom
+    {{-4.0f, -71.0f}, {71.0f, -71.0f}}
+};
+inline std::vector<Line_> soloAWP_obstacles_left = {
+    // Alliance Robot Disable Lines
+    {{-72.0f, -8.0f}, {-36.0f, -8.0f}},
+    {{-36.0f, -8.0f}, {-36.0f, -40.0f}},
+    {{-72.0f, -40.0f}, {-36.0f, -40.0f}},
+    {{-72.0f, -8.0f}, {-72.0f, -40.0f}},
     // Middle Line
     {{-4.0f, -71.0f}, {-4.0f, 71.0f}},
     // oppennent top

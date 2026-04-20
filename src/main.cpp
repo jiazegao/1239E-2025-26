@@ -1,5 +1,6 @@
 #include "main.h"
 #include "custom/RclTracking.hpp"
+#include "custom/Tracking_Util.hpp"
 #include "custom/configs.hpp"
 #include "custom/auton.hpp"
 
@@ -70,12 +71,34 @@ void opcontrol() {
 	// startLeverTuningDisplay();
 
 	MclMain.stopTracking();
+
+	// Partner controller vibration
+	Timer vibT(120000);
+	bool vib60 = false;
+	bool vib30 = false;
+	bool vib20 = false;
 	
 	while (true) {
 		// Update Controls
 		updateTankDrive();
 		updatePneumatics();
 		updateIntake();
+
+		// Vibration control
+		if (vibT.timeLeft(TimeUnit::SECOND) <= 60 && !vib60) {
+			partner_controller.rumble(".");
+			vib60 = true;
+		}
+
+		if (vibT.timeLeft(TimeUnit::SECOND) <= 30 && !vib30) {
+			partner_controller.rumble(". .");
+			vib30 = true;
+		}
+
+		if (vibT.timeLeft(TimeUnit::SECOND) <= 20 && !vib20) {
+			partner_controller.rumble(". . .");
+			vib20 = true;
+		}
 		
 		pros::delay(20);
 	}

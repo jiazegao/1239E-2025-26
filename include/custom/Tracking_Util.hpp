@@ -30,8 +30,9 @@ class Timer {
             return elapsedMs() > timeoutMs;
         };
 
-        float timeLeft() const {
+        float timeLeft(TimeUnit unit = TimeUnit::MILLISECOND) const {
             float e = elapsedMs();
+            if (unit == TimeUnit::SECOND) return e < timeoutMs ? ((timeoutMs - e) * 0.001f) : 0.0f;
             return e < timeoutMs ? (timeoutMs - e) : 0;
         };
 

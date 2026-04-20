@@ -8,20 +8,21 @@
 void leftv2();
 void rightv2();
 
-void soloAWP();
-void counterSAWP();
+void SAWPRight_slowScr();
+void SAWPRight_fastScr();
+void SAWPLeft();
 
-void leftControlRush();
-void rightControlRush();
+void left7();
+void right7();
 
-void leftFastRush();
-void rightFastRush();
+void left4();
+void right4();
 
 void leftDescoreAuto();
 void rightDescoreAuto();
 
-void leftSixBall();
-void rightSixBall();
+void left6();
+void right6();
 
 void skills_119();
 

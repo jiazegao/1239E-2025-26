@@ -11,19 +11,8 @@ void toggle_color(lv_event_t* e) {
 }
 
 void toggle_type(lv_event_t* e) {
-    switch (autonType) {
-        case autonTypes::LEFT_V2: autonType = autonTypes::LEFT_RUSH; lv_label_set_text(label_type, "LEFT_RUSH"); break;
-        case autonTypes::LEFT_RUSH: autonType = autonTypes::LEFT_FAST; lv_label_set_text(label_type, "LEFT_FAST"); break;
-        case autonTypes::LEFT_FAST: autonType = autonTypes::LEFT_DESC; lv_label_set_text(label_type, "LEFT_DESC"); break;
-        case autonTypes::LEFT_DESC: autonType = autonTypes::LEFT_6; lv_label_set_text(label_type, "LEFT_6"); break;
-        case autonTypes::LEFT_6: autonType = autonTypes::RIGHT_V2; lv_label_set_text(label_type, "RIGHT_V2"); break;
-        case autonTypes::RIGHT_V2: autonType = autonTypes::RIGHT_RUSH; lv_label_set_text(label_type, "RIGHT_RUSH"); break;
-        case autonTypes::RIGHT_RUSH: autonType = autonTypes::RIGHT_FAST; lv_label_set_text(label_type, "RIGHT_FAST"); break;
-        case autonTypes::RIGHT_FAST: autonType = autonTypes::RIGHT_DESC; lv_label_set_text(label_type, "RIGHT_DESC"); break;
-        case autonTypes::RIGHT_DESC: autonType = autonTypes::RIGHT_6; lv_label_set_text(label_type, "RIGHT_6"); break;
-        case autonTypes::RIGHT_6: autonType = autonTypes::CTR_SAWP; lv_label_set_text(label_type, "CTR_SAWP"); break;
-        default: autonType = autonTypes::LEFT_V2; lv_label_set_text(label_type, "LEFT_V2"); break;
-    }
+    autonCount = (autonCount+1)%AutonCollection.size();
+    lv_label_set_text(label_type, AutonCollection[autonCount].Name.data());
 }
 
 void toggle_skills (lv_event_t* e) {
@@ -67,6 +56,12 @@ void init_auton_selector() {
     lv_obj_add_event_cb(btn_recalibrate, recalibrate, LV_EVENT_CLICKED, NULL);
     label_recalibrate = lv_label_create(btn_recalibrate);
     lv_label_set_text(label_recalibrate, "Recal");
+
+    lv_label_set_text(label_color, (allianceColor == alliance_color::RED) ? "Red" : "Blue");
+    lv_obj_set_style_bg_color(btn_color, (allianceColor == alliance_color::RED) ? lv_color_hex(0xFF0000) : lv_color_hex(0x0000FF), LV_PART_MAIN);
+    lv_label_set_text(label_type, AutonCollection[autonCount].Name.data());
+    lv_label_set_text(label_skills, (runningSkills) ? "SKILLS/Y" : "SKILLS/N");
+    lv_obj_set_style_bg_color(btn_skills, (runningSkills == true) ? lv_color_hex(0x00FF00) : lv_color_hex(0xFF0000), LV_PART_MAIN);
 }
 
 // Call the according autonomous
@@ -76,44 +71,7 @@ void runAuton() {
 		skills_119();
 		return;
 	}
-
-    switch (autonType) {
-        case autonTypes::LEFT_V2:
-            leftv2();
-            return;
-        case autonTypes::LEFT_RUSH:
-            leftControlRush();
-            return;
-        case autonTypes::LEFT_FAST:
-            leftFastRush();
-            return;
-        case autonTypes::LEFT_DESC:
-            leftDescoreAuto();
-            return;
-        case autonTypes::LEFT_6:
-            leftSixBall();
-            return;
-        case autonTypes::RIGHT_V2:
-            rightv2();
-            return;
-        case autonTypes::RIGHT_RUSH:
-            rightControlRush();
-            return;
-        case autonTypes::RIGHT_FAST:
-            rightFastRush();
-            return;
-        case autonTypes::RIGHT_DESC:
-            rightDescoreAuto();
-            return;
-        case autonTypes::RIGHT_6:
-            rightSixBall();
-            return;
-        case autonTypes::CTR_SAWP:
-            counterSAWP();
-            return;
-        default:
-            counterSAWP();
-            return;
-			
+    if (autonCount >= 0 && autonCount < (int)AutonCollection.size()) {
+        AutonCollection[autonCount].AutonFunc();
     }
 }
