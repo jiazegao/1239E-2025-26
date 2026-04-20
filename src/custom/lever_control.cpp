@@ -240,12 +240,7 @@ void initLeverControl() {
                 }
                 // Haven't reached target, keep going
                 else if (leverMotor.get_position() < currTarget) {
-                    // Velocity control
-                    if (!fast_lever_score && leverMotor.get_position() < currTarget * 0.5f) {
-                        leverMotor.move_velocity(currMaxSpeed*0.5f);
-                    } else {
-                        leverMotor.move_velocity(currMaxSpeed);
-                    }
+                    leverMotor.move_velocity(currMaxSpeed);
                 }
                 // Reached target, immediately reverse then move position
                 else if (leverMotor.get_position() >= currTarget) {

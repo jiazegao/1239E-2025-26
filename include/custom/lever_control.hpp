@@ -14,7 +14,6 @@ const int SLOW_MID_SCORE = 30;
 
 enum LEVER_STAGE {INACTIVE, PRIMING, INTAKING, OUTTAKING, RAISING, LOWERING};
 inline bool lever_antistuck_on = false;
-inline bool fast_lever_score = false;
 void startPriming();
 void endPriming();
 LEVER_STAGE getLeverStage();

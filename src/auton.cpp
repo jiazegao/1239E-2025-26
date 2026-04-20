@@ -164,7 +164,6 @@ void SAWPRight_slowScr() {
     MclMain.setObstacles(&soloAWP_obstacles_right, nullptr);
     startIntake();
     startMcl(-47, 0, 0, false, true, true, false);
-    fast_lever_score = false;
 
     // Push teammate and get their preload
     chassis.moveToPoint(-47, 15, 300, {}, true);
@@ -182,7 +181,7 @@ void SAWPRight_slowScr() {
     closeGate();
     hoodLock = true;
     openHood();
-    score(1000, 7, 50);
+    score(700, 7, 45);
     frontMotor.move(-127);
 
     // Intake 3 balls
@@ -210,7 +209,7 @@ void SAWPRight_slowScr() {
     // Score long goal
     chassis.moveToPoint(-24, 47, 1300, {.forwards=false}, true);
     pros::delay(600);
-    score(1000, 7, 50);
+    score(700, 7, 45);
     
     // Intake from matchloader
     chassis.moveToPoint(-70, 47, 400, {.minSpeed=80}, false);
@@ -224,7 +223,7 @@ void SAWPRight_slowScr() {
     chassis.moveToPoint(-13, 10, 1100, {.forwards=false}, true);
     pros::delay(700);
     retractLift();
-    score(400, 7, 40);
+    score(400, 7, 35);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(1000);
     resetLever();
@@ -235,7 +234,6 @@ void SAWPRight_fastScr() {
     MclMain.setObstacles(&soloAWP_obstacles_right, nullptr);
     startIntake();
     startMcl(-47, 0, 0, false, true, true, false);
-    fast_lever_score = false;
 
     // Push teammate and get their preload
     chassis.moveToPoint(-47, 15, 300, {}, true);
@@ -253,7 +251,7 @@ void SAWPRight_fastScr() {
     closeGate();
     hoodLock = true;
     openHood();
-    score(1000, 7, 50);
+    score(700, 7, 45);
     frontMotor.move(-127);
 
     // Intake 3 balls
@@ -281,7 +279,7 @@ void SAWPRight_fastScr() {
     // Score long goal
     chassis.moveToPoint(-24, 47, 1300, {.forwards=false}, true);
     pros::delay(600);
-    score(1000, 7, 80);
+    score(700, 7, 80);
     
     // Intake from matchloader
     chassis.moveToPoint(-70, 47, 400, {.minSpeed=80}, false);
@@ -295,7 +293,7 @@ void SAWPRight_fastScr() {
     chassis.moveToPoint(-13, 10, 1100, {.forwards=false}, true);
     pros::delay(700);
     retractLift();
-    score(400, 7, 40);
+    score(400, 7, 35);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(1000);
     resetLever();
@@ -306,7 +304,6 @@ void SAWPLeft() {
     MclMain.setObstacles(&soloAWP_obstacles_left, nullptr);
     startIntake();
     startMcl(-47, 0, 180, false, false, true, true);
-    fast_lever_score = false;
 
     // Push teammate and get their preload
     chassis.moveToPoint(-47, -15, 300, {}, true);
@@ -324,7 +321,7 @@ void SAWPLeft() {
     closeGate();
     hoodLock = true;
     openHood();
-    score(1000, 7, 50);
+    score(700, 7, 45);
     frontMotor.move(-127);
 
     // Intake 3 balls
@@ -352,7 +349,7 @@ void SAWPLeft() {
     // Score long goal
     chassis.moveToPoint(-24, -47, 1300, {.forwards=false}, true);
     pros::delay(600);
-    score(1000, 7, 50);
+    score(700, 7, 45);
     
     // Intake from matchloader
     chassis.moveToPoint(-70, -47, 400, {.minSpeed=80}, false);
