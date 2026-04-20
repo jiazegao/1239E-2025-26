@@ -73,7 +73,7 @@ void opcontrol() {
 	MclMain.stopTracking();
 
 	// Partner controller vibration
-	Timer vibT(120000);
+	Timer vibT(105000);
 	bool vib60 = false;
 	bool vib30 = false;
 	bool vib20 = false;

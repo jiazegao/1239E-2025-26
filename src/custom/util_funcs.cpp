@@ -500,7 +500,7 @@ void partnerControllerVibrate() {
     static bool vibrated30 = false;
     static bool vibrated20 = false;
 
-    double matchTime = 105 - (pros::millis() / 1000);
+    double matchTime = 105 - (static_cast<double>(pros::millis()) / 1000);
 
     if (matchTime <= 60 && !vibrated60) {
         partner_controller.rumble(".");
