@@ -369,6 +369,64 @@ void SAWPLeft() {
     chassis.turnToPoint(0, 0, 200, {}, true);
     moveForward(8, 800, 60, 1, true);
 }
+void specSAWP() {
+    leftStackStart();
+    leftStackToGoal(false);
+    score(800, 7, 45);
+    
+    // Intake from matchloader
+    chassis.moveToPoint(-70, 47, 400, {.minSpeed=80}, false);
+    resetLever();
+    chassis.moveToPoint(-70, 47, 1000, {.maxSpeed=45}, true);
+    pros::delay(300);
+    startIntake();
+
+    // Score mid
+    moveForward(-5, 400, 30, 1, true);
+    chassis.moveToPoint(-12, 10, 1100, {.forwards=false}, true);
+    pros::delay(700);
+    retractLift();
+    score(400, 7, 35);
+    chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
+    pros::delay(500);
+    resetLever();
+    closeGate();
+
+    // Intake 3 balls
+    chassis.turnToHeading(210, 500, {}, true);
+    chassis.moveToPoint(-23, -23, 400, {.minSpeed=70, .earlyExitRange=3}, true);
+    closeGate();
+    chassis.moveToPoint(-23, -23, 600, {.maxSpeed=50}, true);
+    pros::delay(200);
+    openGate();
+    
+    // Go to long goal
+    chassis.moveToPoint(-43, -41, 1000, {.maxSpeed=80}, true);
+    chassis.turnToHeading(270, 150, {}, false);
+
+    // Score long goal
+    chassis.moveToPoint(-24, -47, 1300, {.forwards=false}, true);
+    pros::delay(600);
+    score(800, 7, 45);
+    
+    // Intake from matchloader
+    chassis.moveToPoint(-70, -47, 400, {.minSpeed=80}, false);
+    resetLever();
+    chassis.moveToPoint(-70, -47, 1100, {.maxSpeed=50}, true);
+    pros::delay(300);
+    startIntake();
+
+    // Score mid
+    moveForward(-4, 600, 30, 1, true);
+    pros::delay(400);
+    closeGate();
+    chassis.turnToPoint(-10, -10, 500, {}, true);
+    chassis.moveToPoint(-10, -10, 1400, {.maxSpeed=80}, true);
+    pros::delay(1000);
+    startOuttake(300);
+    chassis.turnToPoint(0, 0, 200, {}, true);
+    moveForward(8, 800, 60, 1, true);
+}
 // TUNED
 void leftv2() {
     leftStackStart();

@@ -11,6 +11,7 @@ void rightv2();
 void SAWPRight_slowScr();
 void SAWPRight_fastScr();
 void SAWPLeft();
+void specSAWP();
 
 void left7();
 void right7();
