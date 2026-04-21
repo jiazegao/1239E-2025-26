@@ -472,7 +472,7 @@ void rightv2() {
     chassis.turnToPoint(-10, -10, 600, {}, true);
     chassis.moveToPoint(-10, -10, 1400, {.maxSpeed=80}, true);
     pros::delay(700);
-    startOuttake(200);
+    startOuttake(300);
     chassis.turnToPoint(0, 0, 200, {}, true);
     moveForward(8, 800, 60, 1, true);
     pros::delay(1800);
@@ -725,7 +725,7 @@ void rightDescoreAuto() {
     // Score bottom mid
     chassis.turnToHeading(45, 800, {}, true);
     chassis.moveToPoint(-15, -15, 400, {.maxSpeed=80}, true);
-    resetLever();
+   // resetLever();
     chassis.moveToPoint(-10, -10, 900, {.maxSpeed=80}, true);
     closeGate();
     pros::delay(600);
