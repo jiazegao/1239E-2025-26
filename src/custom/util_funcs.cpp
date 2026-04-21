@@ -178,6 +178,13 @@ void updateIntake() {
         currTopLeverSpeed = 50;
         currMidLeverSpeed = 30;
     }
+
+    // Cancel priming with secondary controller
+    if (partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+        if (getLeverStage() == PRIMING) {
+            resetLever();
+        }
+    }
 }
 
 // Tank drive
