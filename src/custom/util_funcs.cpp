@@ -119,7 +119,7 @@ void updateIntake() {
         }
     }
     // Button Right - Priming
-    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+    if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT) || partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
         startPriming();
     }
 
