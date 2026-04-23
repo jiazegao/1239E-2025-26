@@ -78,8 +78,8 @@ void updateIntake() {
     static scoringStates midState = INACTIVE;
     static scoringStates topState = INACTIVE;
     static int currTopLeverSpeed = 100;
-    static int currMidLeverSpeed = 80;
-
+    static int currMidLeverSpeed = 85;
+    static int outtakeSpeed = 600;
     setAutoReset(false);
 
     // Button R2 - Top state (Toggle)
@@ -144,12 +144,12 @@ void updateIntake() {
         // Button B - Outtake (Hold)
         else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
             extendLift();
-            startOuttake(600);
+            startOuttake(outtakeSpeed);
         }
         // Button A - Slow outtake (Hold)
         else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)) {
             extendLift();
-            startOuttake(100);
+            startOuttake(outtakeSpeed);
         }
         // If no button is pressed, stop everything
         else {
@@ -184,6 +184,12 @@ void updateIntake() {
         if (getLeverStage() == PRIMING) {
             resetLever();
         }
+    }
+    //Control outtake speed w/ secondary controller for outtake speed
+    if (partner_controller.get_digital((pros::E_CONTROLLER_DIGITAL_DOWN))) {
+        outtakeSpeed = 250;
+    } else {
+        outtakeSpeed = 600;
     }
 }
 

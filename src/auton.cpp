@@ -170,14 +170,14 @@ void SAWPRight_slowScr() {
 
     // Head towards the matchloader and intake
     chassis.moveToPoint(-47, -44, 1400, {.forwards=false}, true);
-    pros::delay(400);
+    pros::delay(450);
     openGate();
     chassis.turnToHeading(270, 400, {}, true);
-    chassis.moveToPoint(-70, -47, 1000, {.maxSpeed=50}, true);
+    chassis.moveToPoint(-70, -47, 1200, {.maxSpeed=50}, true);
 
     // Score the long goal
     chassis.moveToPoint(-24, -47, 1800, {.forwards=false}, true);
-    pros::delay(900);
+    pros::delay(1400);
     closeGate();
     hoodLock = true;
     openHood();
@@ -201,7 +201,7 @@ void SAWPRight_slowScr() {
     chassis.moveToPoint(-23, 23, 500, {.maxSpeed=50}, true);
     pros::delay(200);
     openGate();
-    
+    lever_antistuck_on = true;
     // Go to long goal
     chassis.moveToPoint(-43, 41, 1000, {.maxSpeed=80}, true);
     chassis.turnToHeading(270, 150, {}, false);
@@ -210,20 +210,21 @@ void SAWPRight_slowScr() {
     chassis.moveToPoint(-24, 47, 1300, {.forwards=false}, true);
     pros::delay(600);
     score(900, 7, 45);
-    
+    lever_antistuck_on = false;
+
     // Intake from matchloader
     chassis.moveToPoint(-70, 47, 400, {.minSpeed=80}, false);
     resetLever();
-    chassis.moveToPoint(-70, 47, 1100, {.maxSpeed=50}, true);
+    chassis.moveToPoint(-70, 47, 900, {.maxSpeed=50}, true);
     pros::delay(300);
     startIntake();
 
     // Score mid
     moveForward(-5, 400, 30, 1, true);
     chassis.moveToPoint(-12, 10, 1100, {.forwards=false}, true);
-    pros::delay(700);
+    pros::delay(750);
     retractLift();
-    score(400, 7, 35);
+    score(500, 3, 25);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(1000);
     resetLever();
@@ -285,7 +286,7 @@ void SAWPRight_fastScr() {
     chassis.moveToPoint(-70, 47, 400, {.minSpeed=80}, false);
     resetLever();
     chassis.moveToPoint(-70, 47, 1100, {.maxSpeed=50}, true);
-    pros::delay(300);
+    pros::delay(300); //Change later
     startIntake();
 
     // Score mid
@@ -293,7 +294,7 @@ void SAWPRight_fastScr() {
     chassis.moveToPoint(-12, 10, 1100, {.forwards=false}, true);
     pros::delay(700);
     retractLift();
-    score(400, 7, 35);
+    score(400, 4, 35);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(1000);
     resetLever();
@@ -672,8 +673,9 @@ void leftDescoreAuto() {
     chassis.turnToHeading(160, 700, {.maxSpeed=80}, true);
     pros::delay(150);
     resetLever();
-    chassis.moveToPoint(-23, 28, 1000, {.maxSpeed=80}, true);
-    pros::delay(300);
+    startIntake();
+    chassis.moveToPoint(-24, 28, 1000, {.maxSpeed=80}, true);
+    pros::delay(400);
     openGate();
     pros::delay(1000);
     chassis.turnToHeading(315, 500, {}, true);
@@ -730,7 +732,7 @@ void rightDescoreAuto() {
    // resetLever();
     chassis.moveToPoint(-9, -11, 900, {.maxSpeed=80}, true);
     pros::delay(600);
-    startOuttake(200);
+    startOuttake(300);
     chassis.turnToPoint(0, 0, 200, {}, true);
     moveForward(8, 800, 60, 1, false);
     pros::delay(2000);
