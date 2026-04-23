@@ -51,6 +51,7 @@ void autonomous() {
 
 	setMidScoreDelay(0);
 	runAuton();
+	
 }
 
 void opcontrol() {
