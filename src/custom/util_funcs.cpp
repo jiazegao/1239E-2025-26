@@ -171,12 +171,12 @@ void updateIntake() {
         currMidLeverSpeed = 80;
     }
     else if (partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
-        currTopLeverSpeed = 30;
-        currMidLeverSpeed = 20;
+        currTopLeverSpeed = 35;
+        currMidLeverSpeed = 30;
     }
     else {
-        currTopLeverSpeed = 50;
-        currMidLeverSpeed = 30;
+        currTopLeverSpeed = 60;
+        currMidLeverSpeed = 35;
     }
 
     // Cancel priming with secondary controller
@@ -187,7 +187,7 @@ void updateIntake() {
     }
     //Control outtake speed w/ secondary controller for outtake speed
     if (partner_controller.get_digital((pros::E_CONTROLLER_DIGITAL_DOWN))) {
-        outtakeSpeed = 250;
+        outtakeSpeed = 300;
     } else {
         outtakeSpeed = 600;
     }

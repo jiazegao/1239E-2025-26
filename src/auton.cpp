@@ -31,17 +31,17 @@ void rightPush() {
 void leftMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-24, 37, 550, {}, true);
+    chassis.moveToPoint(-24, 34.25, 1500, {}, true);
     chassis.turnToHeading(90, 400, {}, true);
     retractLeftArm();
-    chassis.moveToPoint(-11, 38, 500, {}, true);
-    chassis.moveToPoint(-11, 38, 1000, {.maxSpeed=40}, true);
+    chassis.moveToPoint(-11, 34, 500, {}, true);
+    chassis.moveToPoint(-11, 34, 1000, {.maxSpeed=40}, true);
     chassis.turnToHeading(120, 12000, {.maxSpeed=30}, false);
 }
 void rightMidPush() {
     // Descore
     closeGate();
-    chassis.moveToPoint(-21, -37, 400, {.forwards=false}, true);
+    chassis.moveToPoint(-24, -37, 400, {.forwards=false}, true);
     chassis.turnToHeading(270, 400, {}, true);
     retractLeftArm();
     chassis.moveToPoint(-10, -38, 600, {.forwards=false}, true);
@@ -446,13 +446,13 @@ void specSAWP() {
 // TUNED
 void leftv2() {    
     leftFastStartToGoal();
-    score(800, 7, 45);
+    score(800, 7, 65);
     
     // Intake from matchloader
     chassis.moveToPoint(-70, 47, 450, {.minSpeed=80}, false);
     hoodLock = false;
     resetLever();
-    chassis.moveToPoint(-70, 47, 1000, {.maxSpeed=45}, true);
+    chassis.moveToPoint(-70, 47, 800, {.maxSpeed=45}, true);
     pros::delay(300);
     startIntake();
 
@@ -461,7 +461,7 @@ void leftv2() {
     chassis.moveToPoint(-11, 10, 1100, {.forwards=false}, true);
     pros::delay(700);
     retractLift();
-    score(500, 5, 30);
+    score(500, 4, 27);
     chassis.turnToPoint(0, 0, 200, {.forwards=false}, true);
     pros::delay(500);
     resetLever();
